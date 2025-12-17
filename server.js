@@ -41,6 +41,10 @@ if (isProduction) {
   // Production: serve built static files from classroomv3-main/dist
   const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
   app.use('/studio', express.static(studioDistPath));
+  // Serve index for exact /studio path as well (ensure no 404 on /studio)
+  app.get('/studio', (req, res) => {
+    res.sendFile(path.join(studioDistPath, 'index.html'))
+  });
   // SPA fallback - serve index.html for any /studio/* routes
   app.get('/studio/*', (req, res) => {
     res.sendFile(path.join(studioDistPath, 'index.html'));
@@ -51,7 +55,9 @@ if (isProduction) {
     target: 'http://localhost:5173',
     changeOrigin: true,
     ws: true,
-    logLevel: 'debug'
+    pathRewrite: {
+      '^/studio': '/studio'
+    }
   }));
 }
 
