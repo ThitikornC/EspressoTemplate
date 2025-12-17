@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เกมทายชื่อจากรูป</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/gamepicture.css">
+<script src="/js/prevent-image-download.js"></script>
+<script>
+let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const soundButton = document.getElementById('soundToggleButton');
+  soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+}
+
+// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
+function playSuccessSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+  try {
+    let audio = document.getElementById('winner-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'winner-audio';
+      audio.src = '/Sound/winner.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+// ฟังก์ชันเล่นเสียงผิดจากไฟล์ fail.mp3
+function playFailSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+  try {
+    let audio = document.getElementById('fail-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'fail-audio';
+      audio.src = '/Sound/fail.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+
+// เพิ่มฟังก์ชันเล่นเสียงตอนลาก
+function playDraggingSound() {
+  if (!soundEnabled || !audioCtx) return; // ตรวจสอบสถานะเสียงและ AudioContext
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.2);
+
+  baseFreq = baseFreq >= 800 ? 200 : baseFreq + 50; // ปรับความถี่เสียง
+}
+
+// เพิ่มฟังก์ชัน initAudio เพื่อเริ่มต้น AudioContext
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const s = audioCtx.createBufferSource();
+    s.connect(audioCtx.destination);
+    s.start();
+  }
+}
+
+</script>
+<style>
+  /* Override zone styling: larger touch targets and colored dashed borders */
+  #zones { display:flex; gap:16px; justify-content:center; align-items:center; }
+  #zones .zone {
+    width: 40%;
+    height: 260px; /* ลดความสูงจาก 380px */
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    position: relative;
+  }
+  #zones .zone:active { transform: scale(0.98); }
+  .zone-label {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 700;
+    color: inherit;
+  }
+  /* Correct / Wrong zone styling (static glow, no animation) */
+  #correctZone { 
+    border: 4px dashed #27ae60; 
+    color: #27ae60; 
+    box-shadow: 0 10px 30px rgba(14, 226, 17, 0.1); 
+    background: linear-gradient(135deg, #e0ffe8 0%, #b2f7c1 100%);
+  }
+  #wrongZone { 
+    border: 4px dashed #e74c3c; 
+    color: #e74c3c; 
+    box-shadow: 0 10px 30px rgba(231,76,60,0.10); 
+    background: linear-gradient(135deg, #ffe0e0 0%, #f7b2b2 100%);
+  }
+
+  /* neon-btn: center text, auto width, neon border, responsive */
+  /* neon-btn: center text, auto width, neon border, responsive */
+  .neon-btn {
+    background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+    color: #000000;
+    border: 6px solid #74640a;
+    border-radius: 9999px;
+    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255, 0, 0, 0.45); /* Changed neon color */
+    font-weight: 700;
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding: 6px 16px;
+    transform: translateZ(0);
+    transition: all 0.3s ease;
+    z-index: 10;
+    min-height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    text-align: center;
+  }
+
+
+  /* Adjust image size for larger display */
+  #zones .zone img {
+    max-width: 100%;
+    max-height: 98%;
+    object-fit: contain;
+  }
+  @media (max-width: 768px) {
+  #soundToggleButton {
+    right: 20px !important; /* Ensure the rule is applied */
+    top: 25px !important; /* Adjust top position for better alignment */
+
+  }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<h2 class="neon-btn">หัวข้อกิจกรรม: <span id="topicName"></span></h2>
+<p id="scoreDisplay" style="display:none; font-size:26px; font-weight:700; color:#333; margin:18px 0 6px 0;">Score: <span id="score" style="font-size:34px; color:#27ae60;">0</span></p>
+
+
+
+<div id="zones" style="display:none;">
+  <div id="correctZone" class="zone"><div class="zone-label"></div>✔️</div>
+  <div id="wrongZone" class="zone"><div class="zone-label"></div>❌</div>
+</div>
+
+<!-- Popup -->
+<div id="scorePopup">
+  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
+  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
+  <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
+  <p style="font-size:32px; font-weight:700; margin:20px 0;">🎉 Your Score: <span id="finalScore"></span> 🎉</p>
+  
+  <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
+    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      🔄
+    </button>
+    <div style="position: relative;">
+      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        🔗
+      </button>
+      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 3px solid #2196F3;">
+        <!--<button onclick="shareResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #2196F3, #1E88E5); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #1976D2, #1565C0)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #2196F3, #1E88E5)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">🔗</span> แชร์
+        </button>-->
+        <button onclick="saveResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">📥</span> ดาวน์โหลด
+        </button>
+      </div>
+    </div>
+    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      ✖
+    </button>
+  </div>
+</div>
+
+<!-- Added a modal for selecting saved activities -->
+<div id="activityModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 30px; border-radius: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+    <h2 style="margin: 0 0 20px;">เลือกกิจกรรมที่บันทึกไว้</h2>
+    <div id="activityList"></div>
+    <button onclick="closeActivityModal()" style="margin-top: 20px; padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;">ปิด</button>
+  </div>
+</div>
+
+<script>
+let audioCtx, baseFreq = 200;
+const sparkleChars = ['✨', '🌟', '💫', '⭐'];
+let createdImages = {};
+let score = 0;
+let gameStarted = false;
+// usage tracking id for this page session
+let __localUsageId = null;
+
+// โหลด config จาก localStorage
+let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
+document.getElementById('topicName').innerText = activityName;
+document.getElementById('topicDisplay').innerText = activityName;
+
+// แสดงเกมทันที
+document.getElementById('zones').style.display = 'flex';
+document.getElementById('scoreDisplay').style.display = 'block';
+gameStarted = true;
+
+
+// particle effect
+function createParticle(x, y) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.innerText = sparkleChars[Math.floor(Math.random() * sparkleChars.length)];
+  p.style.left = `${x}px`;
+  p.style.top = `${y}px`;
+  p.style.transform = `scale(${Math.random() * 1.5 + 0.5})`;
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 600);
+}
+
+// Refine the PDF generation logic to align with demo.html and teacherdemo.html
+
+// ฟังก์ชันแชร์ผลเป็น PDF
+async function shareResult() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    const percentageScore = Math.min(100, Math.round((score / (teacherConfig.correctImages?.length || 1)) * 100));
+
+    let grade = '';
+    if (percentageScore >= 80) {
+      grade = 'ดีเยี่ยม';
+    } else if (percentageScore >= 60) {
+      grade = 'ดี';
+    } else if (percentageScore >= 40) {
+      grade = 'พอใจ';
+    } else {
+      grade = 'ต้องปรับปรุง';
+    }
+
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    // Updated the PDF content to include the userName
+    const pdfContent = `
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
+          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+          <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
+        </div>
+              <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ใช้งาน:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        </div>
+        <div style="margin-top: 50px; text-align: center;">
+          <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+        </div>
+      </div>
+    `;
+
+    const element = document.createElement('div');
+    element.innerHTML = pdfContent;
+
+    html2pdf().set(opt).from(element).output('blob').then(blob => {
+      const file = new File([blob], opt.filename, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'Smart Classroom - ผลการทดสอบ',
+          text: `ผลการทดสอบ: ${score}/${teacherConfig.correctImages?.length || 0}`
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        html2pdf().set(opt).from(element).save();
+      }
+    });
+  } catch (error) {
+    console.error('Error sharing PDF:', error);
+  }
+}
+
+// ฟังก์ชันบันทึกผลเป็น PDF
+function saveResult() {
+  try {
+    const date = new Date();
+    // Define dateStr and timeStr within the saveResult function
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    const pdfContent = document.createElement('div');
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
+         <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+      <div style="position: absolute; top: 1px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+      <div style="text-align: center; margin: 40px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
+                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
+      </div>
+         <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 5px 0; font-size: 32px;">Espresso</h1>
+        <p style="margin: 5px 0; font-size: 18px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+      </div>
+       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ใช้งาน:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+            </tr>  
+             <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+          </table>
+        </div>
+      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        </div>
+        <div style="margin-top: 70px; text-align: center;">
+        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      </div>
+       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 50px;">
+      <div style="display: inline-block; text-align: right;">
+        บริษัท กว้างไม่ จำกัด<br>
+        263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+        ติดต่อเราได้ที่<br>
+        โทร : 083-654-9743<br>
+        เว็บไซต์ : www.kwangunlimit.com
+      </div>
+      </div>
+    `;
+
+    html2pdf().set(opt).from(pdfContent).save();
+  } catch (error) {
+    console.error('Error saving PDF:', error);
+  }
+}
+
+// Validate and log teacherConfig data before generating the PDF
+console.log('Teacher Config:', teacherConfig);
+
+if (!teacherConfig.topic || !teacherConfig.unit || !teacherConfig.testCount || !teacherConfig.week || !teacherConfig.teacher) {
+  console.warn('Some fields in teacherConfig are missing. Please ensure all fields are provided.');
+}
+
+// เริ่มเกม (ฟังก์ชันเริ่มต้นเกม)
+function initGame() {
+  if (!teacherConfig.correctImages || !teacherConfig.wrongImages) {
+    alert("ไม่พบข้อมูลจากครู! กรุณาไปหน้าครูตั้งค่า");
+    window.location.href = 'teacher.html';
+    return;
+  }
+
+  createdImages = {};
+  score = 0;
+  document.getElementById('score').innerText = score;
+
+  // จำกัดจำนวนรูปที่แสดง (ถ้ามีรูปเยอะก็สุ่ม 5 รูป)
+  const maxImages = 10;
+  
+  // สุ่มรูปที่ถูกต้อง
+  let correctImagesPool = [...teacherConfig.correctImages];
+  let selectedCorrectImages = correctImagesPool.sort(() => Math.random() - 0.5).slice(0, Math.min(maxImages, correctImagesPool.length));
+  
+  selectedCorrectImages.forEach((imgData, index) => {
+    createDraggableImage(imgData, `correct-${index}`, true);
+  });
+
+  // สุ่มรูปที่ผิด
+  let wrongImagesPool = [...teacherConfig.wrongImages];
+  let selectedWrongImages = wrongImagesPool.sort(() => Math.random() - 0.5).slice(0, Math.min(maxImages, wrongImagesPool.length));
+  
+  selectedWrongImages.forEach((imgData, index) => {
+    createDraggableImage(imgData, `wrong-${index}`, false);
+  });
+}
+
+// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
+function playSuccessSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+  try {
+    let audio = document.getElementById('winner-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'winner-audio';
+      audio.src = '/Sound/winner.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+
+// สร้างรูปที่ลากได้
+function createDraggableImage(imgData, imageId, isCorrect) {
+  if (createdImages[imageId]) return;
+
+  const imageDiv = document.createElement('div');
+  imageDiv.classList.add('image-item');
+  imageDiv.innerHTML = `<img src="${imgData}" alt="Image">`;
+
+  // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง ไม่ซ้อนกัน
+  const estimatedImgW = 100;
+  const estimatedImgH = 100;
+  const horizontalPadding = 24;
+  // นับจำนวนรูปที่สร้างแล้ว เพื่อจัดตำแหน่ง
+  const totalImages = document.querySelectorAll('.image-item').length;
+  const imagesPerRow = 6; // ปรับจำนวนรูปต่อแถวได้
+  const gap = 100; // ระยะห่างระหว่างรูป (เพิ่มขึ้น)
+  const row = Math.floor(totalImages / imagesPerRow);
+  const col = totalImages % imagesPerRow;
+  // คำนวณความกว้างรวมของแถว
+  const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
+  const centerX = Math.max((window.innerWidth - rowWidth) / 2, 0); // ป้องกันล้นขอบซ้ายขวา
+  const startX = centerX + col * (estimatedImgW + gap);
+  // วางรูปภาพให้อยู่กลางจอแนวตั้งเสมอ (centered vertically)
+  const totalRows = Math.ceil((document.querySelectorAll('.image-item').length + 1) / imagesPerRow);
+  const imagesAreaHeight = totalRows * estimatedImgH + (totalRows - 1) * gap;
+  // ขยับลงล่างอีก (เพิ่ม offset 80px)
+  const centerY = Math.max((window.innerHeight - imagesAreaHeight) / 2 + 80, 0); // ป้องกันล้นขอบบนล่าง
+  const startY = centerY + row * (estimatedImgH + gap);
+  // Disable random rotation: keep images upright and prevent scaling on mobile
+  const angle = 0;
+  const isMobile = window.innerWidth <= 768;
+  const scale = isMobile ? 1 : 1 + Math.random() * 0.2;
+  imageDiv.style.left = `${startX}px`;
+  imageDiv.style.top = `${startY}px`;
+  imageDiv.style.transform = `scale(${scale * 2.75})`;
+
+  let offsetX, offsetY;
+  function dragMove(posX, posY) {
+    imageDiv.style.left = `${posX}px`;
+    imageDiv.style.top = `${posY}px`;
+    createParticle(posX + 50, posY + 50);
+    playDraggingSound(); // เรียกใช้ฟังก์ชันเล่นเสียงตอนลาก
+    baseFreq = baseFreq >= 800 ? 200 : baseFreq + 50;
+  }
+
+  // Desktop
+  imageDiv.addEventListener('mousedown', e => {
+    initAudio(); // เริ่มต้น AudioContext
+    e.preventDefault();
+    offsetX = e.clientX - imageDiv.offsetLeft;
+    offsetY = e.clientY - imageDiv.offsetTop;
+
+    function onMove(e) {
+      dragMove(e.clientX - offsetX, e.clientY - offsetY);
+    }
+
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      checkDrop();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Mobile
+  imageDiv.addEventListener('touchstart', e => {
+    initAudio(); // เริ่มต้น AudioContext
+    const t = e.touches[0];
+    offsetX = t.clientX - imageDiv.offsetLeft;
+    offsetY = t.clientY - imageDiv.offsetTop;
+  });
+  imageDiv.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    dragMove(t.clientX - offsetX, t.clientY - offsetY);
+  });
+  imageDiv.addEventListener('touchend', e => {
+    checkDrop();
+  });
+
+  // Updated the `checkDrop` function to prevent score increment for wrong images placed in the wrong zone
+  function checkDrop() {
+    const rect = imageDiv.getBoundingClientRect();
+    const correctZone = document.getElementById('correctZone').getBoundingClientRect();
+    const wrongZone = document.getElementById('wrongZone').getBoundingClientRect();
+
+    if (rect.left + rect.width / 2 > correctZone.left && rect.left + rect.width / 2 < correctZone.right &&
+        rect.top + rect.height / 2 > correctZone.top && rect.top + rect.height / 2 < correctZone.bottom) {
+      if (isCorrect) {
+        score += 1;
+        playSuccessSound(); // เล่นเสียงดีใจเมื่อถูก
+      } else {
+        score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
+      }
+      document.getElementById('score').innerText = score;
+      imageDiv.remove();
+      delete createdImages[imageId];
+      checkEndGame();
+    } else if (rect.left + rect.width / 2 > wrongZone.left && rect.left + rect.width / 2 < wrongZone.right &&
+               rect.top + rect.height / 2 > wrongZone.top && rect.top + rect.height / 2 < wrongZone.bottom) {
+      if (isCorrect) {
+        score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
+      } else {
+        // รูปผิดวางผิด zone (ไม่เพิ่ม/ลดคะแนน) แต่ให้เล่นเสียง winner ด้วย
+        playSuccessSound();
+      }
+      document.getElementById('score').innerText = score;
+      imageDiv.remove();
+      delete createdImages[imageId];
+      checkEndGame();
+    }
+  }
+
+  document.body.appendChild(imageDiv);
+  createdImages[imageId] = true;
+}
+
+// Function to check if the game has ended and show the popup
+function checkEndGame() {
+  const remainingImages = Object.keys(createdImages).length;
+  if (remainingImages === 0) {
+    const popup = document.getElementById('scorePopup');
+    const finalScore = document.getElementById('finalScore');
+    const resultMessage = document.getElementById('resultMessage');
+
+    // Update the popup content
+    finalScore.innerText = score;
+    resultMessage.innerText = score > 0 ? '🎉 ยินดีด้วย! คุณทำได้ดีมาก 🎉' : '😢 ลองใหม่อีกครั้งนะ 😢';
+
+    // Try to end usage for this page/section (if usageTracker available)
+    try {
+      if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+        window.usageTracker.end(__localUsageId, location.pathname, 'gamepicture');
+      }
+    } catch (e) {
+      console.warn('usageTracker.end failed', e);
+    }
+
+    // Show the popup
+    popup.style.display = 'block';
+  }
+}
+
+// Function to close the popup
+function closePopup() {
+  const popup = document.getElementById('scorePopup');
+  popup.style.display = 'none';
+}
+
+// Function to restart the game
+function playAgain() {
+  const popup = document.getElementById('scorePopup');
+  popup.style.display = 'none';
+  initGame();
+}
+
+// Function to toggle the share menu
+function toggleShareMenu() {
+  const shareMenu = document.getElementById('shareMenu');
+  shareMenu.style.display = shareMenu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Updated the activity modal and selection logic for direct navigation
+function loadSavedActivities() {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activityList = document.getElementById('activityList');
+
+  if (savedActivities.length === 0) {
+    activityList.innerHTML = '<p>ยังไม่มีกิจกรรมที่บันทึกไว้</p>';
+    return;
+  }
+
+  activityList.innerHTML = savedActivities.map(activity => `
+    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
+      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="playActivity(${activity.id})">${activity.name}</h3>
+      <p>สาระ: ${activity.topic}</p>
+      <p>สัปดาห์ที่: ${activity.config.week}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('activityModal').style.display = 'flex';
+}
+
+function selectActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+
+  // Save the selected activity configuration and navigate to the test page
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  window.location.reload();
+}
+
+// Added functions for activity modal
+// Function to load saved activities
+function loadSavedActivities() {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activityList = document.getElementById('activityList');
+
+  if (savedActivities.length === 0) {
+    activityList.innerHTML = '<p>ยังไม่มีกิจกรรมที่บันทึกไว้</p>';
+    return;
+  }
+
+  // Updated the activity list to make activity names clickable for direct play
+  activityList.innerHTML = savedActivities.map(activity => `
+    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
+      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="playActivity(${activity.id})">${activity.name}</h3>
+      <p>สาระ: ${activity.topic}</p>
+      <p>สัปดาห์ที่: ${activity.config.week}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('activityModal').style.display = 'flex';
+}
+
+// Updated the `selectActivity` function to directly navigate to the game page
+function selectActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+
+  // Save the selected activity configuration and navigate to the game page
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  window.location.href = 'gamepicture.html';
+}
+
+// Function to close the activity modal
+function closeActivityModal() {
+  document.getElementById('activityModal').style.display = 'none';
+}
+
+// Start/play activity immediately from the saved activity card
+function playActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+
+  // Save config and navigate/reload to start the game
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  // If we're already on gamepicture.html, reload to pick up the new config
+  const current = window.location.pathname.split('/').pop();
+  if (current === 'gamepicture.html' || current === '') {
+    window.location.reload();
+  } else {
+    window.location.href = 'gamepicture.html';
+  }
+}
+
+// Automatically load and start the game on page load
+window.onload = function() {
+  const config = localStorage.getItem('emojiGameConfig');
+  if (!config) {
+    alert('ไม่พบข้อมูลกิจกรรม กรุณากลับไปสร้างกิจกรรมก่อน');
+    window.location.href = 'teacherpicture.html';
+    return;
+  }
+
+  teacherConfig = JSON.parse(config);
+  const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
+  document.getElementById('topicName').innerText = activityName;
+  document.getElementById('topicDisplay').innerText = activityName;
+
+  // Start the game automatically
+  initGame();
+  // เริ่มบันทึกการใช้งานสำหรับหน้านี้ (ถ้ามี usageTracker) — เรียกใน window.onload เพื่อให้แน่ใจว่า /socket-client.js ถูกโหลดแล้ว
+  try {
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId = window.usageTracker.start(location.pathname || 'gamepicture.html', activityName);
+      console.log('usage started', __localUsageId);
+    }
+  } catch (e) {
+    console.warn('usageTracker.start failed', e);
+  }
+
+  // ถ้าผู้ใช้ปิดหรือเปลี่ยนหน้า ให้พยายามส่ง end event
+  window.addEventListener('beforeunload', function() {
+    try {
+      if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+        window.usageTracker.end(__localUsageId, location.pathname, 'gamepicture');
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
+};
+</script>
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 25px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
+<script>
+  try {
+    localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash);
+  } catch (e) { }
+</script>
+</body>
+</html>

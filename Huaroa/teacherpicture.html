@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teachermath Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/teacherpicture.css">
+<script src="/js/prevent-image-download.js"></script>
+</head>
+<body>
+
+<div class="info-section">
+    <h1>สมาร์ทเช็ค</h1>
+  <h3>กรอกข้อมูลกิจกรรม</h3>
+  <div class="info-inputs">
+    <input id="weekInput" placeholder="สัปดาห์ที่">
+    <input id="topicInput" placeholder="สาระการเรียนรู้">
+    <input id="unitInput" placeholder="หน่วยการเรียนรู้">
+    <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
+    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+
+
+  </div>
+</div>
+
+<div class="main-container">
+  <!-- ลบ section โจทย์เลขและคำตอบคณิตศาสตร์ออก เหลือเฉพาะกรอบอัพโหลดรูปภาพ -->
+  <h3 style="margin-top:40px;">เพิ่มรูปภาพ</h3>
+  <input id="mainTopicInput" placeholder="หัวข้อกิจกรรม/หมวดหมู่" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:20px; background:#fff; border:2px solid #ccc; box-shadow:none; color:#333;"><br>
+  <div style="display:flex; gap:5px; justify-content:center; margin-top:20px;">
+  <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(76, 175, 80, 0.1); padding:12px; border-radius:10px; border:2px solid #4CAF50; text-align:center;">
+      <label style="color:#4CAF50; font-weight:bold;">รูปที่ถูกต้อง ✅</label><br>
+      <div class="file-input-wrapper" style="margin-top:10px; display:inline-block;">
+        <label class="file-input-label file-input-label-correct">เลือกภาพ
+          <input type="file" id="correctImageInput" accept="image/*" onchange="handleImageUpload(event, 'correct')">
+        </label>
+      </div>
+      <div id="correctImagesList" style="margin-top:10px;"></div>
+    </div>
+  <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(244, 67, 54, 0.1); padding:12px; border-radius:10px; border:2px solid #f44336; text-align:center;">
+      <label style="color:#f44336; font-weight:bold;">รูปที่ผิด ❌</label><br>
+      <div class="file-input-wrapper" style="margin-top:10px; display:inline-block;">
+        <label class="file-input-label file-input-label-wrong">เลือกภาพ
+          <input type="file" id="wrongImageInput" accept="image/*" onchange="handleImageUpload(event, 'wrong')">
+        </label>
+      </div>
+      <div id="wrongImagesList" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Control Buttons -->
+<div style="display: flex; justify-content: center; gap: 15px; margin: 20px auto; max-width: 900px; flex-wrap: wrap;">
+  <button class="neon-btn" onclick="saveConfig()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เริ่มกิจกรรม</button>
+  <button class="neon-btn" onclick="saveActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">บันทึกกิจกรรม</button>
+  <button class="neon-btn" onclick="loadActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เลือกกิจกรรม</button>
+</div>
+
+<!-- Activity Selection Modal -->
+<div id="activityModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 30px; border-radius: 20px; max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto; border: 5px solid #4CAF50;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="margin: 0; color: #1b5e20;">☁️ เลือกกิจกรรมจากคลาวด์</h2>
+      <button onclick="closeActivityModal()" style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px;">✖</button>
+    </div>
+    <div id="teacherList"></div>
+    <div id="activityList" style="display: none;"></div>
+  </div>
+</div>
+
+<script type="module">
+import { db, saveActivityToFirebase, getAllActivities, deleteActivityFromFirebase } from '/js/firebase-config.js';
+
+let correctImages = [];
+let wrongImages = [];
+
+// ทำให้ฟังก์ชันสำคัญเข้าถึงได้จากทั่วโลก
+window.saveActivityToFirebase = saveActivityToFirebase;
+window.getAllActivities = getAllActivities;
+window.deleteActivityFromFirebase = deleteActivityFromFirebase;
+
+// ฟังก์ชันจัดการรูปภาพที่อัปโหลด
+window.handleImageUpload = function(event, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Auto crop to square
+      const croppedImageData = autoCropToSquare(img);
+      
+      // เพิ่มรูปเข้าอาร์เรย์
+      if (type === 'correct') {
+        correctImages.push(croppedImageData);
+        event.target.value = ''; // Clear input
+        renderImages('correct');
+      } else {
+        wrongImages.push(croppedImageData);
+        event.target.value = ''; // Clear input
+        renderImages('wrong');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ฟังก์ชันปรับขนาดและตัดพื้นหลังอัตโนมัติ
+function autoCropToSquare(img) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // กำหนดขนาดสูงสุด
+  const maxSize = 300;
+  let width = img.width;
+  let height = img.height;
+
+  // ตรวจสอบว่ากำลังใช้งานบนมือถือหรือไม่
+  const isMobile = window.innerWidth <= 768;
+
+  // ปรับขนาดถ้ารูปใหญ่เกินไป โดยรักษาสัดส่วน (ยกเว้นในมือถือ)
+  if (!isMobile && (width > maxSize || height > maxSize)) {
+    if (width > height) {
+      height = (height / width) * maxSize;
+      width = maxSize;
+    } else {
+      width = (width / height) * maxSize;
+      height = maxSize;
+    }
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  // วาดรูปลงบน canvas
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // ตัดพื้นหลัง
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  // หาสีพื้นหลัง (ใช้สีมุม 4 มุม)
+  const corners = [
+    [0, 0], // มุมซ้ายบน
+    [width - 1, 0], // มุมขวาบน
+    [0, height - 1], // มุมซ้ายล่าง
+    [width - 1, height - 1] // มุมขวาล่าง
+  ];
+
+  let bgColor = null;
+  for (let corner of corners) {
+    const x = corner[0];
+    const y = corner[1];
+    const index = (y * width + x) * 4;
+    const r = data[index];
+    const g = data[index + 1];
+    const b = data[index + 2];
+
+    if (r > 200 && g > 200 && b > 200) { // สีขาวหรือใกล้เคียง
+      bgColor = { r, g, b };
+      break;
+    }
+  }
+
+  // ตัดพื้นหลังออก (ถ้าเจอสีพื้นหลัง)
+  if (bgColor) {
+    const threshold = 40; // ค่าความต่างของสี
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+
+      // ถ้าสีใกล้เคียงกับพื้นหลัง ให้โปร่งใส
+      if (
+        Math.abs(r - bgColor.r) < threshold &&
+        Math.abs(g - bgColor.g) < threshold &&
+        Math.abs(b - bgColor.b) < threshold
+      ) {
+        data[i + 3] = 0; // ทำให้โปร่งใส
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  // แปลงเป็น base64 (ใช้ PNG เพื่อรักษาความโปร่งใส)
+  return canvas.toDataURL('image/png', 0.9);
+}
+
+// ฟังก์ชันลบรูปภาพ
+function removeImage(type, index) {
+  if (type === 'correct') {
+    correctImages.splice(index, 1);
+    renderImages('correct');
+  } else {
+    wrongImages.splice(index, 1);
+    renderImages('wrong');
+  }
+}
+
+// ฟังก์ชันแสดงรายการรูปภาพ
+function renderImages(type) {
+  const listId = type === 'correct' ? 'correctImagesList' : 'wrongImagesList';
+  const images = type === 'correct' ? correctImages : wrongImages;
+  const list = document.getElementById(listId);
+  
+  list.innerHTML = images.map((imgData, i) => `
+    <div class="image-preview-item">
+      <img src="${imgData}" alt="Image ${i+1}">
+      <button class="remove-btn" onclick="removeImage('${type}', ${i})">×</button>
+    </div>
+  `).join('');
+}
+
+// โหลด config เก่าถ้ามี
+const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
+if(savedConfig.topic && document.getElementById('topicInput')) document.getElementById('topicInput').value = savedConfig.topic;
+if(savedConfig.date && document.getElementById('dateInput')) document.getElementById('dateInput').value = savedConfig.date;
+if(savedConfig.correctImages) correctImages = savedConfig.correctImages;
+if(savedConfig.wrongImages) wrongImages = savedConfig.wrongImages;
+renderImages('correct');
+renderImages('wrong');
+
+// ตั้งค่าวันที่เป็นวันปัจจุบันถ้ายังไม่มี
+if(!savedConfig.date) {
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('dateInput');
+  if(dateInput) dateInput.value = today;
+}
+
+// Updated saveConfig to include userName in the saved configuration
+function saveConfig() {
+  const week = document.getElementById('weekInput')?.value.trim();
+  const topic = document.getElementById('topicInput')?.value.trim();
+  const unit = document.getElementById('unitInput')?.value.trim();
+  const teacher = document.getElementById('teacherInput')?.value.trim();
+  const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const userName = document.getElementById('userNameInput')?.value.trim();
+
+  // Allow saving even when some fields are empty — use sensible defaults
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgMainTopic = mainTopic || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
+
+  if (correctImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 correctImages');
+  if (wrongImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 wrongImages');
+
+  // Save config (accept empty image lists)
+  const config = {
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    mainTopic: cfgMainTopic,
+    userName: cfgUserName,
+    correctImages: correctImages || [],
+    wrongImages: wrongImages || []
+  };
+  localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+
+  window.location.href = 'gamepicture.html';
+}
+
+// ฟังก์ชันบันทึกกิจกรรม (บันทึกลง Cloud)
+async function saveActivity() {
+  const week = document.getElementById('weekInput')?.value.trim();
+  const topic = document.getElementById('topicInput')?.value.trim();
+  const unit = document.getElementById('unitInput')?.value.trim();
+  const teacher = document.getElementById('teacherInput')?.value.trim();
+  const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const userName = document.getElementById('userNameInput')?.value.trim();
+
+  if (!teacher) {
+    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    return;
+  }
+
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher;
+  const cfgMainTopic = mainTopic || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
+
+  if (correctImages.length === 0 && wrongImages.length === 0) {
+    alert('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปก่อนบันทึก');
+    return;
+  }
+
+  // ถ้ากำลังแก้ไขกิจกรรมจากคลาวด์
+  if (window.editingCloudActivity) {
+    const { teacherName, activityId } = window.editingCloudActivity;
+    try {
+      const res = await fetch(`/api/settings/picture/${encodeURIComponent(teacherName)}/${activityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: window.editingCloudActivityName || `${cfgMainTopic} - สัปดาห์ ${cfgWeek}`,
+          config: {
+            week: cfgWeek,
+            topic: cfgTopic,
+            unit: cfgUnit,
+            teacher: cfgTeacher,
+            mainTopic: cfgMainTopic,
+            userName: cfgUserName,
+            correctImages: correctImages,
+            wrongImages: wrongImages
+          }
+        })
+      });
+      if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
+      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      delete window.editingCloudActivity;
+      delete window.editingCloudActivityName;
+      return;
+    } catch (err) {
+      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+      return;
+    }
+  }
+
+  // บันทึกใหม่
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgMainTopic} - สัปดาห์ ${cfgWeek}`);
+  if (!activityName) return;
+
+  try {
+    const res = await fetch('/api/settings/picture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        teacherName: cfgTeacher,
+        name: activityName,
+        config: {
+          week: cfgWeek,
+          topic: cfgTopic,
+          unit: cfgUnit,
+          teacher: cfgTeacher,
+          mainTopic: cfgMainTopic,
+          userName: cfgUserName,
+          correctImages: correctImages,
+          wrongImages: wrongImages
+        }
+      })
+    });
+    if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
+    const data = await res.json();
+    alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+  } catch (err) {
+    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+  }
+}
+
+// ฟังก์ชันโหลดกิจกรรมจากคลาวด์
+async function loadActivity() {
+  const teacherList = document.getElementById('teacherList');
+  const activityList = document.getElementById('activityList');
+  teacherList.innerHTML = '<p style="text-align:center;">⏳ กำลังโหลดจากคลาวด์...</p>';
+  activityList.style.display = 'none';
+  document.getElementById('activityModal').style.display = 'flex';
+
+  try {
+    const res = await fetch('/api/settings/picture');
+    if (!res.ok) throw new Error('โหลดข้อมูลไม่สำเร็จ');
+    const result = await res.json();
+    const activities = result.data || [];
+
+    const teacherMap = {};
+    activities.forEach(a => {
+      if (!teacherMap[a.teacherName]) teacherMap[a.teacherName] = [];
+      teacherMap[a.teacherName].push(a);
+    });
+
+    const teachers = Object.keys(teacherMap);
+    if (teachers.length === 0) {
+      teacherList.innerHTML = '<p style="text-align:center; color:#666;">ยังไม่มีกิจกรรมบนคลาวด์</p>';
+      return;
+    }
+
+    teacherList.innerHTML = `
+      <h3 style="margin: 0 0 15px 0; color: #2e7d32;">👩‍🏫 เลือกครู</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+        ${teachers.map(t => `
+          <div onclick="showTeacherActivities('${encodeURIComponent(t)}')" 
+               style="background: white; padding: 15px; border-radius: 10px; cursor: pointer; border: 3px solid #4CAF50; transition: all 0.2s;"
+               onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.2)';"
+               onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+            <div style="font-size: 18px; font-weight: bold; color: #1b5e20;">👤 ${t}</div>
+            <div style="font-size: 14px; color: #666; margin-top: 5px;">${teacherMap[t].length} กิจกรรม</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    window.cloudTeacherMap = teacherMap;
+  } catch (err) {
+    teacherList.innerHTML = `<p style="text-align:center; color:red;">❌ ${err.message}</p>`;
+  }
+}
+
+function showTeacherActivities(encodedTeacherName) {
+  const teacherName = decodeURIComponent(encodedTeacherName);
+  const activities = window.cloudTeacherMap[teacherName] || [];
+  const teacherList = document.getElementById('teacherList');
+  const activityList = document.getElementById('activityList');
+
+  teacherList.style.display = 'none';
+  activityList.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: #2e7d32;">🖼️ กิจกรรมของ ${teacherName}</h3>
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    </div>
+    <div style="display: grid; gap: 10px;">
+      ${activities.map(a => `
+        <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #4CAF50;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 8px 0; color: #1b5e20; font-size: 16px;">🖼️ ${a.name}</h4>
+              <p style="margin: 4px 0; font-size: 13px; color: #666;">หัวข้อ: ${a.config?.mainTopic || '-'}</p>
+              <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
+              <p style="margin: 4px 0; font-size: 13px; color: #4CAF50; font-weight: bold;">รูปถูก: ${a.config?.correctImages?.length || 0} / รูปผิด: ${a.config?.wrongImages?.length || 0}</p>
+              <p style="margin: 4px 0; font-size: 11px; color: #999;">รหัส: ${a.activityId}</p>
+              <p style="margin: 4px 0; font-size: 11px; color: #888;">📅 บันทึก: ${a.createdAtThai || a.updatedAtThai || '-'}</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button onclick="playCloudActivity('${encodeURIComponent(teacherName)}', ${a.activityId})" 
+                      style="background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">▶️ เล่น</button>
+              <button onclick="editCloudActivity('${encodeURIComponent(teacherName)}', ${a.activityId})" 
+                      style="background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">✏️ แก้ไข</button>
+              <button onclick="deleteCloudActivity('${encodeURIComponent(teacherName)}', ${a.activityId})" 
+                      style="background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">🗑️ ลบ</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  activityList.style.display = 'block';
+}
+
+function backToTeacherList() {
+  document.getElementById('activityList').style.display = 'none';
+  document.getElementById('teacherList').style.display = 'block';
+}
+
+function playCloudActivity(encodedTeacherName, activityId) {
+  const teacherName = decodeURIComponent(encodedTeacherName);
+  const activities = window.cloudTeacherMap[teacherName] || [];
+  const activity = activities.find(a => a.activityId === activityId);
+  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  window.location.href = 'gamepicture.html';
+}
+
+function editCloudActivity(encodedTeacherName, activityId) {
+  const teacherName = decodeURIComponent(encodedTeacherName);
+  const activities = window.cloudTeacherMap[teacherName] || [];
+  const activity = activities.find(a => a.activityId === activityId);
+  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+
+  const config = activity.config || {};
+  if(document.getElementById('weekInput')) document.getElementById('weekInput').value = config.week || '';
+  if(document.getElementById('topicInput')) document.getElementById('topicInput').value = config.topic || '';
+  if(document.getElementById('unitInput')) document.getElementById('unitInput').value = config.unit || '';
+  if(document.getElementById('teacherInput')) document.getElementById('teacherInput').value = config.teacher || '';
+  if(document.getElementById('mainTopicInput')) document.getElementById('mainTopicInput').value = config.mainTopic || '';
+  if(document.getElementById('userNameInput')) document.getElementById('userNameInput').value = config.userName || '';
+
+  correctImages = config.correctImages || [];
+  wrongImages = config.wrongImages || [];
+  renderImages('correct');
+  renderImages('wrong');
+
+  window.editingCloudActivity = { teacherName, activityId };
+  window.editingCloudActivityName = activity.name;
+
+  closeActivityModal();
+  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
+}
+
+async function deleteCloudActivity(encodedTeacherName, activityId) {
+  const teacherName = decodeURIComponent(encodedTeacherName);
+  if (!confirm(`ต้องการลบกิจกรรม รหัส ${activityId} หรือไม่?`)) return;
+  try {
+    const res = await fetch(`/api/settings/picture/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('ลบไม่สำเร็จ');
+    alert('✅ ลบกิจกรรมสำเร็จ!');
+    loadActivity();
+  } catch (err) {
+    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+  }
+}
+
+// ปิด Modal
+function closeActivityModal() {
+  document.getElementById('activityModal').style.display = 'none';
+}
+
+// ทำให้ฟังก์ชันเข้าถึงได้จากทั่วโลก
+window.handleImageUpload = handleImageUpload;
+window.removeImage = removeImage;
+window.saveConfig = saveConfig;
+window.saveActivity = saveActivity;
+window.loadActivity = loadActivity;
+window.playCloudActivity = playCloudActivity;
+window.editCloudActivity = editCloudActivity;
+window.deleteCloudActivity = deleteCloudActivity;
+window.showTeacherActivities = showTeacherActivities;
+window.backToTeacherList = backToTeacherList;
+window.closeActivityModal = closeActivityModal;
+
+</script>
+
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+<script>
+// เริ่ม/จบการบันทึกการใช้งานสำหรับหน้าครูตั้งค่า (teacherpicture)
+var __localUsageId_teacherpicture = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId_teacherpicture = window.usageTracker.start(location.pathname || 'teacherpicture.html', 'teacher-config');
+      console.log('usage started (teacherpicture)', __localUsageId_teacherpicture);
+    }
+  }catch(e){ console.warn('usage start failed', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_teacherpicture, location.pathname, 'teacher-config');
+    }
+  }catch(e){}
+});
+</script>
+<script>
+  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
+</body>
+</html>
