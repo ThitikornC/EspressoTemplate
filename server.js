@@ -35,11 +35,13 @@ app.get('/classroomv3-main*', (req, res) => {
 })
 
 // /studio - In production serve built files, in development proxy to Vite
-const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+// Prefer serving the built `dist` when it exists (prevent accidental proxy to localhost in production)
+const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
+const hasStudioDist = fs.existsSync(studioDistPath);
+const isProduction = hasStudioDist || process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
 
-if (isProduction) {
+if (isProduction && hasStudioDist) {
   // Production: serve built static files from classroomv3-main/dist
-  const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
   app.use('/studio', express.static(studioDistPath));
   // Serve index for exact /studio path as well (ensure no 404 on /studio)
   app.get('/studio', (req, res) => {
