@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "build": "cd classroomv3-main && npm install && npm run build",

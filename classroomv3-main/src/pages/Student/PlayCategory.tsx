@@ -259,6 +259,7 @@ function PlayCategory() {
       id: Date.now().toString(),
       name: newCategoryName.trim(),
       color: newCategoryColor,
+      order: categories.length, // เพิ่ม order เป็นลำดับถัดไป
     }
 
     setCategories([...categories, newCat])
@@ -284,6 +285,7 @@ function PlayCategory() {
       categoryId: newItemCategory,
       imageUrl: newItemImage || undefined,
       placed: false,
+      order: items.length, // เพิ่ม order เป็นลำดับถัดไป
     }
 
     setItems([...items, newItem])
