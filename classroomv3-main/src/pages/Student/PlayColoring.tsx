@@ -30,6 +30,16 @@ function PlayColoring() {
   const stageRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Activity form data
+  const [weekNumber, setWeekNumber] = useState('')
+  const [learningSubject, setLearningSubject] = useState('')
+  const [learningUnit, setLearningUnit] = useState('')
+  const [responsibleTeacher, setResponsibleTeacher] = useState('')
+  const [testerName, setTesterName] = useState('')
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
+  const [savedActivities, setSavedActivities] = useState<any[]>([])
+  const [showActivityList, setShowActivityList] = useState(false)
+
   useEffect(() => {
     // Load images from teacher and default images
     const teacherImages = getImages().filter(img => img.category === 'coloring')
@@ -326,28 +336,66 @@ function PlayColoring() {
     if (file) {
       const reader = new FileReader()
       reader.onload = (event) => {
-        const img = new window.Image()
-        img.src = event.target?.result as string
-        img.onload = () => {
-          setImage(img)
-          setLines([])
-          setIsStarted(true)
-          // Canvas size will be calculated by useEffect
-        }
+        const imageUrl = event.target?.result as string
+        setSelectedImageUrl(imageUrl)
+        audioManager.playClick()
       }
       reader.readAsDataURL(file)
     }
   }
 
   const handleSelectImage = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl)
+    audioManager.playClick()
+  }
+
+  const handleSaveActivity = () => {
+    if (!selectedImageUrl) {
+      alert('กรุณาเลือกรูปภาพก่อน!')
+      return
+    }
+
+    const newActivity = {
+      id: Date.now(),
+      weekNumber,
+      learningSubject,
+      learningUnit,
+      responsibleTeacher,
+      testerName,
+      imageUrl: selectedImageUrl,
+      createdAt: new Date().toLocaleString('th-TH')
+    }
+
+    setSavedActivities(prev => [...prev, newActivity])
+    audioManager.playSuccess()
+    alert('บันทึกกิจกรรมเรียบร้อย!')
+  }
+
+  const handleLoadActivity = (activity: any) => {
+    setWeekNumber(activity.weekNumber)
+    setLearningSubject(activity.learningSubject)
+    setLearningUnit(activity.learningUnit)
+    setResponsibleTeacher(activity.responsibleTeacher)
+    setTesterName(activity.testerName || '')
+    setSelectedImageUrl(activity.imageUrl)
+    setShowActivityList(false)
+    audioManager.playClick()
+    alert('โหลดกิจกรรมเรียบร้อย!')
+  }
+
+  const handleStartActivity = () => {
+    if (!selectedImageUrl) {
+      alert('กรุณาเลือกรูปภาพก่อนเริ่มกิจกรรม!')
+      return
+    }
+
     const img = new window.Image()
-    img.src = imageUrl
+    img.src = selectedImageUrl
     img.onload = () => {
       setImage(img)
       setLines([])
       setIsStarted(true)
       audioManager.playClick()
-      // Canvas size will be calculated by useEffect
     }
   }
 
@@ -362,6 +410,63 @@ function PlayColoring() {
         </div>
 
         <div className="coloring-setup">
+          {/* Activity Form - Combined with Tester */}
+          <div className="activity-form">
+            <h2 className="form-title">📝 กรอกข้อมูลกิจกรรม</h2>
+            <div className="form-row">
+              <div className="form-field">
+                <label>สัปดาห์ที่</label>
+                <input 
+                  type="text" 
+                  value={weekNumber}
+                  onChange={(e) => setWeekNumber(e.target.value)}
+                  placeholder="กรอกสัปดาห์ที่..."
+                />
+              </div>
+              <div className="form-field">
+                <label>สาระการเรียนรู้</label>
+                <input 
+                  type="text" 
+                  value={learningSubject}
+                  onChange={(e) => setLearningSubject(e.target.value)}
+                  placeholder="กรอกสาระการเรียนรู้..."
+                />
+              </div>
+              <div className="form-field">
+                <label>หน่วยการเรียนรู้</label>
+                <input 
+                  type="text" 
+                  value={learningUnit}
+                  onChange={(e) => setLearningUnit(e.target.value)}
+                  placeholder="กรอกหน่วยการเรียนรู้..."
+                />
+              </div>
+              <div className="form-field">
+                <label>ครูผู้รับผิดชอบ</label>
+                <input 
+                  type="text" 
+                  value={responsibleTeacher}
+                  onChange={(e) => setResponsibleTeacher(e.target.value)}
+                  placeholder="กรอกชื่อครู..."
+                />
+              </div>
+            </div>
+
+            {/* Tester Name - Inside same box */}
+            <div className="tester-section-inline">
+              <div className="form-field-tester">
+                <label>ผู้ทดสอบ</label>
+                <input 
+                  type="text" 
+                  value={testerName}
+                  onChange={(e) => setTesterName(e.target.value)}
+                  placeholder="กรอกชื่อผู้ทดสอบ..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Image Selection Section */}
           <div className="setup-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <h2 style={{ margin: 0 }}>🖼️ เลือกรูป</h2>
@@ -370,12 +475,9 @@ function PlayColoring() {
             <div className="image-gallery">
               {/* กระดาษเปล่า - การ์ดแรก */}
               <div 
-                className="gallery-item blank-paper-item"
+                className={`gallery-item blank-paper-item ${selectedImageUrl === 'blank' ? 'selected' : ''}`}
                 onClick={() => {
-                  setImage(null)
-                  setLines([])
-                  setIsStarted(true)
-                  setShowOutline(false)
+                  setSelectedImageUrl('blank')
                   audioManager.playClick()
                 }}
               >
@@ -385,11 +487,28 @@ function PlayColoring() {
                 <span>กระดาษเปล่า</span>
               </div>
 
+              {/* Upload Image Card */}
+              <div className="gallery-item upload-item">
+                <label htmlFor="image-upload" className="upload-label">
+                  <div className="upload-preview">
+                    <span style={{ fontSize: '4rem' }}>📤</span>
+                  </div>
+                  <span className="upload-text">เพิ่มรูปภาพ</span>
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+              </div>
+
               {/* รูปจากครู */}
               {coloringImages.map(img => (
                 <div 
                   key={img.id} 
-                  className="gallery-item"
+                  className={`gallery-item ${selectedImageUrl === img.url ? 'selected' : ''}`}
                   onClick={() => handleSelectImage(img.url)}
                 >
                   <img src={img.url} alt={img.name} />
@@ -398,7 +517,67 @@ function PlayColoring() {
               ))}
             </div>
           </div>
+
+          {/* Action Buttons - 3 buttons */}
+          <div className="action-buttons">
+            <button 
+              className={`action-btn start-btn ${!selectedImageUrl ? 'disabled' : ''}`}
+              onClick={handleStartActivity}
+              disabled={!selectedImageUrl}
+              title={!selectedImageUrl ? 'กรุณาเลือกรูปก่อน' : 'เริ่มกิจกรรม'}
+            >
+              เริ่มกิจกรรม
+            </button>
+            <button 
+              className="action-btn save-btn"
+              onClick={handleSaveActivity}
+              title="บันทึกรูปและข้อมูลกิจกรรม"
+            >
+              บันทึกกิจกรรม
+            </button>
+            <button 
+              className="action-btn select-btn"
+              onClick={() => setShowActivityList(true)}
+              title="เลือกจากกิจกรรมที่บันทึกไว้"
+            >
+              เลือกกิจกรรม
+            </button>
+          </div>
         </div>
+
+        {/* Activity List Modal */}
+        {showActivityList && (
+          <div className="modal-overlay" onClick={() => setShowActivityList(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>กิจกรรมที่บันทึกไว้</h2>
+              <button className="close-btn" onClick={() => setShowActivityList(false)}>✕</button>
+              
+              {savedActivities.length === 0 ? (
+                <p className="no-data">ยังไม่มีกิจกรรมที่บันทึกไว้</p>
+              ) : (
+                <div className="activity-list">
+                  {savedActivities.map(activity => (
+                    <div 
+                      key={activity.id} 
+                      className="activity-item"
+                      onClick={() => handleLoadActivity(activity)}
+                    >
+                      <img src={activity.imageUrl} alt="รูปกิจกรรม" />
+                      <div className="activity-info">
+                        <h3>สัปดาห์ที่ {activity.weekNumber}</h3>
+                        <p><strong>สาระ:</strong> {activity.learningSubject}</p>
+                        <p><strong>หน่วย:</strong> {activity.learningUnit}</p>
+                        <p><strong>ครู:</strong> {activity.responsibleTeacher}</p>
+                        {activity.testerName && <p><strong>ผู้ทดสอบ:</strong> {activity.testerName}</p>}
+                        <p className="date">{activity.createdAt}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     )
   }

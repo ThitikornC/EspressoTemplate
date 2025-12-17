@@ -44,8 +44,38 @@ function PlayCategory() {
   const [isMusicPlaying, setIsMusicPlaying] = useState(true)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
+  // Activity form data
+  const [weekNumber, setWeekNumber] = useState('')
+  const [learningSubject, setLearningSubject] = useState('')
+  const [learningUnit, setLearningUnit] = useState('')
+  const [responsibleTeacher, setResponsibleTeacher] = useState('')
+  const [testerName, setTesterName] = useState('')
+  const [savedActivities, setSavedActivities] = useState<any[]>([])
+  const [showActivityList, setShowActivityList] = useState(false)
+
+  // Add game data states
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryColor, setNewCategoryColor] = useState('#FF6B9D')
+  const [newItemName, setNewItemName] = useState('')
+  const [newItemCategory, setNewItemCategory] = useState('')
+  const [newItemImage, setNewItemImage] = useState('')
+  const [showAddCategory, setShowAddCategory] = useState(false)
+  const [showAddItem, setShowAddItem] = useState(false)
+
   useEffect(() => {
     loadData()
+  }, [])
+
+  // Load activities from localStorage on component mount
+  useEffect(() => {
+    const saved = localStorage.getItem('categoryActivities')
+    if (saved) {
+      try {
+        setSavedActivities(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to load activities:', e)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -176,6 +206,120 @@ function PlayCategory() {
     return categories.find(c => c.id === categoryId)?.color || '#999'
   }
 
+  const handleSaveActivity = () => {
+    if (!weekNumber) {
+      alert('กรุณากรอกสัปดาห์ที่')
+      return
+    }
+
+    const newActivity = {
+      id: Date.now(),
+      weekNumber,
+      learningSubject,
+      learningUnit,
+      responsibleTeacher,
+      testerName,
+      categories: categories,
+      items: items.map(i => ({ ...i, placed: false, placedInCategoryId: undefined })),
+      categoriesCount: categories.length,
+      itemsCount: items.length,
+    }
+
+    const updated = [...savedActivities, newActivity]
+    setSavedActivities(updated)
+    localStorage.setItem('categoryActivities', JSON.stringify(updated))
+    alert('บันทึกกิจกรรมสำเร็จ!')
+    audioManager.playClick()
+  }
+
+  const handleLoadActivity = (activity: any) => {
+    setWeekNumber(activity.weekNumber)
+    setLearningSubject(activity.learningSubject)
+    setLearningUnit(activity.learningUnit)
+    setResponsibleTeacher(activity.responsibleTeacher)
+    setTesterName(activity.testerName)
+    
+    // Load game data
+    if (activity.categories && activity.items) {
+      setCategories(activity.categories)
+      setItems(activity.items)
+    }
+    
+    setShowActivityList(false)
+    audioManager.playClick()
+  }
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      alert('กรุณากรอกชื่อหมวดหมู่')
+      return
+    }
+
+    const newCat: Category = {
+      id: Date.now().toString(),
+      name: newCategoryName.trim(),
+      color: newCategoryColor,
+    }
+
+    setCategories([...categories, newCat])
+    setNewCategoryName('')
+    setNewCategoryColor('#FF6B9D')
+    setShowAddCategory(false)
+    audioManager.playClick()
+  }
+
+  const handleAddItem = () => {
+    if (!newItemName.trim()) {
+      alert('กรุณากรอกชื่อรายการ')
+      return
+    }
+    if (!newItemCategory) {
+      alert('กรุณาเลือกหมวดหมู่')
+      return
+    }
+
+    const newItem: PlayItem = {
+      id: Date.now().toString(),
+      name: newItemName.trim(),
+      categoryId: newItemCategory,
+      imageUrl: newItemImage || undefined,
+      placed: false,
+    }
+
+    setItems([...items, newItem])
+    setNewItemName('')
+    setNewItemImage('')
+    setShowAddItem(false)
+    audioManager.playClick()
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const url = event.target?.result as string
+      setNewItemImage(url)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleDeleteCategory = (catId: string) => {
+    if (!confirm('ต้องการลบหมวดหมู่นี้? รายการที่เกี่ยวข้องจะถูกลบด้วย')) return
+    
+    setCategories(categories.filter(c => c.id !== catId))
+    setItems(items.filter(i => i.categoryId !== catId))
+    audioManager.playClick()
+  }
+
+  const handleDeleteItem = (itemId: string) => {
+    if (!confirm('ต้องการลบรายการนี้?')) return
+    
+    setItems(items.filter(i => i.id !== itemId))
+    audioManager.playClick()
+  }
+
   if (!started) {
     return (
       <div className="category-setup">
@@ -187,13 +331,270 @@ function PlayCategory() {
         </div>
 
         <div className="setup-container">
+          {/* Activity Form - Combined with Tester */}
+          <div className="activity-form">
+            <h2 className="form-title">📝 กรอกข้อมูลกิจกรรม</h2>
+            <div className="form-row">
+              <div className="form-field">
+                <label>สัปดาห์ที่</label>
+                <input 
+                  type="text" 
+                  value={weekNumber}
+                  onChange={(e) => setWeekNumber(e.target.value)}
+                  placeholder="กรอกสัปดาห์ที่..."
+                />
+              </div>
+              <div className="form-field">
+                <label>สาระการเรียนรู้</label>
+                <input 
+                  type="text" 
+                  value={learningSubject}
+                  onChange={(e) => setLearningSubject(e.target.value)}
+                  placeholder="กรอกสาระการเรียนรู้..."
+                />
+              </div>
+              <div className="form-field">
+                <label>หน่วยการเรียนรู้</label>
+                <input 
+                  type="text" 
+                  value={learningUnit}
+                  onChange={(e) => setLearningUnit(e.target.value)}
+                  placeholder="กรอกหน่วยการเรียนรู้..."
+                />
+              </div>
+              <div className="form-field">
+                <label>ครูผู้รับผิดชอบ</label>
+                <input 
+                  type="text" 
+                  value={responsibleTeacher}
+                  onChange={(e) => setResponsibleTeacher(e.target.value)}
+                  placeholder="กรอกชื่อครู..."
+                />
+              </div>
+            </div>
+
+            {/* Tester Name - Inside same box */}
+            <div className="tester-section-inline">
+              <div className="form-field-tester">
+                <label>ผู้ทดสอบ</label>
+                <input 
+                  type="text" 
+                  value={testerName}
+                  onChange={(e) => setTesterName(e.target.value)}
+                  placeholder="กรอกชื่อผู้ทดสอบ..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Add Game Data Section */}
+          <div className="setup-card">
+            <h2>📦 เพิ่มข้อมูลเกม</h2>
+            
+            {/* Categories Management */}
+            <div className="game-data-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>หมวดหมู่ ({categories.length})</h3>
+                <button 
+                  className="add-data-btn"
+                  onClick={() => setShowAddCategory(!showAddCategory)}
+                >
+                  {showAddCategory ? '✕ ยกเลิก' : '+ เพิ่มหมวดหมู่'}
+                </button>
+              </div>
+
+              {showAddCategory && (
+                <div className="add-form">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="ชื่อหมวดหมู่..."
+                    className="form-input"
+                  />
+                  <input
+                    type="color"
+                    value={newCategoryColor}
+                    onChange={(e) => setNewCategoryColor(e.target.value)}
+                    className="color-input"
+                  />
+                  <button onClick={handleAddCategory} className="confirm-btn">
+                    ✓ เพิ่ม
+                  </button>
+                </div>
+              )}
+
+              <div className="data-list">
+                {categories.map(cat => (
+                  <div key={cat.id} className="data-item">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: cat.color }} />
+                      <span>{cat.name}</span>
+                    </div>
+                    <button onClick={() => handleDeleteCategory(cat.id)} className="delete-btn">
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+                {categories.length === 0 && (
+                  <p className="empty-message">ยังไม่มีหมวดหมู่</p>
+                )}
+              </div>
+            </div>
+
+            {/* Items Management */}
+            <div className="game-data-section" style={{ marginTop: '30px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>รายการ ({items.length})</h3>
+                <button 
+                  className="add-data-btn"
+                  onClick={() => setShowAddItem(!showAddItem)}
+                  disabled={categories.length === 0}
+                  title={categories.length === 0 ? 'กรุณาเพิ่มหมวดหมู่ก่อน' : ''}
+                >
+                  {showAddItem ? '✕ ยกเลิก' : '+ เพิ่มรายการ'}
+                </button>
+              </div>
+
+              {showAddItem && (
+                <div className="add-form">
+                  <input
+                    type="text"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    placeholder="ชื่อรายการ..."
+                    className="form-input"
+                  />
+                  <select
+                    value={newItemCategory}
+                    onChange={(e) => setNewItemCategory(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="">เลือกหมวดหมู่</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <div className="image-upload-wrapper">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      id="item-image-upload"
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="item-image-upload" className="upload-image-btn">
+                      {newItemImage ? '✓ รูปภาพ' : '📷 เพิ่มรูป'}
+                    </label>
+                    {newItemImage && (
+                      <div className="image-preview-small">
+                        <img src={newItemImage} alt="Preview" />
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={handleAddItem} className="confirm-btn">
+                    ✓ เพิ่ม
+                  </button>
+                </div>
+              )}
+
+              <div className="data-list">
+                {items.map(item => {
+                  const cat = categories.find(c => c.id === item.categoryId)
+                  return (
+                    <div key={item.id} className="data-item">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {item.imageUrl && (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name}
+                            style={{ 
+                              width: '40px', 
+                              height: '40px', 
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '2px solid #e0e0e0'
+                            }}
+                          />
+                        )}
+                        <span>{item.name}</span>
+                        {cat && (
+                          <span style={{ 
+                            fontSize: '0.85rem', 
+                            color: '#666',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            backgroundColor: cat.color + '20',
+                            border: `1px solid ${cat.color}`
+                          }}>
+                            {cat.name}
+                          </span>
+                        )}
+                      </div>
+                      <button onClick={() => handleDeleteItem(item.id)} className="delete-btn">
+                        🗑️
+                      </button>
+                    </div>
+                  )
+                })}
+                {items.length === 0 && (
+                  <p className="empty-message">ยังไม่มีรายการ</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons - 3 buttons */}
+          <div className="action-buttons">
+            <button 
+              className="action-btn start-btn-alt"
+              onClick={handleStart}
+              disabled={categories.length === 0 || items.length === 0}
+              title={categories.length === 0 || items.length === 0 ? 'กรุณาเพิ่มข้อมูลหมวดหมู่ก่อน' : 'เริ่มเล่นเกม'}
+            >
+              🎮 เริ่มกิจกรรม
+            </button>
+            <button 
+              className="action-btn save-btn"
+              onClick={handleSaveActivity}
+              title="บันทึกข้อมูลกิจกรรม"
+            >
+              📌 บันทึกกิจกรรม
+            </button>
+            <button 
+              className="action-btn select-btn"
+              onClick={() => setShowActivityList(true)}
+              title="เลือกจากกิจกรรมที่บันทึกไว้"
+            >
+              📂 เลือกกิจกรรม
+            </button>
+          </div>
+
           {categories.length === 0 || items.length === 0 ? (
             <div className="setup-card">
               <div className="no-data-message">
                 <div className="no-data-icon">📭</div>
                 <h2>ยังไม่มีข้อมูล</h2>
                 <p>ครูยังไม่ได้สร้างหมวดหมู่และรายการ</p>
-                <p>กรุณาแจ้งครูเพื่อเพิ่มข้อมูลในหน้าจัดการเกม</p>
+                <p>กรุณาแจ้งครูเพื่อเพิ่มข้อมูลในหน้า <strong>จัดการเกมจัดหมวดหมู่</strong></p>
+                <button 
+                  className="manage-btn"
+                  onClick={() => window.location.href = '/studio/manage-category'}
+                  style={{
+                    marginTop: '20px',
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🎯 ไปหน้าจัดการเกม
+                </button>
               </div>
             </div>
           ) : (
@@ -245,6 +646,38 @@ function PlayCategory() {
             </>
           )}
         </div>
+
+        {/* Activity List Modal */}
+        {showActivityList && (
+          <div className="modal-overlay" onClick={() => setShowActivityList(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>กิจกรรมที่บันทึกไว้</h2>
+              <button className="close-btn" onClick={() => setShowActivityList(false)}>✕</button>
+              
+              {savedActivities.length === 0 ? (
+                <p className="no-data">ยังไม่มีกิจกรรมที่บันทึกไว้</p>
+              ) : (
+                <div className="activity-list">
+                  {savedActivities.map(activity => (
+                    <div 
+                      key={activity.id} 
+                      className="activity-item"
+                      onClick={() => handleLoadActivity(activity)}
+                    >
+                      <div className="activity-info">
+                        <h3>สัปดาห์ที่ {activity.weekNumber}</h3>
+                        <p><strong>สาระ:</strong> {activity.learningSubject}</p>
+                        <p><strong>หน่วย:</strong> {activity.learningUnit}</p>
+                        <p><strong>ครู:</strong> {activity.responsibleTeacher}</p>
+                        <p><strong>ผู้ทดสอบ:</strong> {activity.testerName}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mascot">
           <div className="mascot-avatar">🦊</div>

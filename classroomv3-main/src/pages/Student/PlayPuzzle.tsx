@@ -50,6 +50,15 @@ function PlayPuzzle() {
     clearToast,
   } = usePuzzle()
 
+  // Activity form data
+  const [weekNumber, setWeekNumber] = useState('')
+  const [learningSubject, setLearningSubject] = useState('')
+  const [learningUnit, setLearningUnit] = useState('')
+  const [responsibleTeacher, setResponsibleTeacher] = useState('')
+  const [testerName, setTesterName] = useState('')
+  const [savedActivities, setSavedActivities] = useState<any[]>([])
+  const [showActivityList, setShowActivityList] = useState(false)
+
   // เล่นเพลง background เมื่อเริ่มเกม
   useEffect(() => {
     if (started) {
@@ -76,6 +85,58 @@ function PlayPuzzle() {
     setIsMusicPlaying(isPlaying)
     audioManager.playClick()
   }
+
+  const handleSaveActivity = () => {
+    if (!imageUrl) {
+      alert('กรุณาเลือกรูปก่อนบันทึก')
+      return
+    }
+    if (!weekNumber) {
+      alert('กรุณากรอกสัปดาห์ที่')
+      return
+    }
+
+    const newActivity = {
+      id: Date.now(),
+      weekNumber,
+      learningSubject,
+      learningUnit,
+      responsibleTeacher,
+      testerName,
+      imageUrl,
+      difficulty,
+      selectedConfig: selectedConfig || null,
+    }
+
+    const updated = [...savedActivities, newActivity]
+    setSavedActivities(updated)
+    localStorage.setItem('puzzleActivities', JSON.stringify(updated))
+    alert('บันทึกกิจกรรมสำเร็จ!')
+    audioManager.playClick()
+  }
+
+  const handleLoadActivity = (activity: any) => {
+    setWeekNumber(activity.weekNumber)
+    setLearningSubject(activity.learningSubject)
+    setLearningUnit(activity.learningUnit)
+    setResponsibleTeacher(activity.responsibleTeacher)
+    setTesterName(activity.testerName)
+    setDifficulty(activity.difficulty)
+    setShowActivityList(false)
+    audioManager.playClick()
+  }
+
+  // Load activities from localStorage on component mount
+  useEffect(() => {
+    const saved = localStorage.getItem('puzzleActivities')
+    if (saved) {
+      try {
+        setSavedActivities(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to load activities:', e)
+      }
+    }
+  }, [])
 
   if (started && imageUrl) {
     return (
@@ -142,6 +203,62 @@ function PlayPuzzle() {
       </div>
 
       <div className="setup-container">
+        {/* Activity Form - Combined with Tester */}
+        <div className="activity-form">
+          <h2 className="form-title">📝 กรอกข้อมูลกิจกรรม</h2>
+          <div className="form-row">
+            <div className="form-field">
+              <label>สัปดาห์ที่</label>
+              <input 
+                type="text" 
+                value={weekNumber}
+                onChange={(e) => setWeekNumber(e.target.value)}
+                placeholder="กรอกสัปดาห์ที่..."
+              />
+            </div>
+            <div className="form-field">
+              <label>สาระการเรียนรู้</label>
+              <input 
+                type="text" 
+                value={learningSubject}
+                onChange={(e) => setLearningSubject(e.target.value)}
+                placeholder="กรอกสาระการเรียนรู้..."
+              />
+            </div>
+            <div className="form-field">
+              <label>หน่วยการเรียนรู้</label>
+              <input 
+                type="text" 
+                value={learningUnit}
+                onChange={(e) => setLearningUnit(e.target.value)}
+                placeholder="กรอกหน่วยการเรียนรู้..."
+              />
+            </div>
+            <div className="form-field">
+              <label>ครูผู้รับผิดชอบ</label>
+              <input 
+                type="text" 
+                value={responsibleTeacher}
+                onChange={(e) => setResponsibleTeacher(e.target.value)}
+                placeholder="กรอกชื่อครู..."
+              />
+            </div>
+          </div>
+
+          {/* Tester Name - Inside same box */}
+          <div className="tester-section-inline">
+            <div className="form-field-tester">
+              <label>ผู้ทดสอบ</label>
+              <input 
+                type="text" 
+                value={testerName}
+                onChange={(e) => setTesterName(e.target.value)}
+                placeholder="กรอกชื่อผู้ทดสอบ..."
+              />
+            </div>
+          </div>
+        </div>
+
         {puzzleConfigs.length > 0 && (
           <div className="setup-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
@@ -245,15 +362,65 @@ function PlayPuzzle() {
           </div>
         </div>
 
-        <button 
-          className={`start-btn ${isLoading ? 'loading' : ''}`}
-          onClick={handleStart}
-          disabled={isLoading}
-          aria-label="เริ่มเล่นเกมจิ๊กซอว์"
-        >
-          {isLoading ? 'กำลังโหลด...' : '🎮 เริ่มเล่น!'}
-        </button>
+        {/* Action Buttons - 3 buttons */}
+        <div className="action-buttons">
+          <button 
+            className={`action-btn start-btn ${isLoading ? 'loading' : ''}`}
+            onClick={handleStart}
+            disabled={isLoading}
+            aria-label="เริ่มเล่นเกมจิ๊กซอว์"
+          >
+            {isLoading ? 'กำลังโหลด...' : '🎮 เริ่มกิจกรรม'}
+          </button>
+          <button 
+            className="action-btn save-btn"
+            onClick={handleSaveActivity}
+            title="บันทึกรูปและข้อมูลกิจกรรม"
+          >
+            📌 บันทึกกิจกรรม
+          </button>
+          <button 
+            className="action-btn select-btn"
+            onClick={() => setShowActivityList(true)}
+            title="เลือกจากกิจกรรมที่บันทึกไว้"
+          >
+            📂 เลือกกิจกรรม
+          </button>
+        </div>
       </div>
+
+      {/* Activity List Modal */}
+      {showActivityList && (
+        <div className="modal-overlay" onClick={() => setShowActivityList(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>กิจกรรมที่บันทึกไว้</h2>
+            <button className="close-btn" onClick={() => setShowActivityList(false)}>✕</button>
+            
+            {savedActivities.length === 0 ? (
+              <p className="no-data">ยังไม่มีกิจกรรมที่บันทึกไว้</p>
+            ) : (
+              <div className="activity-list">
+                {savedActivities.map(activity => (
+                  <div 
+                    key={activity.id} 
+                    className="activity-item"
+                    onClick={() => handleLoadActivity(activity)}
+                  >
+                    <div className="activity-info">
+                      <h3>สัปดาห์ที่ {activity.weekNumber}</h3>
+                      <p><strong>สาระ:</strong> {activity.learningSubject}</p>
+                      <p><strong>หน่วย:</strong> {activity.learningUnit}</p>
+                      <p><strong>ครู:</strong> {activity.responsibleTeacher}</p>
+                      <p><strong>ผู้ทดสอบ:</strong> {activity.testerName}</p>
+                      <p><strong>ระดับ:</strong> {activity.difficulty === 'easy' ? 'ง่าย' : activity.difficulty === 'medium' ? 'ปานกลาง' : 'ยาก'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mascot">
         <div className="mascot-avatar">🦊</div>

@@ -51,9 +51,7 @@ if (isProduction) {
     target: 'http://localhost:5173',
     changeOrigin: true,
     ws: true,
-    pathRewrite: {
-      '^/studio': '/studio'
-    }
+    logLevel: 'debug'
   }));
 }
 

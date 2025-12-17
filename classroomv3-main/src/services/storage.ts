@@ -56,7 +56,7 @@ export interface Category {
 export interface CategoryItem {
   id: string
   name: string
-  imageUrl: string
+  imageUrl?: string
   categoryId: string
   order: number
 }
