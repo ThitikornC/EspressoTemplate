@@ -38,9 +38,13 @@ app.get('/classroomv3-main*', (req, res) => {
 // Prefer serving the built `dist` when it exists (prevent accidental proxy to localhost in production)
 const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
 const hasStudioDist = fs.existsSync(studioDistPath);
-const isProduction = hasStudioDist || process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+const isRailway = Boolean(process.env.RAILWAY_ENVIRONMENT);
+const isProduction = process.env.NODE_ENV === 'production' || isRailway;
 
-if (isProduction && hasStudioDist) {
+console.log('[INFO] studioDistPath=', studioDistPath);
+console.log('[INFO] hasStudioDist=', hasStudioDist, 'NODE_ENV=', process.env.NODE_ENV, 'RAILWAY_ENVIRONMENT=', process.env.RAILWAY_ENVIRONMENT);
+
+if (hasStudioDist) {
   // Production: serve built static files from classroomv3-main/dist
   app.use('/studio', express.static(studioDistPath));
   // Serve index for exact /studio path as well (ensure no 404 on /studio)
@@ -52,15 +56,26 @@ if (isProduction && hasStudioDist) {
     res.sendFile(path.join(studioDistPath, 'index.html'));
   });
 } else {
-  // Development: proxy to Vite dev server (port 5173)
-  app.use('/studio', createProxyMiddleware({
-    target: 'http://localhost:5173',
-    changeOrigin: true,
-    ws: true,
-    pathRewrite: {
-      '^/studio': '/studio'
-    }
-  }));
+  // If we're running in a production-like environment but dist is missing, do NOT proxy to localhost.
+  if (isProduction && !hasStudioDist) {
+    console.error('[ERROR] classroomv3-main/dist not found. Not proxying to localhost in production.');
+    app.get('/studio', (req, res) => {
+      res.status(503).send('Studio build not found. Please run the build step before starting the server.');
+    });
+    app.get('/studio/*', (req, res) => {
+      res.status(503).send('Studio build not found.');
+    });
+  } else {
+    // Development: proxy to Vite dev server (port 5173)
+    app.use('/studio', createProxyMiddleware({
+      target: 'http://localhost:5173',
+      changeOrigin: true,
+      ws: true,
+      pathRewrite: {
+        '^/studio': '/studio'
+      }
+    }));
+  }
 }
 
 // Upload endpoint: accept base64 DataURL JSON and save to /uploads
