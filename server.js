@@ -4,6 +4,7 @@ import { fileURLToPath } from "url"
 import { Server } from "socket.io"
 import http from "http"
 import fs from "fs"
+import { execSync } from 'child_process'
 import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
 import { createProxyMiddleware } from 'http-proxy-middleware'
@@ -58,13 +59,34 @@ if (hasStudioDist) {
 } else {
   // If we're running in a production-like environment but dist is missing, do NOT proxy to localhost.
   if (isProduction && !hasStudioDist) {
-    console.error('[ERROR] classroomv3-main/dist not found. Not proxying to localhost in production.');
-    app.get('/studio', (req, res) => {
-      res.status(503).send('Studio build not found. Please run the build step before starting the server.');
-    });
-    app.get('/studio/*', (req, res) => {
-      res.status(503).send('Studio build not found.');
-    });
+    console.warn('[WARN] classroomv3-main/dist not found in production. Attempting runtime build...');
+    try {
+      // Install deps and build the frontend in its folder. This is a best-effort fallback
+      // for environments where the build step might have been skipped or failed earlier.
+      execSync('npm install --prefix classroomv3-main --no-audit --no-fund', { stdio: 'inherit' })
+      execSync('npm run build --prefix classroomv3-main', { stdio: 'inherit' })
+    } catch (err) {
+      console.error('[ERROR] runtime build for classroomv3-main failed:', err && err.message ? err.message : err)
+    }
+
+    // Re-check for dist after attempting build
+    const rebuiltHasDist = fs.existsSync(studioDistPath)
+    console.log('[INFO] hasStudioDist after runtime build=', rebuiltHasDist)
+
+    if (rebuiltHasDist) {
+      // Serve built static files
+      app.use('/studio', express.static(studioDistPath));
+      app.get('/studio', (req, res) => res.sendFile(path.join(studioDistPath, 'index.html')))
+      app.get('/studio/*', (req, res) => res.sendFile(path.join(studioDistPath, 'index.html')))
+    } else {
+      console.error('[ERROR] classroomv3-main/dist still not found after runtime build. Returning 503 for /studio')
+      app.get('/studio', (req, res) => {
+        res.status(503).send('Studio build not found. Please ensure the build step ran during deployment.');
+      });
+      app.get('/studio/*', (req, res) => {
+        res.status(503).send('Studio build not found.');
+      });
+    }
   } else {
     // Development: proxy to Vite dev server (port 5173)
     app.use('/studio', createProxyMiddleware({
@@ -76,6 +98,27 @@ if (hasStudioDist) {
       }
     }));
   }
+
+// Debug endpoint: list files under classroomv3-main/dist (helpful on hosted runtimes)
+app.get('/__studio_dist_list', (req, res) => {
+  try {
+    if (!fs.existsSync(studioDistPath)) return res.json({ success: false, message: 'dist not found' })
+    function walk(dir) {
+      const results = []
+      const list = fs.readdirSync(dir)
+      list.forEach(file => {
+        const full = path.join(dir, file)
+        const stat = fs.statSync(full)
+        if (stat && stat.isDirectory()) results.push({ path: full.replace(studioDistPath + path.sep, ''), type: 'dir' })
+        else results.push({ path: full.replace(studioDistPath + path.sep, ''), type: 'file', size: stat.size })
+      })
+      return results
+    }
+    res.json({ success: true, entries: walk(studioDistPath) })
+  } catch (e) {
+    res.status(500).json({ success: false, error: String(e) })
+  }
+})
 }
 
 // Upload endpoint: accept base64 DataURL JSON and save to /uploads
