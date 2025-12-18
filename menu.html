@@ -131,12 +131,6 @@
           z-index: 50;
         }
 
-        /* Ensure running text and the settings button align vertically */
-        .top-bar { display: flex; align-items: center; }
-        .top-bar .running-text { display: flex; align-items: center; }
-        .top-bar .running-text .marquee { display: flex; align-items: center; }
-        .top-bar a.neon-btn { align-self: center; margin-left: 0.75rem; }
-
         /* Marquee */
         .marquee { 
           display: flex; 
@@ -354,17 +348,6 @@
             align-self: center;
           }
           .top-bar .running-text { order: 1; }
-
-          /* Ensure running text can shrink on iPad portrait so the settings button stays visible */
-          .top-bar .running-text {
-            flex: 1 1 60% !important;
-            min-width: 160px !important;
-            max-width: calc(100% - 140px) !important;
-          }
-          .top-bar a.neon-btn {
-            z-index: 60 !important;
-            box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 18px rgba(255,230,160,0.45) !important;
-          }
         }
 
         @media (max-width: 767px) {
@@ -400,7 +383,7 @@
           }
         }
 
-        @keyframes marquee {
+        @keyframes marquee { ภ-ๆ
           0% { transform: translateX(0); } 
           100% { transform: translateX(-50%); } 
         }
@@ -525,7 +508,6 @@
             border-width: 2px;
             padding: 3px 4px;
             font-size: 0.6rem;
-            min-width: 120px !important;
           }
           
           .marquee span {
@@ -546,7 +528,6 @@
             transform-origin: center center;
             /* reduce visual footprint while preserving layout flow around it */
             will-change: transform;
-            z-index: 60 !important;
           }
           
           /* ป้องกัน text wrap */

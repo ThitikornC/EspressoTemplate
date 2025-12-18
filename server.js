@@ -35,76 +35,24 @@ app.get('/classroomv3-main*', (req, res) => {
 })
 
 // /studio - In production serve built files, in development proxy to Vite
-// Prefer serving the built `dist` when it exists (prevent accidental proxy to localhost in production)
-const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
-const hasStudioDist = fs.existsSync(studioDistPath);
-const isRailway = Boolean(process.env.RAILWAY_ENVIRONMENT);
-const isProduction = process.env.NODE_ENV === 'production' || isRailway;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
 
-console.log('[INFO] studioDistPath=', studioDistPath);
-console.log('[INFO] hasStudioDist=', hasStudioDist, 'NODE_ENV=', process.env.NODE_ENV, 'RAILWAY_ENVIRONMENT=', process.env.RAILWAY_ENVIRONMENT);
-
-// Temporary debug endpoint: list studio dist files and show index.html snippet
-app.get('/debug/studio-dist', (req, res) => {
-  try {
-    const out = { studioDistPath, hasStudioDist };
-    if (hasStudioDist) {
-      const files = [];
-      function walkSync(dir, base) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const e of entries) {
-          const full = path.join(dir, e.name);
-          const rel = base ? path.join(base, e.name) : e.name;
-          if (e.isDirectory()) walkSync(full, rel);
-          else files.push(rel.replace(/\\\\/g, '/'));
-        }
-      }
-      try { walkSync(studioDistPath, ''); } catch (e) { files.push('ERROR_READING_DIST: ' + String(e.message)); }
-      out.files = files;
-      try {
-        const idx = fs.readFileSync(path.join(studioDistPath, 'index.html'), 'utf8');
-        out.indexHtmlSnippet = idx.slice(0, 4096);
-      } catch (e) { out.indexHtmlSnippet = 'unable to read index.html: ' + String(e.message); }
-    }
-    return res.json(out);
-  } catch (err) {
-    console.error('[DEBUG] /debug/studio-dist error', err);
-    return res.status(500).json({ error: String(err && err.message) });
-  }
-});
-
-if (hasStudioDist) {
+if (isProduction) {
   // Production: serve built static files from classroomv3-main/dist
+  const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
   app.use('/studio', express.static(studioDistPath));
-  // Serve index for exact /studio path as well (ensure no 404 on /studio)
-  app.get('/studio', (req, res) => {
-    res.sendFile(path.join(studioDistPath, 'index.html'))
-  });
   // SPA fallback - serve index.html for any /studio/* routes
   app.get('/studio/*', (req, res) => {
     res.sendFile(path.join(studioDistPath, 'index.html'));
   });
 } else {
-  // If we're running in a production-like environment but dist is missing, do NOT proxy to localhost.
-  if (isProduction && !hasStudioDist) {
-    console.error('[ERROR] classroomv3-main/dist not found. Not proxying to localhost in production.');
-    app.get('/studio', (req, res) => {
-      res.status(503).send('Studio build not found. Please run the build step before starting the server.');
-    });
-    app.get('/studio/*', (req, res) => {
-      res.status(503).send('Studio build not found.');
-    });
-  } else {
-    // Development: proxy to Vite dev server (port 5173)
-    app.use('/studio', createProxyMiddleware({
-      target: 'http://localhost:5173',
-      changeOrigin: true,
-      ws: true,
-      pathRewrite: {
-        '^/studio': '/studio'
-      }
-    }));
-  }
+  // Development: proxy to Vite dev server (port 5173)
+  app.use('/studio', createProxyMiddleware({
+    target: 'http://localhost:5173',
+    changeOrigin: true,
+    ws: true,
+    logLevel: 'debug'
+  }));
 }
 
 // Upload endpoint: accept base64 DataURL JSON and save to /uploads
