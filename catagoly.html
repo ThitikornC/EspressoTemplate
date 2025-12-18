@@ -7,6 +7,23 @@
     <link rel="stylesheet" href="css/catagoly.css">
     <link rel="stylesheet" href="css/login.css">
 <script src="/js/prevent-image-download.js"></script>
+    <style>
+      /* Ensure mode buttons have equal size and align consistently */
+      .container { display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+      .container .neon-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: clamp(240px, 36vw, 420px) !important;
+        height: clamp(64px, 8vh, 96px) !important;
+        padding: 0 !important; /* padding handled by height/width */
+        box-sizing: border-box !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+      }
+      /* Keep inner text readable on small screens */
+      .container .neon-btn span, .container .neon-btn { font-size: clamp(1rem, 2.2vw, 1.25rem) !important; }
+    </style>
 </head>
 <body>
     <!-- ...existing code... -->
