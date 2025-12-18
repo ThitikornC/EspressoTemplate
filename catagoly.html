@@ -14,11 +14,12 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: clamp(240px, 36vw, 420px) !important;
-        /* use min-height so padding can expand vertically */
-        min-height: clamp(64px, 8vh, 96px) !important;
-        /* add vertical padding (top/bottom) while keeping horizontal centered */
-        padding: clamp(12px, 2.5vh, 20px) 0 !important;
+        /* reduced horizontal size */
+        width: clamp(200px, 32vw, 360px) !important;
+        /* slightly taller buttons */
+        min-height: clamp(72px, 9vh, 104px) !important;
+        /* increase vertical padding, keep smaller horizontal padding */
+        padding: clamp(16px, 3vh, 28px) clamp(10px, 2.2vw, 16px) !important;
         box-sizing: border-box !important;
         text-align: center !important;
         white-space: nowrap !important;
