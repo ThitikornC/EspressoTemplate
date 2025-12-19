@@ -493,35 +493,57 @@ function createDraggableImage(imgData, imageId, isCorrect) {
 
   const imageDiv = document.createElement('div');
   imageDiv.classList.add('image-item');
-  imageDiv.innerHTML = `<img src="${imgData}" alt="Image">`;
+  imageDiv.style.position = 'absolute';
+  imageDiv.style.pointerEvents = 'auto';
+  imageDiv.innerHTML = `<img src="${imgData}" alt="Image" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;">`;
 
-  // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง ไม่ซ้อนกัน
-  const estimatedImgW = 100;
-  const estimatedImgH = 100;
-  const horizontalPadding = 24;
-  // นับจำนวนรูปที่สร้างแล้ว เพื่อจัดตำแหน่ง
+  // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง โดยกำหนดขนาดตามจำนวนรูปในรอบ
   const totalImages = document.querySelectorAll('.image-item').length;
-  const imagesPerRow = 6; // ปรับจำนวนรูปต่อแถวได้
-  const gap = 100; // ระยะห่างระหว่างรูป (เพิ่มขึ้น)
+  const roundCount = window.currentRoundImageCount || (totalImages + 1);
+  // เลือกจำนวนคอลัมน์ (imagesPerRow) ให้เหมาะสมกับจำนวนรูป (สูงสุด 6 คอลัมน์)
+  const imagesPerRow = Math.min(6, Math.max(1, Math.ceil(roundCount / Math.ceil(roundCount / 6))));
+  const gap = Math.max(12, Math.floor(window.innerWidth * 0.02));
+
+  // คำนวณขนาดรูปให้ยืดหยุ่นตามความกว้างหน้าจอและจำนวนคอลัมน์
+  const availableWidth = Math.max(420, window.innerWidth - 80);
+  // make images larger: raise minimum and maximum caps and apply small scale factor
+  const estimatedImgW = Math.max(80, Math.min(320, Math.floor(((availableWidth - (imagesPerRow + 1) * gap) / imagesPerRow) * 1.08)));
+  const estimatedImgH = estimatedImgW;
+
+  // ตำแหน่งแถวและคอลัมน์
   const row = Math.floor(totalImages / imagesPerRow);
   const col = totalImages % imagesPerRow;
-  // คำนวณความกว้างรวมของแถว
   const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
-  const centerX = Math.max((window.innerWidth - rowWidth) / 2, 0); // ป้องกันล้นขอบซ้ายขวา
+  const centerX = Math.max((window.innerWidth - rowWidth) / 2, 12);
   const startX = centerX + col * (estimatedImgW + gap);
-  // วางรูปภาพให้อยู่กลางจอแนวตั้งเสมอ (centered vertically)
-  const totalRows = Math.ceil((document.querySelectorAll('.image-item').length + 1) / imagesPerRow);
+
+  const totalRows = Math.ceil((totalImages + 1) / imagesPerRow);
   const imagesAreaHeight = totalRows * estimatedImgH + (totalRows - 1) * gap;
-  // ขยับลงล่างอีก (เพิ่ม offset 80px)
-  const centerY = Math.max((window.innerHeight - imagesAreaHeight) / 2 + 80, 0); // ป้องกันล้นขอบบนล่าง
-  const startY = centerY + row * (estimatedImgH + gap);
-  // Disable random rotation: keep images upright and prevent scaling on mobile
-  const angle = 0;
-  const isMobile = window.innerWidth <= 768;
-  const scale = isMobile ? 1 : 1 + Math.random() * 0.2;
+  // compute a vertical baseline but ensure images start below the zones area to avoid overlap
+  const tentativeCenterY = Math.max((window.innerHeight - imagesAreaHeight) / 2 + 80, 0);
+  let baseY = tentativeCenterY;
+  try {
+    const zonesEl = document.getElementById('zones');
+    if (zonesEl) {
+      const zr = zonesEl.getBoundingClientRect();
+      // leave a margin below zones
+      const minBelowZones = Math.max(24, Math.floor(window.innerHeight * 0.03));
+      baseY = Math.max(tentativeCenterY, zr.bottom + minBelowZones);
+    }
+  } catch (e) {
+    baseY = tentativeCenterY;
+  }
+  const startY = baseY + row * (estimatedImgH + gap);
+
+  // กำหนดตำแหน่งและขนาดโดยตรง แทนการใช้ transform scale
   imageDiv.style.left = `${startX}px`;
   imageDiv.style.top = `${startY}px`;
-  imageDiv.style.transform = `scale(${scale * 2.75})`;
+  imageDiv.style.width = estimatedImgW + 'px';
+  imageDiv.style.height = estimatedImgH + 'px';
+  // Force no rotation/transform so images are upright
+  imageDiv.style.transform = 'none';
+  imageDiv.style.transformOrigin = 'center center';
+  imageDiv.style.willChange = 'left, top';
 
   let offsetX, offsetY;
   function dragMove(posX, posY) {
