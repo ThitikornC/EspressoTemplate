@@ -500,14 +500,18 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง โดยกำหนดขนาดตามจำนวนรูปในรอบ
   const totalImages = document.querySelectorAll('.image-item').length;
   const roundCount = window.currentRoundImageCount || (totalImages + 1);
-  // เลือกจำนวนคอลัมน์ (imagesPerRow) ให้เหมาะสมกับจำนวนรูป (สูงสุด 6 คอลัมน์)
-  const imagesPerRow = Math.min(6, Math.max(1, Math.ceil(roundCount / Math.ceil(roundCount / 6))));
-  const gap = Math.max(12, Math.floor(window.innerWidth * 0.02));
+  // เลือกจำนวนคอลัมน์: ถ้าน้อยกว่าหรือเท่ากับ 4 ให้เท่าจำนวนรูป ถ้ามากกว่า 4 ให้ใช้ 4-6 คอลัมน์ตามพื้นที่
+  let imagesPerRow = Math.min(6, Math.max(1, roundCount));
+  if (roundCount > 4) imagesPerRow = Math.min(6, Math.max(4, Math.floor(window.innerWidth / 160)));
+  const gap = Math.max(14, Math.floor(window.innerWidth * 0.02));
 
   // คำนวณขนาดรูปให้ยืดหยุ่นตามความกว้างหน้าจอและจำนวนคอลัมน์
-  const availableWidth = Math.max(420, window.innerWidth - 80);
-  // make images larger: raise minimum and maximum caps and apply small scale factor
-  const estimatedImgW = Math.max(80, Math.min(320, Math.floor(((availableWidth - (imagesPerRow + 1) * gap) / imagesPerRow) * 1.08)));
+  const availableWidth = Math.max(480, window.innerWidth - 100);
+  let baseImgW = Math.floor((availableWidth - (imagesPerRow + 1) * gap) / imagesPerRow);
+  // caps ให้ใหญ่ขึ้นตามคำขอ
+  baseImgW = Math.max(90, Math.min(420, baseImgW));
+  // ถ้ารอบรูปเยอะกว่า 4 ให้ขยายขนาดเล็กน้อย แต่ไม่เกิน cap
+  const estimatedImgW = roundCount > 4 ? Math.min(440, Math.floor(baseImgW * 1.12)) : baseImgW;
   const estimatedImgH = estimatedImgW;
 
   // ตำแหน่งแถวและคอลัมน์
