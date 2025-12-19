@@ -500,9 +500,10 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง โดยกำหนดขนาดตามจำนวนรูปในรอบ
   const totalImages = document.querySelectorAll('.image-item').length;
   const roundCount = window.currentRoundImageCount || (totalImages + 1);
-  // เลือกจำนวนคอลัมน์: ถ้าน้อยกว่าหรือเท่ากับ 4 ให้เท่าจำนวนรูป ถ้ามากกว่า 4 ให้ใช้ 4-6 คอลัมน์ตามพื้นที่
-  let imagesPerRow = Math.min(6, Math.max(1, roundCount));
-  if (roundCount > 4) imagesPerRow = Math.min(6, Math.max(4, Math.floor(window.innerWidth / 160)));
+  // เลือกจำนวนคอลัมน์ที่เหมาะสม
+  const maxColsBasedOnWidth = Math.max(1, Math.min(6, Math.floor(window.innerWidth / 160)));
+  let imagesPerRow = roundCount <= 4 ? Math.min(roundCount, maxColsBasedOnWidth) : Math.min(maxColsBasedOnWidth, Math.max(4, maxColsBasedOnWidth));
+  imagesPerRow = Math.max(1, Math.min(imagesPerRow, roundCount));
   const gap = Math.max(14, Math.floor(window.innerWidth * 0.02));
 
   // คำนวณขนาดรูปให้ยืดหยุ่นตามความกว้างหน้าจอและจำนวนคอลัมน์
@@ -517,8 +518,10 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   // ตำแหน่งแถวและคอลัมน์
   const row = Math.floor(totalImages / imagesPerRow);
   const col = totalImages % imagesPerRow;
-  const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
-  const centerX = Math.max((window.innerWidth - rowWidth) / 2, 12);
+  // For centering, compute how many columns are in this particular row (last row may be partial)
+  const colsThisRow = Math.min(imagesPerRow, Math.max(1, roundCount - row * imagesPerRow));
+  const rowWidth = colsThisRow * estimatedImgW + (colsThisRow - 1) * gap;
+  const centerX = Math.max(Math.floor((window.innerWidth - rowWidth) / 2), 12);
   const startX = centerX + col * (estimatedImgW + gap);
 
   const totalRows = Math.ceil((totalImages + 1) / imagesPerRow);
