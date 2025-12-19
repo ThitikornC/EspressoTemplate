@@ -517,7 +517,9 @@ function createDraggableImage(imgData, imageId, isCorrect) {
 
   // ตำแหน่งแถวและคอลัมน์
   const row = Math.floor(totalImages / imagesPerRow);
-  const col = totalImages % imagesPerRow;
+  // index within this row (0-based) — safer than modulo if imagesPerRow was adjusted
+  const indexInRow = totalImages - row * imagesPerRow;
+  const col = Math.max(0, indexInRow);
   // For centering, compute how many columns are in this particular row (last row may be partial)
   const colsThisRow = Math.min(imagesPerRow, Math.max(1, roundCount - row * imagesPerRow));
   const rowWidth = colsThisRow * estimatedImgW + (colsThisRow - 1) * gap;
@@ -547,6 +549,9 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   imageDiv.style.top = `${startY}px`;
   imageDiv.style.width = estimatedImgW + 'px';
   imageDiv.style.height = estimatedImgH + 'px';
+  // remove CSS max caps so inline sizes are enforced
+  imageDiv.style.maxWidth = 'none';
+  imageDiv.style.maxHeight = 'none';
   // Force no rotation/transform so images are upright
   imageDiv.style.transform = 'none';
   imageDiv.style.transformOrigin = 'center center';
