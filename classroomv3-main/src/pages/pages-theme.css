@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root{
+  --page-bg-top: #ebd09e;
+  --page-bg-bottom: #251f03;
+  --panel-gradient-start: #f8f6f0;
+  --panel-gradient-mid: #fffef8;
+  --panel-gradient-end: #f5f0e5;
+  --panel-border: #74640a;
+  --panel-shadow: rgba(255,230,160,0.55);
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
+}
+
+/* Ensure this theme overrides the global body background set in index.css */
+/* Apply the warm catagoly gradient directly to body (use !important to beat index.css) */
+body {
+  background: linear-gradient(to bottom, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%) !important;
+}
+
+/* Full-page warm gradient background like catagoly.html */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%);
+  z-index: -1;
+}
+
+/* Optional container to ensure pages area has proper padding and text color */
+.page-theme {
+  min-height: 100vh;
+  color: #fff;
+}
+
+/* Card / panel style consistent with catagoly's neon buttons */
+.page-panel {
+  background: linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-mid) 45%, var(--panel-gradient-mid) 55%, var(--panel-gradient-end) 100%);
+  color: #000;
+  border: 6px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px var(--panel-shadow);
+  padding: 18px;
+}
+
+/* Utility: neon-style button (compatible with existing components) */
+.neon-btn {
+  background: linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-mid) 45%, var(--panel-gradient-mid) 55%, var(--panel-gradient-end) 100%);
+  color: #000;
+  border: 6px solid var(--panel-border);
+  border-radius: 9999px;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px var(--panel-shadow);
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make sure text on dark gradient is readable for headings */
+.page-theme h1, .page-theme h2, .page-theme h3 {
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Override App-level container background so pages match catagoly theme */
+.app-container {
+  background: linear-gradient(to bottom, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%) !important;
+}
+
+/* If a page uses a full-width element with its own gradient, hide it behind the page-theme body background */
+.app-container::before { background: none !important; }
