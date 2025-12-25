@@ -41,9 +41,23 @@ if (isProduction) {
   // Production: serve built static files from classroomv3-main/dist
   const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
   app.use('/studio', express.static(studioDistPath));
-  // SPA fallback - serve index.html for any /studio/* routes
-  app.get('/studio/*', (req, res) => {
-    res.sendFile(path.join(studioDistPath, 'index.html'));
+  // SPA fallback - serve index.html for client-side routes only.
+  // Do NOT return index.html for requests that look like static asset files
+  // (have an extension). If a requested asset is missing, let the static
+  // middleware fall through to a 404 so we don't return HTML with a JS URL.
+  app.get('/studio/*', (req, res, next) => {
+    try {
+      const ext = path.extname(req.path);
+      if (ext) {
+        // asset-like request (e.g. /studio/assets/foo.js) -> delegate to static/404
+        console.warn('[STATIC] asset-like request, passing through:', req.path)
+        return next()
+      }
+      res.sendFile(path.join(studioDistPath, 'index.html'));
+    } catch (e) {
+      console.error('[ERROR] /studio/* fallback', e && e.message)
+      next()
+    }
   });
 } else {
   // Development: proxy to Vite dev server (port 5173)
