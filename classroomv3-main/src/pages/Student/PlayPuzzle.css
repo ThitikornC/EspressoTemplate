@@ -425,6 +425,31 @@
   transform: none !important;
   box-shadow: none !important;
 }
+
+/* Ensure pressed/focused/active difficulty buttons keep black text */
+.difficulty-btn:active,
+.difficulty-btn:focus,
+.difficulty-btn:focus-visible,
+.difficulty-btn.active:active,
+.difficulty-btn.active:focus,
+.difficulty-btn.active:focus-visible {
+  color: #000 !important;
+}
+
+.difficulty-btn.active .difficulty-name,
+.difficulty-btn.active .difficulty-desc,
+.difficulty-btn.active .difficulty-icon,
+.difficulty-btn:active .difficulty-name,
+.difficulty-btn:active .difficulty-desc,
+.difficulty-btn:active .difficulty-icon {
+  color: #000 !important;
+}
+
+/* Also prevent UA focus outline from hiding text contrast */
+.difficulty-btn:focus {
+  outline: 3px solid rgba(116,100,10,0.12);
+  outline-offset: 2px;
+}
 .difficulty-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
