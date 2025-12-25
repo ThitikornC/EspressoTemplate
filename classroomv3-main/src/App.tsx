@@ -4,6 +4,7 @@ import PlayColoring from './pages/Student/PlayColoring'
 import PlayPuzzle from './pages/Student/PlayPuzzle'
 import PlayCategory from './pages/Student/PlayCategory'
 import './App.css'
+import './pages/pages-theme.css'
 
 function App() {
   return (

@@ -1,6 +1,7 @@
 .app-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  /* Use warm catagoly gradient instead of pink/orange */
+  background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
 }
 
 .home-page {

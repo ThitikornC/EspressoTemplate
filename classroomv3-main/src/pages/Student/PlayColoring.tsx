@@ -356,9 +356,9 @@ function PlayColoring() {
       `
 
       reportElement.innerHTML = `
-        <div style="background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%); padding: 18px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-          <h1 style="color: white; margin: 0 0 6px 0; font-size: 26px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">🎨 แบบประเมินกิจกรรมระบายสี</h1>
-          <p style="color: white; margin: 0; font-size: 13px; opacity: 0.95;">Coloring Activity Evaluation Report</p>
+        <div style="background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding: 18px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55); border: 6px solid #74640a;">
+          <h1 style="color: #333; margin: 0 0 6px 0; font-size: 26px;">🎨 แบบประเมินกิจกรรมระบายสี</h1>
+          <p style="color: #555; margin: 0; font-size: 13px; opacity: 0.95;">Coloring Activity Evaluation Report</p>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">

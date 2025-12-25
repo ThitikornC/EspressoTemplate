@@ -266,14 +266,14 @@ function PlayPuzzle() {
       `
 
       reportElement.innerHTML = `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 18px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-          <h1 style="color: white; margin: 0 0 6px 0; font-size: 26px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">🧩 แบบประเมินกิจกรรมจิ๊กซอว์</h1>
-          <p style="color: white; margin: 0; font-size: 13px; opacity: 0.95;">Puzzle Activity Evaluation Report</p>
+        <div style="background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding: 18px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55); border: 6px solid #74640a;">
+          <h1 style="color: #333; margin: 0 0 6px 0; font-size: 26px;">🧩 แบบประเมินกิจกรรมจิ๊กซอว์</h1>
+          <p style="color: #555; margin: 0; font-size: 13px; opacity: 0.95;">Puzzle Activity Evaluation Report</p>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #e9ecef;">
-            <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">📋 ข้อมูลกิจกรรม</h2>
+            <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">📋 ข้อมูลกิจกรรม</h2>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>สัปดาห์ที่:</strong> ${weekNumber || '-'}</p>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>สาระการเรียนรู้:</strong> ${learningSubject || '-'}</p>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>หน่วยการเรียนรู้:</strong> ${learningUnit || '-'}</p>
@@ -284,7 +284,7 @@ function PlayPuzzle() {
           </div>
 
           <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #e9ecef;">
-            <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">📊 การประเมิน</h2>
+            <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">📊 การประเมิน</h2>
             ${[
               { label: 'ความสนใจ', score: evaluation.attention },
               { label: 'ความรอบคอบ', score: evaluation.carefulness },

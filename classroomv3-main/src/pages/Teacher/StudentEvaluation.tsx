@@ -265,7 +265,10 @@ function StudentEvaluation() {
       // สร้าง HTML สำหรับ PDF
       const htmlContent = `
         <div style="padding: 20px; font-family: Arial, sans-serif;">
-          <h2 style="text-align: center; margin-bottom: 20px;">แบบประเมินพฤติกรรมนักเรียน</h2>
+          <div style="background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 12px; box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55); border: 6px solid #74640a;">
+            <h2 style="text-align: center; margin-bottom: 8px; color: #333;">แบบประเมินพฤติกรรมนักเรียน</h2>
+            <p style="color: #555; margin: 0; font-size: 13px;">รายงานสรุปการประเมินพฤติกรรม</p>
+          </div>
           <p><strong>วิชา:</strong> ${selectedSubject}</p>
           <p><strong>ครูผู้รับผิดชอบ:</strong> ${teacherName || '-'}</p>
           <p><strong>วันที่:</strong> ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
