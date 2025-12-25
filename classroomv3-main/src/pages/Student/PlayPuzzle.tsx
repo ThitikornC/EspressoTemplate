@@ -381,8 +381,8 @@ function PlayPuzzle() {
       setShowEvaluation(false)
       
       setEvaluation({
-        creativity: 5,
-        colorChoice: 5,
+        attention: 5,
+        carefulness: 5,
         neatness: 5,
         completeness: 5
       })
