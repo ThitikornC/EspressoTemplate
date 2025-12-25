@@ -87,3 +87,41 @@ body::before {
 .coloring-container, .setup-container, .setup-card {
   background: transparent !important;
 }
+
+/* Apply catagoly 'neon' button style to common Student buttons */
+.action-btn,
+.start-btn,
+.save-btn,
+.select-btn,
+.back-btn,
+.btn-export-pdf,
+.export-pdf-btn,
+.cancel-eval-btn,
+.confirm-btn {
+  background: linear-gradient(180deg, var(--panel-gradient-start) 0%, var(--panel-gradient-mid) 45%, var(--panel-gradient-mid) 55%, var(--panel-gradient-end) 100%) !important;
+  color: #000 !important;
+  border: 6px solid var(--panel-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px var(--panel-shadow) !important;
+  font-weight: 700 !important;
+  padding: 12px 22px !important;
+  min-height: 48px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.action-btn:hover,
+.start-btn:hover,
+.save-btn:hover,
+.select-btn:hover,
+.back-btn:hover,
+.btn-export-pdf:hover,
+.export-pdf-btn:hover,
+.cancel-eval-btn:hover,
+.confirm-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 2px 2px 0 #000, -10px 8px #3b3305, 0 0 25px rgba(255,230,160,0.75) !important;
+}
