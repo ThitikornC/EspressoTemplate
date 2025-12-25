@@ -700,6 +700,7 @@ function PlayPuzzle() {
               onClick={() => setDifficulty('easy')}
               disabled={isLoading}
               aria-label="เลือกระดับง่าย"
+              style={difficulty === 'easy' ? { color: '#000' } : undefined}
             >
               <div className="difficulty-icon">😊</div>
               <div className="difficulty-name">ง่าย</div>
@@ -711,6 +712,7 @@ function PlayPuzzle() {
               onClick={() => setDifficulty('medium')}
               disabled={isLoading}
               aria-label="เลือกระดับปานกลาง"
+              style={difficulty === 'medium' ? { color: '#000' } : undefined}
             >
               <div className="difficulty-icon">🤔</div>
               <div className="difficulty-name">ปานกลาง</div>
@@ -722,6 +724,7 @@ function PlayPuzzle() {
               onClick={() => setDifficulty('hard')}
               disabled={isLoading}
               aria-label="เลือกระดับยาก"
+              style={difficulty === 'hard' ? { color: '#000' } : undefined}
             >
               <div className="difficulty-icon">🤯</div>
               <div className="difficulty-name">ยาก</div>
