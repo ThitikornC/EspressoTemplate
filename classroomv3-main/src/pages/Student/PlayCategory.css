@@ -19,7 +19,7 @@
 }
 
 .back-btn {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   border: none;
   padding: 12px 24px;
   border-radius: 12px;
@@ -50,7 +50,7 @@
 }
 
 .info-banner {
-  background: linear-gradient(135deg, #FFB347 0%, #FF6B9D 100%);
+  background: linear-gradient(135deg, #FFB347 0%, #74640a 100%);
   color: white;
   padding: 15px 25px;
   border-radius: 15px;
@@ -119,7 +119,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -194,7 +194,7 @@
 
 .start-btn {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   border: none;
   padding: 18px 32px;
   border-radius: 16px;
@@ -295,7 +295,7 @@
 }
 
 .score-number {
-  color: #667eea;
+  color: #74640a;
   font-size: 1.5rem;
   font-weight: 700;
 }
@@ -364,7 +364,7 @@
 }
 
 .category-zone.tap-target {
-  border-color: #667eea;
+  border-color: #74640a;
   border-style: solid;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25), 0 8px 32px rgba(102, 126, 234, 0.2);
 }
@@ -455,7 +455,7 @@
 .draggable-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  border-color: #667eea;
+  border-color: #74640a;
 }
 
 .draggable-item.dragging {
@@ -646,7 +646,7 @@
   justify-content: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, #74640a15 0%, #764ba215 100%);
   border-radius: 16px;
 }
 
@@ -659,7 +659,7 @@
 .score-value {
   font-size: 4rem;
   font-weight: 700;
-  color: #667eea;
+  color: #74640a;
   line-height: 1;
   margin: 5px 0;
 }
@@ -697,7 +697,7 @@
 }
 
 .play-again-btn {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
 }
 
@@ -786,7 +786,7 @@
 
 .form-field input:focus {
   outline: none;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   background: white;
   box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
@@ -829,7 +829,7 @@
 
 .form-field-tester input:focus {
   outline: none;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   background: white;
   box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
@@ -891,7 +891,7 @@
 }
 
 .start-btn-alt {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
 }
 
 .start-btn-alt:hover {
@@ -984,7 +984,7 @@
 
 .activity-item:hover {
   background: #f0f0f0;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: translateX(10px);
 }
 
@@ -1143,7 +1143,7 @@
 
 .add-data-btn {
   padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -1186,7 +1186,7 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #74640a;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -1203,7 +1203,7 @@
 
 .form-select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #74640a;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -1217,7 +1217,7 @@
 }
 
 .color-input:hover {
-  border-color: #667eea;
+  border-color: #74640a;
 }
 
 .confirm-btn {
@@ -1258,7 +1258,7 @@
 }
 
 .data-item:hover {
-  border-color: #667eea;
+  border-color: #74640a;
   transform: translateX(5px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -1316,7 +1316,7 @@
 
 .upload-image-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -1337,7 +1337,7 @@
   height: 44px;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid #667eea;
+  border: 2px solid #74640a;
 }
 
 .image-preview-small img {
@@ -1368,7 +1368,7 @@
   height: 120px;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid #667eea;
+  border: 2px solid #74640a;
 }
 
 .image-preview-small img {
@@ -1410,7 +1410,7 @@
 
 .upload-placeholder-small:hover {
   background: #e8e8e8;
-  border-color: #667eea;
+  border-color: #74640a;
 }
 
 .remove-image-btn {
@@ -1512,14 +1512,14 @@
 }
 
 .score-btn:hover {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.2);
 }
 
 .score-btn.active {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
-  border-color: #FF6B9D;
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
+  border-color: #74640a;
   color: white;
   transform: scale(1.15);
   box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
@@ -1538,7 +1538,7 @@
 
 .average-score .score-value {
   font-size: 2rem;
-  color: #FF6B9D;
+  color: #74640a;
   font-weight: 700;
   margin-left: 10px;
 }
@@ -1589,7 +1589,7 @@
 
 .eval-btn {
   flex: 1;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   border: none;
   padding: 15px 25px;
   border-radius: 12px;
@@ -1648,4 +1648,24 @@
   .eval-btn {
     width: 100%;
   }
+}
+
+/* --- Inner frame color overrides --- */
+/* Ensure the inner cards/panels are white for better contrast */
+.play-category-page .setup-card,
+.play-category-page .preview-category-card,
+.play-category-page .category-zone,
+.play-category-page .category-zone-content,
+.play-category-page .instruction-item,
+.play-category-page .score-display,
+.play-category-page .evaluation-content {
+  background: #ffffff !important;
+  color: #222 !important;
+}
+
+.play-category-page .preview-category-card,
+.play-category-page .category-zone,
+.play-category-page .evaluation-content {
+  border-color: #e9ecef !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
 }

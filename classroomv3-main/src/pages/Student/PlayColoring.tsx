@@ -363,7 +363,7 @@ function PlayColoring() {
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #e9ecef;">
-            <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">📋 ข้อมูลกิจกรรม</h2>
+            <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">📋 ข้อมูลกิจกรรม</h2>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>สัปดาห์ที่:</strong> ${weekNumber || '-'}</p>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>สาระการเรียนรู้:</strong> ${learningSubject || '-'}</p>
             <p style="margin: 4px 0; color: #495057; font-size: 12px;"><strong>หน่วยการเรียนรู้:</strong> ${learningUnit || '-'}</p>
@@ -373,7 +373,7 @@ function PlayColoring() {
           </div>
 
           <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #e9ecef;">
-            <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">📊 การประเมิน</h2>
+            <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">📊 การประเมิน</h2>
             ${[
               { label: 'ความคิดสร้างสรรค์', score: evaluation.creativity },
               { label: 'การเลือกใช้สี', score: evaluation.colorChoice },
@@ -397,7 +397,7 @@ function PlayColoring() {
               `
             }).join('')}
             
-            <div style="background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(255,107,157,0.3);">
+            <div style="background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.12);">
               <span style="color: white; font-size: 13px; font-weight: 600;">คะแนนเฉลี่ย: </span>
               <span style="color: white; font-size: 24px; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${averageScore}/5</span>
             </div>
@@ -405,7 +405,7 @@ function PlayColoring() {
         </div>
 
         <div style="margin-bottom: 15px;">
-          <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">🖼️ ผลงานนักเรียน</h2>
+          <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">🖼️ ผลงานนักเรียน</h2>
           <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 2px solid #e9ecef;">
             <img src="${artworkDataUrl}" style="max-width: 100%; max-height: 400px; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
           </div>

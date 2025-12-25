@@ -17,7 +17,7 @@ interface ToolboxProps {
 
 const COLORS = [
   // แถวที่ 1: สีชมพู
-  '#FF2E63', '#FF6B9D', '#FF69B4', '#FFB6D9', '#FFC0CB',
+  '#FF2E63', '#74640a', '#FF69B4', '#FFB6D9', '#FFC0CB',
   // แถวที่ 2: สีเหลือง-ส้ม
   '#FFC75F', '#FFD700', '#FFA500', '#FF8C00', '#FF6347',
   // แถวที่ 3: สีแดง-บานเงา

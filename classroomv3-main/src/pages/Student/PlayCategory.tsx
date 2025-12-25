@@ -58,7 +58,7 @@ function PlayCategory() {
 
   // Add game data states
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [newCategoryColor, setNewCategoryColor] = useState('#FF6B9D')
+  const [newCategoryColor, setNewCategoryColor] = useState('#74640a')
   const [newCategoryBackgroundImage, setNewCategoryBackgroundImage] = useState('')
   const [newItemName, setNewItemName] = useState('')
   const [newItemCategory, setNewItemCategory] = useState('')
@@ -439,7 +439,7 @@ function PlayCategory() {
               `
             }).join('')}
             
-            <div style="background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(255,107,157,0.3);">
+            <div style="background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.12);">
               <span style="color: white; font-size: 13px; font-weight: 600;">คะแนนเฉลี่ย: </span>
               <span style="color: white; font-size: 24px; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${averageScore}/5</span>
             </div>
@@ -447,7 +447,7 @@ function PlayCategory() {
         </div>
 
         <div style="margin-bottom: 15px;">
-          <h2 style="color: #FF6B9D; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #FF6B9D; padding-bottom: 6px;">🖼️ ภาพกิจกรรม</h2>
+          <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">🖼️ ภาพกิจกรรม</h2>
           <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 2px solid #e9ecef;">
             ${categoryCompletedImage ? 
               `<img src="${categoryCompletedImage}" style="max-width: 100%; max-height: 400px; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />` : 
@@ -550,7 +550,7 @@ function PlayCategory() {
 
     setCategories([...categories, newCat])
     setNewCategoryName('')
-    setNewCategoryColor('#FF6B9D')
+    setNewCategoryColor('#74640a')
     setNewCategoryBackgroundImage('')
     setShowAddCategory(false)
     audioManager.playClick()
@@ -582,7 +582,7 @@ function PlayCategory() {
     ))
 
     setNewCategoryName('')
-    setNewCategoryColor('#FF6B9D')
+    setNewCategoryColor('#74640a')
     setNewCategoryBackgroundImage('')
     setEditingCategoryId(null)
     setShowAddCategory(false)
@@ -778,7 +778,7 @@ function PlayCategory() {
                     if (showAddCategory && editingCategoryId) {
                       setEditingCategoryId(null)
                       setNewCategoryName('')
-                      setNewCategoryColor('#FF6B9D')
+                      setNewCategoryColor('#74640a')
                       setNewCategoryBackgroundImage('')
                     }
                     setShowAddCategory(!showAddCategory)
@@ -1436,7 +1436,7 @@ function EvaluationModal({
   return (
     <div className="evaluation-modal">
       <div className="evaluation-content">
-        <h2 style={{ color: '#FF6B9D', marginBottom: '24px', textAlign: 'center', fontSize: '24px' }}>
+        <h2 style={{ color: '#74640a', marginBottom: '24px', textAlign: 'center', fontSize: '24px' }}>
           ประเมินผลกิจกรรม
         </h2>
         

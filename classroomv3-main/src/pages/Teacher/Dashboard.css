@@ -43,7 +43,7 @@
 }
 
 .link-card {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   border: none;
   border-radius: 12px;
   padding: 20px;
@@ -105,7 +105,7 @@
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
 }
@@ -285,8 +285,8 @@
   padding: 15px;
 }
 
-.upload-placeholder:hover {
-  border-color: #667eea;
+  .upload-placeholder:hover {
+  border-color: #74640a;
   background: #f0f2ff;
   transform: translateY(-2px);
 }
@@ -460,7 +460,7 @@
   display: inline-block;
   padding: 6px 12px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   font-weight: 600;
 }
@@ -470,7 +470,7 @@
   padding: 12px 24px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -520,7 +520,7 @@
 }
 
 .create-btn, .export-btn, .upload-btn {
-  background: #FF6B9D;
+  background: #74640a;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -571,9 +571,9 @@
   transition: border-color 0.3s ease;
 }
 
-.form-input:focus, .form-select:focus {
+  .form-input:focus, .form-select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #74640a;
 }
 
 .preview-img {
@@ -617,10 +617,10 @@
   cursor: pointer;
 }
 
-.activity-card:hover {
+  .activity-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-  border-color: #667eea;
+  border-color: #74640a;
 }
 
 .activity-card img {
@@ -662,7 +662,7 @@
 }
 
 .students-table thead {
-  background: #FF6B9D;
+  background: #74640a;
   color: white;
 }
 
@@ -683,7 +683,7 @@
 
 .score-badge {
   display: inline-block;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   padding: 6px 16px;
   border-radius: 20px;
@@ -788,7 +788,7 @@
 
 .coming-soon-text {
   font-size: 1.5rem;
-  color: #FF6B9D;
+  color: #74640a;
   font-weight: 600;
   margin: 0 0 20px 0;
 }

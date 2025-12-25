@@ -70,7 +70,7 @@
   border-radius: 4px;
   outline: none;
   -webkit-appearance: none;
-  background: linear-gradient(to right, #ccc, #FF6B9D);
+  background: linear-gradient(to right, #ccc, #74640a);
   cursor: pointer;
 }
 
@@ -79,7 +79,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #FF6B9D;
+  background: #74640a;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
@@ -88,7 +88,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #FF6B9D;
+  background: #74640a;
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -108,7 +108,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 8px;
-  background: #FF6B9D;
+  background: #74640a;
   color: white;
   transition: all 0.3s ease;
   min-height: 48px;

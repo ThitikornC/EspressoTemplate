@@ -338,13 +338,13 @@ function CustomDragLayer({ pieces }: CustomDragLayerProps) {
         <img
           src={piece.imageData}
           alt="Dragging piece"
-          style={{
+            style={{
             width: '120px',
             height: '120px',
             objectFit: 'cover',
             borderRadius: '8px',
             boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-            border: '3px solid #667eea'
+            border: '3px solid #74640a'
           }}
           draggable={false}
         />

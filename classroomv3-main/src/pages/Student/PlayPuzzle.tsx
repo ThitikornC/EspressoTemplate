@@ -308,7 +308,7 @@ function PlayPuzzle() {
               `
             }).join('')}
             
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(102,126,234,0.3);">
+            <div style="background: linear-gradient(135deg, #74640a 0%, #764ba2 100%); padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.12);">
               <span style="color: white; font-size: 13px; font-weight: 600;">คะแนนเฉลี่ย: </span>
               <span style="color: white; font-size: 24px; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${averageScore}/5</span>
             </div>
@@ -316,7 +316,7 @@ function PlayPuzzle() {
         </div>
 
         <div style="margin-bottom: 15px;">
-          <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #667eea; padding-bottom: 6px;">🖼️ ภาพกิจกรรม</h2>
+          <h2 style="color: #74640a; margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #74640a; padding-bottom: 6px;">🖼️ ภาพกิจกรรม</h2>
           <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 2px solid #e9ecef;">
             <img src="${puzzleCompletedImage}" style="max-width: 100%; max-height: 400px; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
           </div>
@@ -419,7 +419,7 @@ function PlayPuzzle() {
                 style={{
                   padding: '10px 15px',
                   background: 'rgba(255, 255, 255, 0.9)',
-                  border: '2px solid #667eea',
+                  border: '2px solid #74640a',
                   borderRadius: '10px',
                   cursor: 'pointer',
                   fontSize: '1.2rem',
@@ -451,7 +451,7 @@ function PlayPuzzle() {
         {showEvaluation && (
           <div className="evaluation-modal">
             <div className="evaluation-content">
-              <h2 style={{ color: '#667eea', marginBottom: '24px', textAlign: 'center', fontSize: '24px' }}>
+              <h2 style={{ color: '#74640a', marginBottom: '24px', textAlign: 'center', fontSize: '24px' }}>
                 ประเมินผลกิจกรรม
               </h2>
               

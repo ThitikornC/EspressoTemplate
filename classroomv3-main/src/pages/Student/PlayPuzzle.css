@@ -44,7 +44,7 @@
 }
 
 .info-banner {
-  background: linear-gradient(135deg, #FFB347 0%, #FF6B9D 100%);
+  background: linear-gradient(135deg, #FFB347 0%, #74640a 100%);
   color: white;
   padding: 15px 25px;
   border-radius: 15px;
@@ -77,7 +77,7 @@
 }
 
 .config-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   border-radius: 10px;
 }
 
@@ -114,7 +114,7 @@
 .config-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(255, 107, 157, 0.25);
-  border-color: #FF6B9D;
+  border-color: #74640a;
 }
 
 .config-item:hover::before {
@@ -122,7 +122,7 @@
 }
 
 .config-item.selected {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.3);
   animation: pulse 2s infinite;
 }
@@ -171,7 +171,7 @@
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: bold;
-  background: #FF6B9D;
+  background: #74640a;
   color: white;
 }
 
@@ -250,7 +250,7 @@
 }
 
 .upload-label:hover {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: scale(1.02);
   box-shadow: 0 8px 20px rgba(255, 107, 157, 0.15);
 }
@@ -334,14 +334,14 @@
 }
 
 .difficulty-btn:hover {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: translateY(-4px);
   box-shadow: 0 10px 30px rgba(255, 107, 157, 0.25);
 }
 
 .difficulty-btn.active {
-  border-color: #FF6B9D;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  border-color: #74640a;
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   transform: scale(1.05);
   box-shadow: 0 12px 35px rgba(255, 107, 157, 0.4);
@@ -377,7 +377,7 @@
   padding: 20px 40px;
   font-size: clamp(1.3rem, 4vw, 1.8rem);
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 16px;
@@ -449,7 +449,7 @@
 
 .back-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
   border: none;
   border-radius: 10px;
   color: white;
@@ -471,7 +471,7 @@
 .music-toggle-btn {
   padding: 10px 15px;
   background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #667eea;
+  border: 2px solid #74640a;
   border-radius: 10px;
   cursor: pointer;
   font-size: 1.2rem;
@@ -484,7 +484,7 @@
 }
 
 .music-toggle-btn:hover {
-  background: #667eea;
+  background: #74640a;
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
@@ -574,7 +574,7 @@
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #FFB347, #FF6B9D);
+  background: linear-gradient(135deg, #FFB347, #74640a);
 }
 
 .toast.error {
@@ -885,7 +885,7 @@
 
 .form-field input:focus {
   outline: none;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   background: white;
   box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
@@ -928,7 +928,7 @@
 
 .form-field-tester input:focus {
   outline: none;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   background: white;
   box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
@@ -978,7 +978,7 @@
 }
 
 .start-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
 }
 
 .start-btn:hover {
@@ -1083,7 +1083,7 @@
 
 .activity-item:hover {
   background: #f0f0f0;
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: translateX(10px);
 }
 
@@ -1330,17 +1330,17 @@
 }
 
 .score-btn:hover {
-  border-color: #667eea;
+  border-color: #74640a;
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .score-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
+  border-color: #74640a;
   color: white;
   transform: scale(1.15);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
 }
 
 .average-score {
@@ -1356,7 +1356,7 @@
 
 .average-score .score-value {
   font-size: 2rem;
-  color: #667eea;
+  color: #74640a;
   font-weight: 700;
   margin-left: 10px;
 }
@@ -1400,7 +1400,7 @@
 }
 
 .eval-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
 }
 
 .eval-btn:hover {

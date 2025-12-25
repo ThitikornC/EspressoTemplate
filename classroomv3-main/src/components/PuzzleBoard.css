@@ -67,7 +67,7 @@
 }
 
 .board-slot.drop-target {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   background: linear-gradient(135deg, #ffe0ed 0%, #fff0f7 100%);
   transform: scale(1.05);
   box-shadow: 0 0 20px rgba(255, 107, 157, 0.4);
@@ -167,7 +167,7 @@
 /* ชิ้นส่วนที่ลากได้ */
 .draggable-piece {
   background: white;
-  border: 3px solid #FF6B9D;
+  border: 3px solid #74640a;
   border-radius: 8px;
   padding: 4px;
   cursor: grab;
@@ -193,8 +193,8 @@
 }
 
 .board-slot.selected-target {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25), 0 6px 18px rgba(102, 126, 234, 0.25);
+  border-color: #74640a;
+  box-shadow: 0 0 0 3px rgba(116,100,10,0.25), 0 6px 18px rgba(116,100,10,0.25);
 }
 
 .piece-image {
@@ -291,7 +291,7 @@
 }
 
 .play-again-btn {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
 }
 
 .play-again-btn:hover {
@@ -300,12 +300,12 @@
 }
 
 .evaluate-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74640a 0%, #764ba2 100%);
 }
 
 .evaluate-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(116,100,10,0.4);
 }
 
 /* Touch-friendly for mobile */

@@ -41,6 +41,22 @@ if (isProduction) {
   // Production: serve built static files from classroomv3-main/dist
   const studioDistPath = path.join(__dirname, 'classroomv3-main', 'dist');
   app.use('/studio', express.static(studioDistPath));
+    // If a request looks like a static asset (has an extension) but the
+    // static middleware didn't find it, return a plain 404 response rather
+    // than falling through to an HTML page. This avoids serving HTML for
+    // CSS/JS requests which triggers MIME type errors in browsers.
+    app.use('/studio', (req, res, next) => {
+      try {
+        const ext = path.extname(req.path)
+        if (ext) {
+          // static middleware already tried and failed if we reach here
+          return res.status(404).type('text/plain').send('Not found')
+        }
+      } catch (e) {
+        // ignore and continue to SPA fallback
+      }
+      next()
+    })
   // SPA fallback - serve index.html for client-side routes only.
   // Do NOT return index.html for requests that look like static asset files
   // (have an extension). If a requested asset is missing, let the static

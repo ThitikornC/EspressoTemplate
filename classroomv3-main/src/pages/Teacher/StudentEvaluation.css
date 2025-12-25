@@ -113,13 +113,13 @@
 }
 
 .export-radio-label:hover {
-  color: #FF6B9D;
+  color: #74640a;
 }
 
 .export-file-input {
   width: 100%;
   padding: 10px 14px;
-  border: 2px solid #FF6B9D;
+  border: 2px solid #74640a;
   border-radius: 10px;
   font-size: 1rem;
   margin-bottom: 20px;
@@ -132,7 +132,7 @@
 }
 
 .back-btn {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   border: none;
   padding: 10px 20px;
   border-radius: 10px;
@@ -152,7 +152,7 @@
 
 .subject-select {
   padding: 10px 20px;
-  border: 2px solid #FF6B9D;
+  border: 2px solid #74640a;
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
@@ -166,7 +166,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -184,8 +184,8 @@
 
 .btn-secondary {
   background: white;
-  color: #FF6B9D;
-  border: 2px solid #FF6B9D;
+  color: #74640a;
+  border: 2px solid #74640a;
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 1rem;
@@ -195,7 +195,7 @@
 }
 
 .btn-secondary:hover {
-  background: #FF6B9D;
+  background: #74640a;
   color: white;
   transform: translateY(-2px);
 }
@@ -278,7 +278,7 @@
 
 .score-input {
   padding: 5px 10px;
-  border: 2px solid #FF6B9D;
+  border: 2px solid #74640a;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -655,7 +655,7 @@
 }
 
 .stats strong {
-  color: #FF6B9D;
+  color: #74640a;
   font-size: 1.1rem;
 }
 
@@ -854,7 +854,7 @@
 }
 
 .subject-item:hover {
-  border-color: #FF6B9D;
+  border-color: #74640a;
   transform: translateX(5px);
   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.2);
 }
@@ -914,7 +914,7 @@
 
 .btn-add-subject {
   width: 100%;
-  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  background: linear-gradient(135deg, #74640a 0%, #FFC75F 100%);
   color: white;
   border: none;
   padding: 15px;
