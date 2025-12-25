@@ -421,6 +421,16 @@
   opacity: 0.8;
 }
 
+/* Ensure difficulty labels are readable: dark by default, white when active */
+.difficulty-btn .difficulty-name,
+.difficulty-btn .difficulty-desc {
+  color: #222 !important;
+}
+.difficulty-btn.active .difficulty-name,
+.difficulty-btn.active .difficulty-desc {
+  color: #fff !important;
+}
+
 .start-btn {
   width: 100%;
   max-width: 400px;
