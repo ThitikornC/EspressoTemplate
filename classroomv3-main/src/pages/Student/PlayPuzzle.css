@@ -399,6 +399,32 @@
   box-shadow: 0 12px 35px rgba(255, 107, 157, 0.4);
 }
 
+/* Disable hover effects for difficulty buttons and force black text */
+.difficulty-btn:hover,
+.difficulty-btn:hover::before {
+  border-color: #e0e0e0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.difficulty-btn::before {
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+.difficulty-btn,
+.difficulty-btn .difficulty-name,
+.difficulty-btn .difficulty-desc,
+.difficulty-btn .difficulty-icon {
+  color: #000 !important;
+}
+/* Keep active state visually distinct but ensure readable black text */
+.difficulty-btn.active {
+  border-color: #74640a !important;
+  background: #ffffff !important;
+  color: #000 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
 .difficulty-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
