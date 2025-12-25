@@ -221,6 +221,58 @@
   margin-bottom: 20px;
 }
 
+/* Strong guard for puzzle pages: ensure inner cards and config items render as opaque white
+   and disable any translucent overlays, blend modes, or backdrop filters that show the page tint. */
+.puzzle-setup .setup-card,
+.puzzle-page .setup-card,
+.puzzle-setup .setup-card *,
+.puzzle-page .setup-card *,
+.puzzle-setup .setup-card::before,
+.puzzle-page .setup-card::before,
+.puzzle-setup .setup-card::after,
+.puzzle-page .setup-card::after,
+.puzzle-setup .config-item,
+.puzzle-page .config-item,
+.puzzle-setup .config-item *,
+.puzzle-page .config-item *,
+.puzzle-setup .config-item::before,
+.puzzle-page .config-item::before,
+.puzzle-setup .config-item::after,
+.puzzle-page .config-item::after,
+.puzzle-setup .upload-label,
+.puzzle-page .upload-label,
+.puzzle-setup .upload-label *,
+.puzzle-page .upload-label * {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Remove translucent pseudo-overlay used on config items that can tint content */
+.puzzle-setup .config-item::before,
+.puzzle-page .config-item::before,
+.puzzle-setup .upload-label::after,
+.puzzle-page .upload-label::after {
+  background: none !important;
+  opacity: 0 !important;
+}
+
+/* Make images inside cards opaque so transparent PNGs don't reveal the page background */
+.puzzle-setup .config-item img,
+.puzzle-page .config-item img,
+.puzzle-setup .preview-image,
+.puzzle-page .preview-image,
+.puzzle-setup .upload-placeholder,
+.puzzle-page .upload-placeholder {
+  background-color: #ffffff !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+}
+
 .upload-area {
   width: 100%;
 }

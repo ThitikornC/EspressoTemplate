@@ -49,6 +49,79 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
+/* Ensure innermost cards are pure white and do not blend with page tints */
+.setup-card, .preview-category-card, .modal-content {
+  background-color: #ffffff !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+/* Stronger guard: ensure any descendant or pseudo-element cannot show page tint
+   (covers images with transparency, pseudo overlays, backdrop-filters, and blended backgrounds) */
+.play-category-page .setup-card,
+.play-category-page .setup-card *,
+.play-category-page .setup-card::before,
+.play-category-page .setup-card::after,
+.play-category-page .preview-category-card,
+.play-category-page .preview-category-card *,
+.play-category-page .preview-category-card::before,
+.play-category-page .preview-category-card::after,
+.play-category-page .modal-content,
+.play-category-page .modal-content *,
+.play-category-page .modal-content::before,
+.play-category-page .modal-content::after {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Same strong guard for the category setup page root (`.category-setup`) */
+.category-setup .setup-card,
+.category-setup .setup-card *,
+.category-setup .setup-card::before,
+.category-setup .setup-card::after,
+.category-setup .preview-category-card,
+.category-setup .preview-category-card *,
+.category-setup .preview-category-card::before,
+.category-setup .preview-category-card::after,
+.category-setup .modal-content,
+.category-setup .modal-content *,
+.category-setup .modal-content::before,
+.category-setup .modal-content::after {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure images inside setup cards on category page are opaque white */
+.category-setup .preview-category-card img,
+.category-setup .draggable-item img,
+.category-setup .placed-item img,
+.category-setup .preview-image {
+  background-color: #ffffff !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+}
+
+/* Ensure images inside cards have an opaque white background so transparent PNGs don't show the page tint */
+.play-category-page .preview-category-card img,
+.play-category-page .draggable-item img,
+.play-category-page .placed-item img {
+  background-color: #ffffff !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+}
+
 .info-banner {
   background: linear-gradient(135deg, #FFB347 0%, #74640a 100%);
   color: white;
