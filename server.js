@@ -69,7 +69,37 @@ if (isProduction) {
         console.warn('[STATIC] asset-like request, passing through:', req.path)
         return next()
       }
-      res.sendFile(path.join(studioDistPath, 'index.html'));
+      // Attempt to serve index.html. If the built index references asset filenames
+      // that don't exist on disk (hash mismatch), rewrite the HTML on-the-fly to
+      // point to actual files present in the assets folder. This is a tolerant
+      // fallback to avoid 404s when a partial/old deploy left index.html out of
+      // sync with the hashed asset filenames.
+      const indexPath = path.join(studioDistPath, 'index.html')
+      try {
+        let html = fs.readFileSync(indexPath, 'utf8')
+
+        // Gather available index-*.js and index-*.css from assets
+        const assetsDir = path.join(studioDistPath, 'assets')
+        let files = []
+        try { files = fs.readdirSync(assetsDir) } catch (e) { files = [] }
+
+        const jsFile = files.find(f => /^index-.*\.js$/.test(f))
+        const cssFile = files.find(f => /^index-.*\.css$/.test(f))
+
+        if (jsFile) {
+          html = html.replace(/\/(studio\/)?assets\/index-[A-Za-z0-9_.-]+\.js/g, `/studio/assets/${jsFile}`)
+        }
+        if (cssFile) {
+          html = html.replace(/\/(studio\/)?assets\/index-[A-Za-z0-9_.-]+\.css/g, `/studio/assets/${cssFile}`)
+        }
+
+        res.type('text/html').send(html)
+        return
+      } catch (readErr) {
+        console.warn('[WARN] failed to rewrite index.html:', readErr && readErr.message)
+        // fallback to normal sendFile
+        return res.sendFile(indexPath)
+      }
     } catch (e) {
       console.error('[ERROR] /studio/* fallback', e && e.message)
       next()
