@@ -959,6 +959,31 @@
   color: #000 !important;
 }
 
+/* Aggressive safety: ensure all label elements render black and visible */
+.difficulty-btn .difficulty-name,
+.difficulty-btn .difficulty-desc,
+.difficulty-btn .difficulty-icon,
+.difficulty-btn.active .difficulty-name,
+.difficulty-btn.active .difficulty-desc,
+.difficulty-btn.active .difficulty-icon {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  mix-blend-mode: normal !important;
+  background: transparent !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+}
+
+/* Prevent any pseudo-element overlay from covering the label */
+.difficulty-btn::after,
+.difficulty-btn::before,
+.difficulty-btn .difficulty-name::after,
+.difficulty-btn .difficulty-name::before {
+  background: transparent !important;
+  display: none !important;
+}
+
 
 @media (max-width: 480px) {
   .config-list {
