@@ -939,6 +939,27 @@
   }
 }
 
+/* Final override: ensure selected difficulty button text always remains black */
+.puzzle-setup .difficulty-buttons .difficulty-btn.active,
+.puzzle-page .difficulty-buttons .difficulty-btn.active,
+.puzzle-setup .difficulty-btn.active .difficulty-name,
+.puzzle-setup .difficulty-btn.active .difficulty-desc,
+.puzzle-setup .difficulty-btn.active .difficulty-icon,
+.puzzle-page .difficulty-btn.active .difficulty-name,
+.puzzle-page .difficulty-btn.active .difficulty-desc,
+.puzzle-page .difficulty-btn.active .difficulty-icon {
+  color: #000 !important;
+}
+
+/* Also cover focus/pressed states for highest specificity */
+.puzzle-setup .difficulty-buttons .difficulty-btn.active:focus,
+.puzzle-setup .difficulty-buttons .difficulty-btn.active:active,
+.puzzle-page .difficulty-buttons .difficulty-btn.active:focus,
+.puzzle-page .difficulty-buttons .difficulty-btn.active:active {
+  color: #000 !important;
+}
+
+
 @media (max-width: 480px) {
   .config-list {
     grid-template-columns: 1fr;
