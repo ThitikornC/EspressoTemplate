@@ -457,14 +457,21 @@ function initGame() {
   let correctImagesPool = [...teacherConfig.correctImages];
   let selectedCorrectImages = correctImagesPool.sort(() => Math.random() - 0.5).slice(0, Math.min(maxImages, correctImagesPool.length));
   
-  selectedCorrectImages.forEach((imgData, index) => {
-    createDraggableImage(imgData, `correct-${index}`, true);
-  });
+  // set current round image count BEFORE creating elements so sizing logic knows total
+  // we'll compute after selecting both correct and wrong sets
 
   // สุ่มรูปที่ผิด
   let wrongImagesPool = [...teacherConfig.wrongImages];
   let selectedWrongImages = wrongImagesPool.sort(() => Math.random() - 0.5).slice(0, Math.min(maxImages, wrongImagesPool.length));
   
+  // expose current round count so createDraggableImage can size correctly
+  window.currentRoundImageCount = selectedCorrectImages.length + selectedWrongImages.length;
+  window.imagesPerRowPref = Math.min(6, Math.max(1, Math.ceil(Math.sqrt(window.currentRoundImageCount))));
+
+  selectedCorrectImages.forEach((imgData, index) => {
+    createDraggableImage(imgData, `correct-${index}`, true);
+  });
+
   selectedWrongImages.forEach((imgData, index) => {
     createDraggableImage(imgData, `wrong-${index}`, false);
   });
@@ -509,10 +516,10 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   // คำนวณขนาดรูปให้ยืดหยุ่นตามความกว้างหน้าจอและจำนวนคอลัมน์
   const availableWidth = Math.max(480, window.innerWidth - 100);
   let baseImgW = Math.floor((availableWidth - (imagesPerRow + 1) * gap) / imagesPerRow);
-  // caps ให้ใหญ่ขึ้นตามคำขอ
-  baseImgW = Math.max(90, Math.min(420, baseImgW));
-  // ถ้ารอบรูปเยอะกว่า 4 ให้ขยายขนาดเล็กน้อย แต่ไม่เกิน cap
-  const estimatedImgW = roundCount > 4 ? Math.min(440, Math.floor(baseImgW * 1.12)) : baseImgW;
+  // ปรับ caps ให้เหมาะสม: ไม่เล็กเกินไป และไม่ใหญ่เกินหน้าจอ
+  baseImgW = Math.max(80, Math.min(260, baseImgW));
+  // ถ้ารอบรูปเยอะกว่า 4 ให้ขยายขนาดเล็กน้อย แต่จำกัดที่ reasonable max
+  const estimatedImgW = roundCount > 4 ? Math.min(320, Math.floor(baseImgW * 1.08)) : baseImgW;
   const estimatedImgH = estimatedImgW;
 
   // ตำแหน่งแถวและคอลัมน์
