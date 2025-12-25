@@ -73,3 +73,17 @@ body::before {
 
 /* If a page uses a full-width element with its own gradient, hide it behind the page-theme body background */
 .app-container::before { background: none !important; }
+
+/* Student pages override: ensure Student area uses catagoly warm gradient */
+.coloring-page,
+.coloring-setup,
+.puzzle-page,
+.puzzle-setup,
+.category-setup {
+  background: linear-gradient(to bottom, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%) !important;
+}
+
+/* if pages use a full-width inner container, ensure it appears on the warm background */
+.coloring-container, .setup-container, .setup-card {
+  background: transparent !important;
+}
