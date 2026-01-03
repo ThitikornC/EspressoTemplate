@@ -699,7 +699,8 @@
         <div class="ClientNo">Expiration Date : 1-12-25</div>
       </div>
       <div class="ClientName_Container neon scroll-reveal">
-        <div class="ClientName">Usernumber : No.001</div>
+        <div class="ClientName">Active User : <span id="active-user-box">0</span></div>
+        <div class="ClientName">Total User : <span id="total-user-box">0</span></div>
       </div>
     </div>
 
@@ -766,6 +767,11 @@ async function fetchUserStats(){
     if(dc) dc.textContent = 'จำนวนผู้ใช้งานที่กำลัง active (distinct clientIds): ' + (data.distinctActiveClientIds ?? 0);
     if(dd) dd.textContent = 'ผู้ใช้วันนี้ (unique): ' + (data.dailyUniqueToday ?? 0);
     if(ev) ev.textContent = 'ผู้ใช้ทั้งหมดที่เคยเข้ามา: ' + (data.totalEverUsers ?? 0);
+    // Update right box
+    const activeBox = document.getElementById('active-user-box');
+    const totalBox = document.getElementById('total-user-box');
+    if(activeBox) activeBox.textContent = data.distinctActiveClientIds ?? 0;
+    if(totalBox) totalBox.textContent = data.totalEverUsers ?? 0;
   }catch(e){
     // ignore
   }
