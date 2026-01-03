@@ -1284,7 +1284,8 @@ app.post('/api/game-results', async (req, res) => {
       wrongAnswers,    // จำนวนตอบผิด
       percentage,      // เปอร์เซ็นต์
       duration,        // ระยะเวลาเล่น (ms)
-      config           // config ทั้งหมด (optional)
+      config,          // config ทั้งหมด (optional)
+      reportImage      // รูปรายงาน PNG base64 (optional)
     } = req.body || {}
     
     const now = new Date()
@@ -1305,6 +1306,7 @@ app.post('/api/game-results', async (req, res) => {
       percentage: typeof percentage === 'number' ? percentage : 0,
       duration_ms: typeof duration === 'number' ? duration : null,
       config: config || null,
+      report_image: reportImage || null, // PNG base64
       day,
       created_at: now.toISOString(),
       timestamp: now
