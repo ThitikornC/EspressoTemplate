@@ -93,6 +93,56 @@ let currentQuestionIndex = 0;
 let correctAnswers = 0;
 let wrongAnswers = 0;
 let questions = [];
+let gameStartTime = null; // เวลาเริ่มเล่น
+
+// ฟังก์ชันบันทึกผลเกมอัตโนมัติลง DB
+async function autoSaveGameResult() {
+  try {
+    // ดึง clientId จาก localStorage หรือ cookie
+    let clientId = localStorage.getItem('huaroa_client_id');
+    if (!clientId) {
+      // สร้าง clientId ใหม่ถ้าไม่มี
+      clientId = 'c-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+      localStorage.setItem('huaroa_client_id', clientId);
+    }
+    
+    const endTime = Date.now();
+    const duration = gameStartTime ? (endTime - gameStartTime) : null;
+    const percentage = Math.round((correctAnswers / questions.length) * 100);
+    
+    const payload = {
+      clientId,
+      gameType: 'gamethai',
+      topic: teacherConfig.topic || null,
+      unit: teacherConfig.unit || null,
+      week: teacherConfig.week || null,
+      teacher: teacherConfig.teacher || null,
+      userName: teacherConfig.userName || null,
+      score: correctAnswers,
+      totalQuestions: questions.length,
+      correctAnswers: correctAnswers,
+      wrongAnswers: wrongAnswers,
+      percentage: percentage,
+      duration: duration,
+      config: teacherConfig
+    };
+    
+    const response = await fetch('/api/game-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      console.log('[AutoSave] Game result saved:', result.resultId);
+    } else {
+      console.warn('[AutoSave] Failed to save game result:', result.message);
+    }
+  } catch (e) {
+    console.error('[AutoSave] Error saving game result:', e);
+  }
+}
 
 // โหลดค่าจาก localStorage
 window.onload = function() {
@@ -108,6 +158,8 @@ window.onload = function() {
   
   document.getElementById('topicDisplay').textContent = teacherConfig.topic || 'ภาษาไทย';
   
+  // บันทึกเวลาเริ่มเล่น
+  gameStartTime = Date.now();
   
   loadQuestion();
 };
@@ -186,6 +238,9 @@ function showCompletion() {
   const percentage = Math.round((correctAnswers / questions.length) * 100);
   document.getElementById('percentageDisplay').textContent = `${percentage}%`;
   document.getElementById('completionScore').textContent = `คะแนน: ${correctAnswers}/${questions.length}`;
+  
+  // บันทึกผลเกมอัตโนมัติลง DB
+  autoSaveGameResult();
   
   // แสดง Popup
   setTimeout(() => {

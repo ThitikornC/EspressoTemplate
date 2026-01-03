@@ -226,6 +226,57 @@ let score = 0;
 let gameStarted = false;
 // usage tracking id for this page session
 let __localUsageId = null;
+let gameStartTime = null; // เวลาเริ่มเล่น
+
+// ฟังก์ชันบันทึกผลเกมอัตโนมัติลง DB
+async function autoSaveGameResult() {
+  try {
+    // ดึง clientId จาก localStorage หรือ cookie
+    let clientId = localStorage.getItem('huaroa_client_id');
+    if (!clientId) {
+      // สร้าง clientId ใหม่ถ้าไม่มี
+      clientId = 'c-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+      localStorage.setItem('huaroa_client_id', clientId);
+    }
+    
+    const endTime = Date.now();
+    const duration = gameStartTime ? (endTime - gameStartTime) : null;
+    const totalImages = (teacherConfig.correctImages?.length || 0) + (teacherConfig.wrongImages?.length || 0);
+    const percentage = totalImages > 0 ? Math.round((score / (teacherConfig.correctImages?.length || 1)) * 100) : 0;
+    
+    const payload = {
+      clientId,
+      gameType: 'gamepicture',
+      topic: teacherConfig.mainTopic || teacherConfig.topic || null,
+      unit: teacherConfig.unit || null,
+      week: teacherConfig.week || null,
+      teacher: teacherConfig.teacher || null,
+      userName: teacherConfig.userName || null,
+      score: score,
+      totalQuestions: teacherConfig.correctImages?.length || 0,
+      correctAnswers: score,
+      wrongAnswers: 0, // gamepicture ไม่นับผิด
+      percentage: Math.min(100, percentage),
+      duration: duration,
+      config: teacherConfig
+    };
+    
+    const response = await fetch('/api/game-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      console.log('[AutoSave] Game result saved:', result.resultId);
+    } else {
+      console.warn('[AutoSave] Failed to save game result:', result.message);
+    }
+  } catch (e) {
+    console.error('[AutoSave] Error saving game result:', e);
+  }
+}
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
@@ -449,6 +500,9 @@ function initGame() {
   createdImages = {};
   score = 0;
   document.getElementById('score').innerText = score;
+  
+  // บันทึกเวลาเริ่มเล่น
+  gameStartTime = Date.now();
 
   // จำกัดจำนวนรูปที่แสดง (ถ้ามีรูปเยอะก็สุ่ม 5 รูป)
   const maxImages = 10;
@@ -659,6 +713,9 @@ function checkEndGame() {
     // Update the popup content
     finalScore.innerText = score;
     resultMessage.innerText = score > 0 ? '🎉 ยินดีด้วย! คุณทำได้ดีมาก 🎉' : '😢 ลองใหม่อีกครั้งนะ 😢';
+
+    // บันทึกผลเกมอัตโนมัติลง DB
+    autoSaveGameResult();
 
     // Try to end usage for this page/section (if usageTracker available)
     try {

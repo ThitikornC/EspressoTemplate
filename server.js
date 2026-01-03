@@ -360,6 +360,7 @@ let dailyPageUsersColl
 let dailyPageCountsColl
 let dailyPageViewsColl
 let userStatsColl // collection for persistent user stats (total users, etc.)
+let gameResultsColl // collection for game results/reports
 const pageUsageColls = new Map()
 
 function safeCollectionNameForPage(page) {
@@ -405,6 +406,8 @@ try {
   feedbacksColl = mdb.collection('feedbacks')
   // user_stats collection for persistent total user count
   userStatsColl = mdb.collection('user_stats')
+  // game_results collection for storing game reports automatically
+  gameResultsColl = mdb.collection('game_results')
   await sessionsColl.createIndex({ client_id: 1 })
   if (usageColl) {
     await usageColl.createIndex({ client_id: 1 })
@@ -420,6 +423,13 @@ try {
   }
   if (dailyPageViewsColl) {
     await dailyPageViewsColl.createIndex({ page: 1, day: 1 }, { unique: true })
+  }
+  // ensure indexes for game_results
+  if (gameResultsColl) {
+    await gameResultsColl.createIndex({ client_id: 1 })
+    await gameResultsColl.createIndex({ game_type: 1 })
+    await gameResultsColl.createIndex({ created_at: -1 })
+    await gameResultsColl.createIndex({ day: 1 })
   }
   // ensure unique index on client_id + day
   await dailyUsersColl.createIndex({ client_id: 1, day: 1 }, { unique: true })
@@ -1249,6 +1259,136 @@ app.post('/api/user-stats/increment', async (req, res) => {
   } catch (e) {
     console.error('[ERROR] /api/user-stats/increment', e)
     res.status(500).json({ success: false, message: 'Failed to increment total users' })
+  }
+})
+
+// ===== GAME RESULTS API =====
+// บันทึกผลเกมอัตโนมัติเมื่อเล่นเสร็จ (ไม่ต้องกด download)
+app.post('/api/game-results', async (req, res) => {
+  try {
+    if (!gameResultsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    
+    const {
+      clientId,
+      gameType,        // 'gamethai', 'gamepicture', 'gamemath'
+      topic,           // หัวข้อกิจกรรม
+      unit,            // หน่วยการเรียนรู้
+      week,            // สัปดาห์ที่
+      teacher,         // ครูผู้รับผิดชอบ
+      userName,        // ชื่อผู้เล่น (ถ้ามี)
+      score,           // คะแนนที่ได้
+      totalQuestions,  // จำนวนคำถามทั้งหมด
+      correctAnswers,  // จำนวนตอบถูก
+      wrongAnswers,    // จำนวนตอบผิด
+      percentage,      // เปอร์เซ็นต์
+      duration,        // ระยะเวลาเล่น (ms)
+      config           // config ทั้งหมด (optional)
+    } = req.body || {}
+    
+    const now = new Date()
+    const day = now.toISOString().slice(0, 10)
+    
+    const doc = {
+      client_id: clientId || null,
+      game_type: gameType || 'unknown',
+      topic: topic || null,
+      unit: unit || null,
+      week: week || null,
+      teacher: teacher || null,
+      user_name: userName || null,
+      score: typeof score === 'number' ? score : 0,
+      total_questions: typeof totalQuestions === 'number' ? totalQuestions : 0,
+      correct_answers: typeof correctAnswers === 'number' ? correctAnswers : 0,
+      wrong_answers: typeof wrongAnswers === 'number' ? wrongAnswers : 0,
+      percentage: typeof percentage === 'number' ? percentage : 0,
+      duration_ms: typeof duration === 'number' ? duration : null,
+      config: config || null,
+      day,
+      created_at: now.toISOString(),
+      timestamp: now
+    }
+    
+    const result = await gameResultsColl.insertOne(doc)
+    console.log(`[DEBUG] Game result saved: ${gameType} - score ${score}/${totalQuestions} - ${result.insertedId}`)
+    
+    res.json({ 
+      success: true, 
+      resultId: result.insertedId.toString(),
+      message: 'Game result saved successfully'
+    })
+  } catch (e) {
+    console.error('[ERROR] /api/game-results', e)
+    res.status(500).json({ success: false, message: 'Failed to save game result' })
+  }
+})
+
+// ดึงผลเกมตาม clientId หรือ gameType (สำหรับดูรายงาน)
+app.get('/api/game-results', async (req, res) => {
+  try {
+    if (!gameResultsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    
+    const { clientId, gameType, day, limit } = req.query
+    const query = {}
+    
+    if (clientId) query.client_id = clientId
+    if (gameType) query.game_type = gameType
+    if (day) query.day = day
+    
+    const maxLimit = Math.min(parseInt(limit) || 100, 500)
+    
+    const results = await gameResultsColl
+      .find(query)
+      .sort({ created_at: -1 })
+      .limit(maxLimit)
+      .toArray()
+    
+    res.json({ success: true, results, count: results.length })
+  } catch (e) {
+    console.error('[ERROR] GET /api/game-results', e)
+    res.status(500).json({ success: false, message: 'Failed to get game results' })
+  }
+})
+
+// สรุปผลเกมรายวัน
+app.get('/api/game-results/summary', async (req, res) => {
+  try {
+    if (!gameResultsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    
+    const { day, gameType } = req.query
+    const targetDay = day || new Date().toISOString().slice(0, 10)
+    
+    const matchQuery = { day: targetDay }
+    if (gameType) matchQuery.game_type = gameType
+    
+    const summary = await gameResultsColl.aggregate([
+      { $match: matchQuery },
+      { $group: {
+        _id: '$game_type',
+        totalPlays: { $sum: 1 },
+        avgScore: { $avg: '$percentage' },
+        totalCorrect: { $sum: '$correct_answers' },
+        totalWrong: { $sum: '$wrong_answers' },
+        avgDuration: { $avg: '$duration_ms' }
+      }}
+    ]).toArray()
+    
+    const totalPlays = await gameResultsColl.countDocuments(matchQuery)
+    
+    res.json({ 
+      success: true, 
+      day: targetDay,
+      totalPlays,
+      byGameType: summary 
+    })
+  } catch (e) {
+    console.error('[ERROR] /api/game-results/summary', e)
+    res.status(500).json({ success: false, message: 'Failed to get summary' })
   }
 })
 

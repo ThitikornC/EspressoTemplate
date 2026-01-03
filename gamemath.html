@@ -269,6 +269,59 @@ let gameStarted = false;
 let currentQuestionIndex = 0;
 let allQuestions = [];
 let playCount = 1; // นับจำนวนครั้งที่เล่น
+let gameStartTime = null; // เวลาเริ่มเล่น
+let totalCorrectAnswers = 0; // จำนวนตอบถูก
+let totalWrongAnswers = 0; // จำนวนตอบผิด
+
+// ฟังก์ชันบันทึกผลเกมอัตโนมัติลง DB
+async function autoSaveGameResult() {
+  try {
+    // ดึง clientId จาก localStorage หรือ cookie
+    let clientId = localStorage.getItem('huaroa_client_id');
+    if (!clientId) {
+      // สร้าง clientId ใหม่ถ้าไม่มี
+      clientId = 'c-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36);
+      localStorage.setItem('huaroa_client_id', clientId);
+    }
+    
+    const endTime = Date.now();
+    const duration = gameStartTime ? (endTime - gameStartTime) : null;
+    const totalQuestions = allQuestions.length || 1;
+    const percentage = Math.round((score / totalQuestions) * 100);
+    
+    const payload = {
+      clientId,
+      gameType: 'gamemath',
+      topic: teacherConfig.topic || null,
+      unit: teacherConfig.unit || null,
+      week: teacherConfig.week || null,
+      teacher: teacherConfig.teacher || null,
+      userName: teacherConfig.userName || null,
+      score: score,
+      totalQuestions: totalQuestions,
+      correctAnswers: totalCorrectAnswers,
+      wrongAnswers: totalWrongAnswers,
+      percentage: percentage,
+      duration: duration,
+      config: teacherConfig
+    };
+    
+    const response = await fetch('/api/game-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      console.log('[AutoSave] Game result saved:', result.resultId);
+    } else {
+      console.warn('[AutoSave] Failed to save game result:', result.message);
+    }
+  } catch (e) {
+    console.error('[AutoSave] Error saving game result:', e);
+  }
+}
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
@@ -525,11 +578,13 @@ function checkDrop(answerDiv, answerId, isCorrect) {
       // ใส่คำตอบถูกในช่อง = ถูกต้อง! ได้คะแนนและไปโจทย์ถัดไป
       showFeedback(true);
       score += 1;
+      totalCorrectAnswers += 1;
       document.getElementById('score').innerText = score;
       setTimeout(() => nextQuestion(), 800);
     } else {
       // ใส่คำตอบผิดในช่อง = ผิด! สคิปไปข้อถัดไปโดยไม่ได้คะแนน
       showFeedback(false);
+      totalWrongAnswers += 1;
       setTimeout(() => nextQuestion(), 800);
     }
   }
@@ -565,6 +620,9 @@ function endGame(message, color) {
   document.getElementById('resultMessage').style.color = color;
   document.getElementById('finalScore').innerText = `${score}/${allQuestions.length}`;
   document.getElementById('scorePopup').style.display = 'block';
+  
+  // บันทึกผลเกมอัตโนมัติลง DB
+  autoSaveGameResult();
 }
 
 // ตรวจสอบจบเกม (กรณีหมดคำตอบ)
@@ -1188,7 +1246,12 @@ function initGame() {
 
   score = 0;
   currentQuestionIndex = 0;
+  totalCorrectAnswers = 0;
+  totalWrongAnswers = 0;
   document.getElementById('score').innerText = score;
+  
+  // บันทึกเวลาเริ่มเล่น
+  gameStartTime = Date.now();
   
   // โหลดโจทย์แรก
   loadQuestion(0);
