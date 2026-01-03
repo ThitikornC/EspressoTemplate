@@ -789,6 +789,13 @@ if(window.io){
       const el = document.getElementById('user-count');
       if(el) el.textContent = 'จำนวนเชื่อมต่อ (connections): ' + count;
     });
+    // Listen for realtime user stats update
+    s.on('userStats:update', function(data){
+      const totalBox = document.getElementById('total-user-box');
+      if(totalBox && data && typeof data.totalUsers === 'number') {
+        totalBox.textContent = data.totalUsers;
+      }
+    });
   }catch(e){}
 }
 </script>

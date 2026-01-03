@@ -359,6 +359,7 @@ let mdb
 let dailyPageUsersColl
 let dailyPageCountsColl
 let dailyPageViewsColl
+let userStatsColl // collection for persistent user stats (total users, etc.)
 const pageUsageColls = new Map()
 
 function safeCollectionNameForPage(page) {
@@ -402,6 +403,8 @@ try {
   // daily page views: total visits per page per day
   dailyPageViewsColl = mdb.collection('daily_page_views')
   feedbacksColl = mdb.collection('feedbacks')
+  // user_stats collection for persistent total user count
+  userStatsColl = mdb.collection('user_stats')
   await sessionsColl.createIndex({ client_id: 1 })
   if (usageColl) {
     await usageColl.createIndex({ client_id: 1 })
@@ -429,6 +432,98 @@ try {
   dailyUsersColl = null
   sessionsColl = null
   usageColl = null
+}
+
+// ===== USER STATS TRACKING (Persistent Total User Counter) =====
+// This tracks total unique users that have ever visited
+// Collection: user_stats with documents like { _id: 'global', totalUsers: 123 }
+// Also tracks each unique client_id in 'unique_users' collection
+
+let uniqueUsersColl
+try {
+  if (mdb) {
+    uniqueUsersColl = mdb.collection('unique_users')
+    await uniqueUsersColl.createIndex({ client_id: 1 }, { unique: true })
+    console.log('[DEBUG] unique_users collection initialized')
+  }
+} catch (e) {
+  console.error('[WARN] Failed to init unique_users collection', e && e.message)
+}
+
+// Record a unique user (increment total if new)
+async function recordUniqueUser(clientId) {
+  if (!clientId) return { isNew: false, totalUsers: 0 }
+  if (!uniqueUsersColl || !userStatsColl) return { isNew: false, totalUsers: 0 }
+  
+  try {
+    const createdAt = new Date().toISOString()
+    
+    // Try to insert unique user
+    const upsertRes = await uniqueUsersColl.updateOne(
+      { client_id: clientId },
+      { $setOnInsert: { created_at: createdAt, first_seen: createdAt }, $set: { last_seen: createdAt } },
+      { upsert: true }
+    )
+    
+    const isNew = Boolean(
+      (upsertRes.upsertedId && Object.keys(upsertRes.upsertedId).length > 0) ||
+      (upsertRes.upsertedCount && upsertRes.upsertedCount > 0)
+    )
+    
+    // If new user, increment total counter
+    if (isNew) {
+      await userStatsColl.updateOne(
+        { _id: 'global' },
+        { $inc: { totalUsers: 1 }, $setOnInsert: { created_at: createdAt } },
+        { upsert: true }
+      )
+      console.log(`[DEBUG] New unique user recorded: ${clientId}`)
+      
+      // Emit realtime update
+      try {
+        const stats = await userStatsColl.findOne({ _id: 'global' })
+        if (io) io.emit('userStats:update', { totalUsers: stats?.totalUsers || 0 })
+      } catch (e) {}
+    }
+    
+    // Get current total
+    const stats = await userStatsColl.findOne({ _id: 'global' })
+    return { isNew, totalUsers: stats?.totalUsers || 0 }
+  } catch (e) {
+    console.error('[WARN] recordUniqueUser failed', e && e.message)
+    return { isNew: false, totalUsers: 0 }
+  }
+}
+
+// Get current user stats
+async function getUserStats() {
+  try {
+    const activeUsers = clientIdMap.size // distinct active clientIds
+    let totalUsers = 0
+    
+    if (userStatsColl) {
+      const stats = await userStatsColl.findOne({ _id: 'global' })
+      totalUsers = stats?.totalUsers || 0
+    }
+    
+    // Fallback: if totalUsers is 0, count from unique_users collection
+    if (totalUsers === 0 && uniqueUsersColl) {
+      totalUsers = await uniqueUsersColl.countDocuments()
+      // Initialize the counter if not set
+      if (totalUsers > 0 && userStatsColl) {
+        await userStatsColl.updateOne(
+          { _id: 'global' },
+          { $set: { totalUsers }, $setOnInsert: { created_at: new Date().toISOString() } },
+          { upsert: true }
+        )
+      }
+    }
+    
+    return { activeUsers, totalUsers }
+  } catch (e) {
+    console.error('[ERROR] getUserStats failed', e && e.message)
+    return { activeUsers: clientIdMap.size, totalUsers: 0 }
+  }
 }
 
 async function recordDailyUser(clientId) {
@@ -643,6 +738,8 @@ io.on("connection", (socket) => {
     try {
       if (clientId) {
         recordDailyUser(clientId)
+        // Record unique user for total count (persistent)
+        recordUniqueUser(clientId)
         // add mapping clientId -> socket.id
         const set = clientIdMap.get(clientId) || new Set()
         set.add(socket.id)
@@ -1060,6 +1157,13 @@ app.get("/status/active-clients", async (req, res) => {
     try {
       if (dailyUsersColl) {
         dailyUniqueToday = await dailyUsersColl.countDocuments({ day: today })
+      }
+      // Use persistent user stats for total
+      const stats = await getUserStats()
+      totalEverUsers = stats.totalUsers
+      
+      // Fallback to distinct count if persistent stats not available
+      if (totalEverUsers === 0 && dailyUsersColl) {
         const distinct = await dailyUsersColl.distinct('client_id')
         totalEverUsers = Array.isArray(distinct) ? distinct.length : 0
       }
@@ -1080,6 +1184,71 @@ app.get("/status/active-clients", async (req, res) => {
       success: false,
       message: "เกิดข้อผิดพลาดในการดึงข้อมูลจำนวนผู้ใช้งาน (status)",
     })
+  }
+})
+
+// ===== USER STATS API =====
+// Get user stats (active + total)
+app.get('/api/user-stats', async (req, res) => {
+  try {
+    const stats = await getUserStats()
+    res.json({
+      success: true,
+      activeUsers: stats.activeUsers,
+      totalUsers: stats.totalUsers,
+      timestamp: new Date().toISOString()
+    })
+  } catch (e) {
+    console.error('[ERROR] /api/user-stats', e)
+    res.status(500).json({ success: false, message: 'Failed to get user stats' })
+  }
+})
+
+// Manually set total users (admin use)
+app.post('/api/user-stats/set-total', async (req, res) => {
+  try {
+    const { totalUsers } = req.body || {}
+    if (typeof totalUsers !== 'number' || totalUsers < 0) {
+      return res.status(400).json({ success: false, message: 'totalUsers must be a positive number' })
+    }
+    if (!userStatsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    await userStatsColl.updateOne(
+      { _id: 'global' },
+      { $set: { totalUsers }, $setOnInsert: { created_at: new Date().toISOString() } },
+      { upsert: true }
+    )
+    // Emit update
+    if (io) io.emit('userStats:update', { totalUsers })
+    res.json({ success: true, totalUsers })
+  } catch (e) {
+    console.error('[ERROR] /api/user-stats/set-total', e)
+    res.status(500).json({ success: false, message: 'Failed to set total users' })
+  }
+})
+
+// Increment total users manually (admin use)
+app.post('/api/user-stats/increment', async (req, res) => {
+  try {
+    const { amount } = req.body || {}
+    const inc = typeof amount === 'number' ? amount : 1
+    if (!userStatsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    await userStatsColl.updateOne(
+      { _id: 'global' },
+      { $inc: { totalUsers: inc }, $setOnInsert: { created_at: new Date().toISOString() } },
+      { upsert: true }
+    )
+    const stats = await userStatsColl.findOne({ _id: 'global' })
+    const totalUsers = stats?.totalUsers || 0
+    // Emit update
+    if (io) io.emit('userStats:update', { totalUsers })
+    res.json({ success: true, totalUsers })
+  } catch (e) {
+    console.error('[ERROR] /api/user-stats/increment', e)
+    res.status(500).json({ success: false, message: 'Failed to increment total users' })
   }
 })
 
