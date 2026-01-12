@@ -711,25 +711,63 @@
         }
 
         async function exportToPNG() {
-            // Capture the main card+charts area
             const el = document.getElementById('captureAreaDashboard');
-            if (!el) {
-                alert('ไม่พบพื้นที่สำหรับส่งออก');
-                return;
-            }
+            if (!el) { alert('ไม่พบพื้นที่สำหรับส่งออก'); return; }
 
-            // Temporarily expand capture area to include charts section (if collapsed)
-            const prevScroll = window.scrollY;
+            // Save previous styles to restore later
+            const bodyStyle = document.body.style.overflow;
+            const aside = document.querySelector('aside');
+            const asideDisplay = aside ? aside.style.display : null;
+            const globalToggle = document.getElementById('globalSidebarToggle');
+            const mobileToggle = document.getElementById('mobileToggleBtn');
+            const contentSection = document.getElementById('contentSection');
+            const captureStyle = el.style.cssText;
+
+            // prepare for full capture; force a desktop-width layout so export matches desktop size
             try {
-                // Wait a tick for layout
-                await new Promise(r => setTimeout(r, 50));
+                // show full content and hide side controls
+                document.body.style.overflow = 'visible';
+                if (aside) aside.style.display = 'none';
+                if (globalToggle) globalToggle.style.display = 'none';
+                if (mobileToggle) mobileToggle.style.display = 'none';
+                if (contentSection) contentSection.style.overflow = 'visible';
 
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    scrollY: -window.scrollY
-                });
+                // Save and then set width to a desktop target (e.g., 1200px)
+                const prevMaxWidth = el.style.maxWidth || '';
+                const prevWidth = el.style.width || '';
+                const prevPadding = el.style.padding || '';
+                const prevMargin = el.style.margin || '';
+                el.style.maxWidth = '1200px';
+                el.style.width = '1200px';
+                el.style.padding = '0';
+                el.style.margin = '0 auto';
+
+                // expand history table container so all rows are visible in the capture
+                const historyWrapper = document.getElementById('historyTableBody') ? document.getElementById('historyTableBody').parentElement : null;
+                let historyPrev = null;
+                if (historyWrapper) {
+                    historyPrev = { overflow: historyWrapper.style.overflow, height: historyWrapper.style.height, maxHeight: historyWrapper.style.maxHeight };
+                    historyWrapper.style.overflow = 'visible';
+                    historyWrapper.style.height = 'auto';
+                    historyWrapper.style.maxHeight = 'none';
+                }
+
+                // ensure charts are resized to new layout
+                try {
+                    Object.keys(chartInstances || {}).forEach(k => {
+                        const c = chartInstances[k]; if (c && typeof c.resize === 'function') c.resize();
+                        if (c && typeof c.update === 'function') c.update();
+                    });
+                } catch(e) { /* ignore */ }
+
+                // wait for layout & canvases to settle
+                await new Promise(r => setTimeout(r, 300));
+
+                // capture at a fixed desktop pixel width by telling html2canvas to use a higher scale
+                const targetScale = 2; // keeps good quality for 1200px
+                const canvas = await html2canvas(el, { scale: targetScale, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 });
+
+                await new Promise(r => setTimeout(r, 50));
 
                 canvas.toBlob((blob) => {
                     if (!blob) { alert('สร้างรูปภาพล้มเหลว'); return; }
@@ -742,11 +780,32 @@
                     a.remove();
                     URL.revokeObjectURL(url);
                 }, 'image/png', 1.0);
+
+                // restore element sizing
+                el.style.maxWidth = prevMaxWidth;
+                el.style.width = prevWidth;
+                el.style.padding = prevPadding;
+                el.style.margin = prevMargin;
+
             } catch (err) {
                 console.error('exportToPNG failed', err);
                 alert('ไม่สามารถส่งออกเป็น PNG ได้: ' + (err && err.message));
             } finally {
-                window.scrollTo(0, prevScroll);
+                // restore styles
+                document.body.style.overflow = bodyStyle || '';
+                if (aside) aside.style.display = asideDisplay || '';
+                if (globalToggle) globalToggle.style.display = '';
+                if (mobileToggle) mobileToggle.style.display = '';
+                if (contentSection) contentSection.style.overflow = '';
+                el.style.cssText = captureStyle || '';
+                // restore history wrapper
+                try {
+                    if (historyWrapper && historyPrev) {
+                        historyWrapper.style.overflow = historyPrev.overflow || '';
+                        historyWrapper.style.height = historyPrev.height || '';
+                        historyWrapper.style.maxHeight = historyPrev.maxHeight || '';
+                    }
+                } catch(e) { /* ignore */ }
             }
         }
         
