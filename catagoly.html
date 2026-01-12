@@ -27,6 +27,25 @@
       }
       /* Keep inner text readable on small screens */
       .container .neon-btn span, .container .neon-btn { font-size: clamp(1rem, 2.2vw, 1.25rem) !important; }
+      /* Mobile: make contact button flow-friendly and touchable when moved under SmartTrack */
+      @media (max-width: 768px) {
+        #contactButton {
+          position: static !important;
+          right: auto !important;
+          bottom: auto !important;
+          display: block !important;
+          /* match the container .neon-btn sizing so contact looks identical */
+          width: clamp(200px, 32vw, 360px) !important;
+          min-height: clamp(72px, 9vh, 104px) !important;
+          max-width: 420px !important;
+          margin: 12px auto !important;
+          padding: clamp(16px, 3vh, 28px) clamp(10px, 2.2vw, 16px) !important;
+          font-size: clamp(1rem, 2.2vw, 1.25rem) !important;
+          border-radius: 9999px !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.32) !important;
+          z-index: 9999 !important;
+        }
+      }
     </style>
 </head>
 <body>
@@ -98,6 +117,51 @@
 <button id="contactButton" title="ติดต่อ" class="neon-btn" style="position: fixed; bottom: 32px; right: 32px; z-index: 9999;">
 ติดต่อ
 </button>
+
+<script>
+// Move the contact button to appear immediately after the SmartTrack button on small screens
+(function(){
+  const MOBILE_QUERY = '(max-width: 768px)';
+  const mq = window.matchMedia(MOBILE_QUERY);
+  const contact = document.getElementById('contactButton');
+  const smart = document.getElementById('smartTrackBtn');
+
+  function moveContact() {
+    if(!contact || !smart) return;
+    if(mq.matches) {
+      // insert contact button right after smartTrackBtn
+      const parent = smart.parentNode;
+      parent.insertBefore(contact, smart.nextSibling);
+      // ensure styles suitable for flow
+      contact.style.position = 'static';
+      contact.style.right = 'auto';
+      contact.style.bottom = 'auto';
+      contact.style.display = 'block';
+      contact.style.width = 'calc(100% - 48px)';
+      contact.style.maxWidth = '420px';
+      contact.style.margin = '12px auto';
+      contact.style.zIndex = '9999';
+    } else {
+      // restore fixed position at bottom-right
+      document.body.appendChild(contact);
+      contact.style.position = 'fixed';
+      contact.style.right = '32px';
+      contact.style.bottom = '32px';
+      contact.style.width = '';
+      contact.style.maxWidth = '';
+      contact.style.margin = '';
+      contact.style.minHeight = '';
+      contact.style.padding = '';
+      contact.style.fontSize = '';
+      contact.style.borderRadius = '';
+      contact.style.boxShadow = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', moveContact);
+  try { mq.addListener(moveContact); } catch(e) { /* ignore */ }
+})();
+</script>
 
 <script>
 // Long press for Smart Check info
