@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ระบบประเมินการเจริญเติบโต (เกณฑ์ตามเอกสารแนบ)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+        .list-item { transition: all 0.2s; }
+        .list-item.active { background-color: #eff6ff; border-left: 4px solid #3b82f6; }
+        
+        /* Pill Badges - สีตามตัวอย่าง */
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            white-space: nowrap;
+        }
+        /* แดง (มีปัญหา) */
+        .status-red { background-color: #ffe4e6; color: #e11d48; } 
+        /* ส้ม (เสี่ยง/ค่อนข้าง) */
+        .status-orange { background-color: #ffedd5; color: #c2410c; }
+        /* เหลือง (ท้วม - เฉพาะกราฟรูปร่าง) */
+        .status-yellow { background-color: #fef9c3; color: #a16207; } 
+        /* เขียว (ปกติ) */
+        .status-green { background-color: #dcfce7; color: #15803d; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden flex flex-col lg:flex-row">
+
+    <aside class="w-full lg:w-[350px] bg-white border-r border-gray-200 flex flex-col h-full z-20 shadow-lg lg:shadow-none">
+        <div class="p-5 border-b bg-white flex justify-between items-center sticky top-0">
+            <h2 class="font-bold text-xl text-gray-800">รายชื่อเด็ก</h2>
+            <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-full shadow transition-all flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                เพิ่ม
+            </button>
+        </div>
+        <div class="p-3 bg-gray-50 border-b">
+            <input id="searchName" placeholder="🔍 ค้นหาชื่อ..." class="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+        </div>
+        <div id="childrenList" class="flex-1 overflow-y-auto p-2 space-y-1 bg-gray-50"></div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div id="contentSection" class="flex-1 overflow-y-auto p-4 lg:p-8 pb-20 hidden">
+            
+            <div id="captureAreaDashboard" class="max-w-5xl mx-auto space-y-8">
+
+                <div class="flex justify-center">
+                    <div class="bg-white rounded-[2rem] shadow-xl p-8 w-full max-w-md text-center border border-gray-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-10 -mt-10 opacity-50 pointer-events-none"></div>
+
+                        <h2 class="text-xl font-bold text-gray-800 mb-1">ผลการประเมินการเจริญเติบโต</h2>
+                        <p class="text-gray-400 text-sm mb-6" id="cardDate">-</p>
+
+                        <div class="flex flex-col items-center mb-6">
+                            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-5xl mb-3 shadow-inner border-4 border-white relative">
+                                <img id="cardThumb" src="" class="w-full h-full object-cover rounded-full hidden">
+                                <span id="cardThumbPlaceholder">👶</span>
+                            </div>
+                            <div class="text-4xl font-bold text-blue-600 mb-1" id="cardBigNumber">0</div>
+                            <div class="text-gray-500 font-medium" id="cardAgeText">อายุ - ปี - เดือน</div>
+                        </div>
+
+                        <div class="flex gap-4 mb-8">
+                            <div class="flex-1 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                <div class="text-gray-400 text-sm mb-1">น้ำหนัก</div>
+                                <div class="text-2xl font-bold text-gray-800"><span id="cardWeight">-</span> <span class="text-sm font-normal text-gray-500">กก.</span></div>
+                            </div>
+                            <div class="flex-1 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                <div class="text-gray-400 text-sm mb-1">ส่วนสูง</div>
+                                <div class="text-2xl font-bold text-gray-800"><span id="cardHeight">-</span> <span class="text-sm font-normal text-gray-500">ซม.</span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 text-left">
+                            <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                                <span class="text-gray-600 font-medium">น้ำหนักตามเกณฑ์ส่วนสูง</span>
+                                <span id="badgeWH" class="status-pill status-red">รอผล</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                                <span class="text-gray-600 font-medium">ส่วนสูงตามเกณฑ์อายุ</span>
+                                <span id="badgeHA" class="status-pill status-green">รอผล</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                                <span class="text-gray-600 font-medium">น้ำหนักตามเกณฑ์อายุ</span>
+                                <span id="badgeWA" class="status-pill status-red">รอผล</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 text-xs text-gray-300">เกณฑ์อ้างอิง: จากไฟล์ PDF ที่กำหนด</div>
+                        
+                        <div class="mt-6 flex gap-2 justify-center">
+                            <button onclick="openAddModal()" class="text-blue-500 text-sm hover:underline">บันทึกเพิ่ม</button>
+                            <span class="text-gray-300">|</span>
+                            <button onclick="exportToCSV()" class="text-green-500 text-sm hover:underline">Export CSV</button>
+                            <button onclick="exportToPNG()" class="text-purple-600 text-sm hover:underline">Export PNG</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 mb-4 text-sm flex items-center"><span class="w-2 h-5 bg-blue-500 rounded mr-2"></span>กราฟน้ำหนักตามเกณฑ์อายุ (0-5 ปี)</h3>
+                        <div class="h-[300px]"><canvas id="chartWA"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 mb-4 text-sm flex items-center"><span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามเกณฑ์อายุ (0-5 ปี)</h3>
+                        <div class="h-[300px]"><canvas id="chartHA"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 xl:col-span-2">
+                        <h3 class="font-bold text-gray-700 mb-4 text-sm flex items-center"><span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามเกณฑ์ส่วนสูง (2-5 ปี / 65-140 ซม.)</h3>
+                        <div class="h-[350px]"><canvas id="chartWH"></canvas></div>
+                        <p class="text-xs text-gray-400 mt-2 text-center">*หมายเหตุ: กราฟนี้สำหรับเด็กส่วนสูง 65 ซม. ขึ้นไป (ตามเอกสาร)</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-50"><h3 class="font-bold text-gray-800">ประวัติการบันทึกทั้งหมด</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="bg-gray-50 text-gray-500 font-medium">
+                                <tr>
+                                    <th class="px-6 py-4">วันที่</th>
+                                    <th class="px-6 py-4">อายุ</th>
+                                    <th class="px-6 py-4 text-right">น้ำหนัก</th>
+                                    <th class="px-6 py-4 text-right">ส่วนสูง</th>
+                                    <th class="px-6 py-4 text-center">น/ส (รูปร่าง)</th>
+                                    <th class="px-6 py-4 text-center">ส/อ (สูง)</th>
+                                    <th class="px-6 py-4 text-center">น/อ (น้ำหนัก)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-400">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-4 text-gray-300">📊</div>
+            <p class="text-lg">เลือกรายชื่อเด็กจากด้านซ้าย</p>
+            <p class="text-sm">เพื่อดูผลการประเมินแบบละเอียด</p>
+        </div>
+    </main>
+
+    <div id="addModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all">
+        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden transform scale-100">
+            <div class="bg-blue-600 p-5 flex justify-between items-center text-white header-bg">
+                <h3 class="font-bold text-lg">สมาร์ทแทรค</h3>
+                <button onclick="closeAddModal()" class="opacity-70 hover:opacity-100 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="flex gap-3">
+                    <label class="cursor-pointer w-1/2">
+                        <input type="radio" name="gender" value="boy" class="peer hidden" checked onchange="updateModalTheme()">
+                        <div class="py-3 rounded-2xl border-2 border-gray-100 peer-checked:border-blue-500 peer-checked:bg-blue-50 text-gray-400 peer-checked:text-blue-600 font-bold text-center transition-all">👦 ชาย</div>
+                    </label>
+                    <label class="cursor-pointer w-1/2">
+                        <input type="radio" name="gender" value="girl" class="peer hidden" onchange="updateModalTheme()">
+                        <div class="py-3 rounded-2xl border-2 border-gray-100 peer-checked:border-pink-500 peer-checked:bg-pink-50 text-gray-400 peer-checked:text-pink-600 font-bold text-center transition-all">👧 หญิง</div>
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">ชื่อเด็ก</label>
+                    <input type="text" id="inputName" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-200 font-bold text-gray-700" placeholder="ระบุชื่อ..." />
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">อายุ (ปี)</label>
+                        <input type="number" id="inputYear" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-200 font-bold text-center" placeholder="0" />
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">อายุ (เดือน)</label>
+                        <input type="number" id="inputMonth" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-200 font-bold text-center" placeholder="0" />
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">น้ำหนัก (กก.)</label>
+                        <input type="number" id="inputWeight" step="0.1" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-200 font-bold text-center text-blue-600 text-lg" placeholder="0.0" />
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">ส่วนสูง (ซม.)</label>
+                        <input type="number" id="inputHeight" step="0.1" class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-200 font-bold text-center text-blue-600 text-lg" placeholder="0.0" />
+                    </div>
+                </div>
+                <input type="file" id="inputPhoto" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                <button onclick="saveRecord()" id="saveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 transition-all mt-2">บันทึกผล</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA FROM UPLOADED PDF FILES ONLY ---
+        // Manually sampled from the grid lines in b0-5_1, b0-5_2, b2-5_1, etc.
+        // Array Format: [ -2SD, -1.5SD, Median, +1.5SD, +2SD, +3SD ]
+        
+        const growthData = {
+            boy: { 
+                // Weight for Height (From b2-5_1.pdf) - Starts at 65cm
+                w_h: [
+                    {x:65,y:[6.6,6.9,7.5,8.3,8.9,9.8]}, 
+                    {x:70,y:[7.4,7.8,8.5,9.5,10.2,11.5]}, 
+                    {x:75,y:[8.2,8.7,9.6,10.8,11.6,13.0]}, 
+                    {x:80,y:[9.1,9.6,10.6,12.0,12.9,14.6]}, 
+                    {x:85,y:[10.0,10.7,11.8,13.4,14.5,16.4]}, 
+                    {x:90,y:[11.0,11.8,13.0,14.8,16.0,18.2]}, 
+                    {x:95,y:[12.1,12.9,14.3,16.4,17.7,20.1]}, 
+                    {x:100,y:[13.2,14.1,15.7,18.0,19.5,22.2]}, 
+                    {x:105,y:[14.4,15.5,17.3,19.9,21.5,24.5]}, 
+                    {x:110,y:[15.8,16.9,19.0,22.0,23.7,27.0]}, 
+                    {x:115,y:[17.2,18.5,20.9,24.2,26.1,29.9]}, 
+                    {x:120,y:[18.8,20.2,23.0,26.7,28.8,33.0]},
+                    {x:125,y:[20.5,22.1,25.3,29.5,31.8,36.5]},
+                    {x:130,y:[22.5,24.3,28.0,32.7,35.3,40.6]},
+                    {x:135,y:[24.8,26.8,30.9,36.2,39.2,45.1]},
+                    {x:140,y:[27.3,29.7,34.3,40.2,43.6,50.4]}
+                ],
+                // Weight for Age (From b0-5_1.pdf)
+                w_a: [
+                    {x:0,y:[2.4,2.6,3.3,4.2,4.5]}, 
+                    {x:6,y:[6.4,6.8,7.9,9.4,9.9]}, 
+                    {x:12,y:[7.7,8.2,9.6,11.2,11.9]}, 
+                    {x:18,y:[8.8,9.4,10.9,12.8,13.7]}, 
+                    {x:24,y:[9.7,10.3,12.2,14.4,15.3]}, 
+                    {x:30,y:[10.5,11.2,13.3,15.7,16.9]}, 
+                    {x:36,y:[11.3,12.0,14.3,17.0,18.3]}, 
+                    {x:42,y:[12.0,12.8,15.3,18.2,19.7]}, 
+                    {x:48,y:[12.7,13.6,16.3,19.4,21.2]}, 
+                    {x:54,y:[13.4,14.3,17.3,20.7,22.7]}, 
+                    {x:60,y:[14.1,15.1,18.3,21.9,24.2]}, 
+                    {x:72,y:[15.5,16.6,20.2,24.5,27.0]}
+                ],
+                // Height for Age (From b0-5_2.pdf)
+                h_a: [
+                    {x:0,y:[46,47,50,53,54]}, 
+                    {x:6,y:[63,64,68,71,72]}, 
+                    {x:12,y:[71,72,76,79,81]}, 
+                    {x:18,y:[77,78,82,86,88]}, 
+                    {x:24,y:[81,82,87,92,93]}, 
+                    {x:30,y:[85,86,92,97,98]}, 
+                    {x:36,y:[88,90,96,101,103]}, 
+                    {x:42,y:[92,93,100,105,107]}, 
+                    {x:48,y:[95,96,103,109,111]}, 
+                    {x:54,y:[98,99,107,113,115]}, 
+                    {x:60,y:[100,102,110,116,119]}, 
+                    {x:72,y:[105,107,116,123,125]}
+                ]
+            },
+            girl: { 
+                // Weight for Height (From g2-5_1.pdf)
+                w_h: [
+                    {x:65,y:[6.3,6.5,7.2,8.1,8.7,9.6]}, 
+                    {x:70,y:[7.0,7.3,8.2,9.2,9.9,11.1]}, 
+                    {x:75,y:[7.8,8.2,9.1,10.3,11.1,12.5]}, 
+                    {x:80,y:[8.6,9.1,10.2,11.5,12.4,14.0]}, 
+                    {x:85,y:[9.6,10.1,11.4,12.9,13.9,15.7]}, 
+                    {x:90,y:[10.6,11.2,12.7,14.4,15.6,17.7]}, 
+                    {x:95,y:[11.7,12.4,14.1,16.1,17.4,19.8]}, 
+                    {x:100,y:[12.9,13.7,15.7,18.0,19.4,22.2]}, 
+                    {x:105,y:[14.2,15.1,17.4,20.1,21.7,24.9]}, 
+                    {x:110,y:[15.7,16.7,19.3,22.4,24.3,27.8]}, 
+                    {x:115,y:[17.3,18.4,21.4,25.0,27.1,31.1]}, 
+                    {x:120,y:[19.1,20.4,23.8,27.9,30.3,34.8]},
+                    {x:125,y:[21.1,22.6,26.6,31.3,34.0,39.1]},
+                    {x:130,y:[23.4,25.1,29.8,35.2,38.3,44.1]},
+                    {x:135,y:[25.9,27.9,33.3,39.6,43.1,49.8]},
+                    {x:140,y:[28.7,31.1,37.3,44.6,48.6,56.4]}
+                ],
+                // Weight for Age (From g0-5_1.pdf)
+                w_a: [
+                    {x:0,y:[2.3,2.5,3.2,4.0,4.3]}, 
+                    {x:6,y:[5.7,6.1,7.3,8.7,9.3]}, 
+                    {x:12,y:[7.0,7.5,8.9,10.6,11.4]}, 
+                    {x:18,y:[8.1,8.6,10.2,12.2,13.1]}, 
+                    {x:24,y:[9.0,9.6,11.5,13.7,14.8]}, 
+                    {x:30,y:[9.8,10.5,12.7,15.2,16.4]}, 
+                    {x:36,y:[10.7,11.4,13.9,16.7,18.1]}, 
+                    {x:42,y:[11.5,12.3,15.0,18.1,19.6]}, 
+                    {x:48,y:[12.2,13.1,16.1,19.5,21.2]}, 
+                    {x:54,y:[12.9,13.9,17.2,21.0,22.9]}, 
+                    {x:60,y:[13.6,14.6,18.2,22.3,24.4]}, 
+                    {x:72,y:[15.0,16.1,20.5,25.5,28.0]}
+                ],
+                // Height for Age (From g0-5_2.pdf)
+                h_a: [
+                    {x:0,y:[45,46,49,52,53]}, 
+                    {x:6,y:[61,62,66,69,70]}, 
+                    {x:12,y:[69,70,74,78,79]}, 
+                    {x:18,y:[75,76,81,85,87]}, 
+                    {x:24,y:[80,81,86,91,92]}, 
+                    {x:30,y:[84,85,91,96,97]}, 
+                    {x:36,y:[87,89,95,101,102]}, 
+                    {x:42,y:[91,92,99,105,106]}, 
+                    {x:48,y:[94,95,103,109,111]}, 
+                    {x:54,y:[97,98,106,113,115]}, 
+                    {x:60,y:[99,101,109,117,119]}, 
+                    {x:72,y:[105,106,116,123,125]}
+                ]
+            }
+        };
+
+        // --- 2. EVALUATION LOGIC (Criteria from PDF Labels) ---
+        function getLinearInterpolation(dataset, inputX) {
+            if (inputX <= dataset[0].x) return dataset[0].y;
+            if (inputX >= dataset[dataset.length-1].x) return dataset[dataset.length-1].y;
+            for (let i = 0; i < dataset.length - 1; i++) {
+                if (inputX >= dataset[i].x && inputX <= dataset[i+1].x) {
+                    const t = (inputX - dataset[i].x) / (dataset[i+1].x - dataset[i].x);
+                    const yArr = [];
+                    // Handle 5 or 6 items array based on what available
+                    const len = dataset[i].y.length;
+                    for(let j=0; j<len; j++) yArr.push(dataset[i].y[j] * (1 - t) + dataset[i+1].y[j] * t);
+                    return yArr;
+                }
+            }
+            return dataset[0].y;
+        }
+
+        function evaluateStatus(val, ref, type) {
+            // ref indices logic based on PDF:
+            // WA/HA (5 lines): 0:-2SD, 1:-1.5SD, 2:Median, 3:+1.5SD, 4:+2SD
+            // WH (6 lines): 0:-2SD, 1:-1.5SD, 2:Median, 3:+1.5SD, 4:+2SD, 5:+3SD
+
+            if (type === 'HA') { // ส่วนสูงตามเกณฑ์อายุ
+                if (val > ref[4]) return { t: "สูง", c: "status-green bg-green-100 text-green-700" }; 
+                if (val > ref[3]) return { t: "ค่อนข้างสูง", c: "status-green bg-green-50 text-green-600" }; 
+                if (val >= ref[1]) return { t: "สูงตามเกณฑ์", c: "status-green" }; 
+                if (val >= ref[0]) return { t: "ค่อนข้างเตี้ย", c: "status-orange" }; 
+                return { t: "เตี้ย", c: "status-red" }; 
+            }
+            if (type === 'WA') { // น้ำหนักตามเกณฑ์อายุ
+                if (val > ref[4]) return { t: "น้ำหนักมาก", c: "status-red" }; 
+                if (val > ref[3]) return { t: "น้ำหนักค่อนข้างมาก", c: "status-orange" }; 
+                if (val >= ref[1]) return { t: "น้ำหนักตามเกณฑ์", c: "status-green" }; 
+                if (val >= ref[0]) return { t: "น้ำหนักค่อนข้างน้อย", c: "status-orange" }; 
+                return { t: "น้ำหนักน้อย", c: "status-red" }; 
+            }
+            if (type === 'WH') { // น้ำหนักตามเกณฑ์ส่วนสูง (รูปร่าง)
+                if (val > ref[5]) return { t: "อ้วน", c: "status-red" }; 
+                if (val > ref[4]) return { t: "เริ่มอ้วน", c: "status-orange" }; // +2SD to +3SD
+                if (val > ref[3]) return { t: "ท้วม", c: "status-yellow" }; // +1.5SD to +2SD
+                if (val >= ref[1]) return { t: "สมส่วน", c: "status-green" }; // -1.5SD to +1.5SD
+                if (val >= ref[0]) return { t: "ค่อนข้างผอม", c: "status-orange" }; // -2SD to -1.5SD
+                return { t: "ผอม", c: "status-red" }; // < -2SD
+            }
+        }
+
+        // --- 3. APP LOGIC ---
+        let allRecords = [];
+        let currentSelectedName = null;
+        let chartInstances = {};
+
+        async function fetchRecords() {
+            try {
+                const res = await fetch('/api/bmi-records');
+                if (res.ok) { const json = await res.json(); return json.records || []; }
+            } catch(e) {}
+            return localStorage.getItem('bmiRecords') ? JSON.parse(localStorage.getItem('bmiRecords')) : [];
+        }
+
+        function groupByName(records) {
+            const map = new Map();
+            records.forEach(r => {
+                const name = (r.name || 'ไม่ระบุ').trim();
+                if (!map.has(name)) map.set(name, []);
+                map.get(name).push(r);
+            });
+            return map;
+        }
+
+        function formatDate(d) {
+            try { 
+                return new Date(d).toLocaleDateString('th-TH', {day:'numeric', month:'long', year:'2-digit'}); 
+            } catch (e) { return d; }
+        }
+
+        async function initApp() {
+            allRecords = await fetchRecords();
+            renderSidebar();
+        }
+
+        function renderSidebar(filter = '') {
+            const listEl = document.getElementById('childrenList');
+            listEl.innerHTML = '';
+            const grouped = groupByName(allRecords);
+            const names = Array.from(grouped.keys()).filter(n => n.includes(filter));
+
+            if (names.length === 0) {
+                listEl.innerHTML = '<div class="p-8 text-center text-gray-400">ยังไม่มีข้อมูล</div>';
+                return;
+            }
+
+            names.forEach(name => {
+                const items = grouped.get(name).sort((a,b) => new Date(b.date) - new Date(a.date)); 
+                const latest = items[0];
+                const div = document.createElement('div');
+                div.className = `p-4 hover:bg-blue-50 cursor-pointer flex items-center gap-3 border-b border-gray-100 ${currentSelectedName === name ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`;
+                div.onclick = () => selectChild(name);
+                
+                const imgSrc = latest.photo || '';
+                const imgHtml = imgSrc ? `<img src="${imgSrc}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 font-bold">${name[0]}</div>`;
+                
+                div.innerHTML = `
+                    ${imgHtml}
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-700">${name}</div>
+                        <div class="text-xs text-gray-400">${latest.ageY}ปี ${latest.ageM_Input}ด · ${formatDate(latest.date)}</div>
+                    </div>
+                `;
+
+                // add per-child add button (doesn't trigger selectChild when clicked)
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.className = 'ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200';
+                addBtn.innerText = '+ เพิ่ม';
+                addBtn.onclick = function(ev) { ev.stopPropagation(); openAddModalFor(name); };
+
+                // place button to the right
+                div.appendChild(addBtn);
+                listEl.appendChild(div);
+            });
+        }
+
+        function selectChild(name) {
+            currentSelectedName = name;
+            renderSidebar(document.getElementById('searchName').value);
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('contentSection').style.display = 'block';
+
+            const items = allRecords.filter(r => r.name === name).sort((a,b) => a.ageTotalM - b.ageTotalM);
+            const latest = items[items.length - 1]; 
+
+            // Update Card
+            const gender = latest.gender || 'boy';
+            const dataRef = growthData[gender];
+            
+            // Safe interpolation
+            const refWA = getLinearInterpolation(dataRef.w_a, latest.ageTotalM);
+            const refHA = getLinearInterpolation(dataRef.h_a, latest.ageTotalM);
+            let refWH = null;
+            let stWH = {t:'-', c:'bg-gray-100'};
+            
+            // Check if height is valid for W/H chart (>= 65cm)
+            if (latest.h >= 65) {
+                refWH = getLinearInterpolation(dataRef.w_h, latest.h);
+                stWH = evaluateStatus(latest.w, refWH, 'WH');
+            } else {
+                stWH = {t:'ส่วนสูงน้อยกว่าเกณฑ์ (65ซม.)', c:'bg-gray-100 text-gray-500'};
+            }
+
+            const stHA = evaluateStatus(latest.h, refHA, 'HA');
+            const stWA = evaluateStatus(latest.w, refWA, 'WA');
+
+            document.getElementById('cardDate').innerText = new Date(latest.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: '2-digit' });
+            document.getElementById('cardBigNumber').innerText = latest.w; 
+            document.getElementById('cardAgeText').innerText = `อายุ ${latest.ageY} ปี ${latest.ageM_Input} เดือน`;
+            
+            const imgEl = document.getElementById('cardThumb');
+            const phEl = document.getElementById('cardThumbPlaceholder');
+            if(latest.photo){ imgEl.src = latest.photo; imgEl.classList.remove('hidden'); phEl.classList.add('hidden'); }
+            else { imgEl.classList.add('hidden'); phEl.classList.remove('hidden'); }
+
+            document.getElementById('cardWeight').innerText = latest.w;
+            document.getElementById('cardHeight').innerText = latest.h;
+
+            const bWH = document.getElementById('badgeWH'); bWH.innerText = stWH.t; bWH.className = `status-pill ${stWH.c}`;
+            const bHA = document.getElementById('badgeHA'); bHA.innerText = stHA.t; bHA.className = `status-pill ${stHA.c}`;
+            const bWA = document.getElementById('badgeWA'); bWA.innerText = stWA.t; bWA.className = `status-pill ${stWA.c}`;
+
+            // History Table
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+            [...items].reverse().forEach(row => {
+                const rWA = evaluateStatus(row.w, getLinearInterpolation(dataRef.w_a, row.ageTotalM), 'WA');
+                const rHA = evaluateStatus(row.h, getLinearInterpolation(dataRef.h_a, row.ageTotalM), 'HA');
+                let rWH = {t:'-', c:''};
+                if(row.h >= 65) {
+                    rWH = evaluateStatus(row.w, getLinearInterpolation(dataRef.w_h, row.h), 'WH');
+                }
+                
+                const tr = document.createElement('tr');
+                tr.className = "bg-white hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-6 py-4">${formatDate(row.date)}</td>
+                    <td class="px-6 py-4">${row.ageY}ปี ${row.ageM_Input}ด</td>
+                    <td class="px-6 py-4 text-right font-bold">${row.w}</td>
+                    <td class="px-6 py-4 text-right font-bold">${row.h}</td>
+                    <td class="px-6 py-4 text-center"><span class="status-pill ${rWH.c} text-xs py-1 px-3">${rWH.t}</span></td>
+                    <td class="px-6 py-4 text-center"><span class="status-pill ${rHA.c} text-xs py-1 px-3">${rHA.t}</span></td>
+                    <td class="px-6 py-4 text-center"><span class="status-pill ${rWA.c} text-xs py-1 px-3">${rWA.t}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateCharts(items, gender);
+        }
+
+        // --- CHARTS (Matched to PDF Zones) ---
+        function updateCharts(data, gender) {
+            const dataRef = growthData[gender];
+            // WA & HA: 0-72 months (PDF goes to 6 years sometimes, or 5) - PDF shows 0-72 marks
+            createAreaChart('chartWA', 'น้ำหนัก (กก.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.w), dataRef.w_a, 0, 72);
+            createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.h), dataRef.h_a, 0, 72);
+            // WH: 65-140 cm
+            createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', data.map(d => ({x: d.h, y: d.w})), dataRef.w_h, 65, 140);
+        }
+
+        function createAreaChart(id, yLabel, xLabel, xData, yData, refData, minX, maxX) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if(chartInstances[id]) chartInstances[id].destroy();
+            const labels = refData.map(d => d.x);
+            
+            // WA/HA lines: 5 lines typically in these PDFs (+2, +1.5, Med, -1.5, -2)
+            // Color Zones based on visual:
+            // >+2: Red? No, usually Orange/Red
+            // +1.5 to +2: Green (Top)
+            // Med to +1.5: Green (Mid)
+            // -1.5 to Med: Green (Low)
+            // -2 to -1.5: Orange
+            // <-2: Red
+            
+            chartInstances[id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'ข้อมูลเด็ก', data: xData.map((x, i) => ({x: x, y: yData[i]})), borderColor: '#000', borderWidth: 2, pointBackgroundColor: '#000', tension: 0, order: 1 },
+                        // Zones
+                        { data: refData.map(d => d.y[4]), borderColor:'transparent', backgroundColor:'rgba(254, 226, 226, 0.5)', fill:false, pointRadius:0 }, // Top
+                        { data: refData.map(d => d.y[3]), backgroundColor:'rgba(220, 252, 231, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // +1.5 (Green top)
+                        { data: refData.map(d => d.y[2]), backgroundColor:'rgba(220, 252, 231, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // Median
+                        { data: refData.map(d => d.y[1]), backgroundColor:'rgba(220, 252, 231, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // -1.5 (Green bot)
+                        { data: refData.map(d => d.y[0]), backgroundColor:'rgba(255, 237, 213, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // -2 (Orange)
+                        { data: refData.map(d => 0), backgroundColor:'rgba(254, 226, 226, 0.8)', fill:'-1', pointRadius:0, borderWidth:0 } // Bottom (Red)
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: minX, max: maxX, title:{display:true, text:xLabel}}, y: { title:{display:true, text:yLabel} } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function createScatterAreaChart(id, yLabel, xLabel, points, refData, minX, maxX) {
+            const ctx = document.getElementById(id).getContext('2d');
+            if(chartInstances[id]) chartInstances[id].destroy();
+            const labels = refData.map(d => d.x);
+            
+            // WH lines: 6 lines (+3, +2, +1.5, Med, -1.5, -2)
+            // Zones: >+3(Red), +2 to +3(Red/Orange?), +1.5 to +2(Yellow), -1.5 to +1.5(Green), -2 to -1.5(Orange), <-2(Red)
+            
+            chartInstances[id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'scatter', label: 'ข้อมูลเด็ก', data: points, backgroundColor: '#000', pointRadius: 5, order: 1 },
+                        // Zones
+                        { data: refData.map(d => d.y[5]), borderColor:'transparent', backgroundColor:'rgba(254, 226, 226, 0.5)', fill:false, pointRadius:0 }, // >+3
+                        { data: refData.map(d => d.y[4]), backgroundColor:'rgba(254, 226, 226, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // +2 to +3 (Start Obese) - Red/Pink
+                        { data: refData.map(d => d.y[3]), backgroundColor:'rgba(254, 249, 195, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // +1.5 to +2 (Yellow)
+                        { data: refData.map(d => d.y[2]), backgroundColor:'rgba(220, 252, 231, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // Med
+                        { data: refData.map(d => d.y[1]), backgroundColor:'rgba(220, 252, 231, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // -1.5 (Green)
+                        { data: refData.map(d => d.y[0]), backgroundColor:'rgba(255, 237, 213, 0.8)', fill:'-1', pointRadius:0, borderWidth:1 }, // -2 (Orange)
+                        { data: refData.map(d => 0), backgroundColor:'rgba(254, 226, 226, 0.8)', fill:'-1', pointRadius:0, borderWidth:0 } // <-2 (Red)
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: minX, max: maxX, title:{display:true, text:xLabel}}, y: { title:{display:true, text:yLabel} } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // --- ACTIONS ---
+        const modal = document.getElementById('addModal');
+        function openAddModal() {
+            modal.classList.remove('hidden');
+            if (currentSelectedName) { document.getElementById('inputName').value = currentSelectedName; }
+            else { document.getElementById('inputName').value = ''; document.querySelector('input[value="boy"]').checked = true; updateModalTheme(); }
+            document.getElementById('inputWeight').value = ''; document.getElementById('inputHeight').value = '';
+        }
+        
+        // Open add modal for a specific child name (prefill name and gender if known)
+        function openAddModalFor(name) {
+            try {
+                const items = allRecords.filter(r => (r.name||'').trim() === name).sort((a,b) => new Date(b.date) - new Date(a.date));
+                const latest = items.length ? items[0] : null;
+                document.getElementById('inputName').value = name || '';
+                if (latest && latest.gender) {
+                    const radio = document.querySelector(`input[name="gender"][value="${latest.gender}"]`);
+                    if (radio) radio.checked = true;
+                } else {
+                    document.querySelector('input[name="gender"][value="boy"]').checked = true;
+                }
+                updateModalTheme();
+                document.getElementById('inputWeight').value = '';
+                document.getElementById('inputHeight').value = '';
+                modal.classList.remove('hidden');
+            } catch (e) { console.warn('[openAddModalFor] error', e && e.message); modal.classList.remove('hidden'); }
+        }
+        function closeAddModal() { modal.classList.add('hidden'); }
+        function updateModalTheme() {
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const btn = document.getElementById('saveBtn');
+            const header = modal.querySelector('.header-bg');
+            if (gender === 'boy') {
+                btn.className = btn.className.replace('bg-pink-600 hover:bg-pink-700', 'bg-blue-600 hover:bg-blue-700');
+                header.className = header.className.replace('bg-pink-600', 'bg-blue-600');
+            } else {
+                btn.className = btn.className.replace('bg-blue-600 hover:bg-blue-700', 'bg-pink-600 hover:bg-pink-700');
+                header.className = header.className.replace('bg-blue-600', 'bg-pink-600');
+            }
+        }
+        function readFileAsDataURL(file) { return new Promise(r => { if(!file)return r(null); const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(file); }); }
+        async function saveRecord() {
+            const name = document.getElementById('inputName').value.trim();
+            const ageY = parseInt(document.getElementById('inputYear').value)||0;
+            const ageM = parseInt(document.getElementById('inputMonth').value)||0;
+            const w = parseFloat(document.getElementById('inputWeight').value);
+            const h = parseFloat(document.getElementById('inputHeight').value);
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const photo = await readFileAsDataURL(document.getElementById('inputPhoto').files[0]);
+            if(!name || isNaN(w) || isNaN(h)) { alert('กรุณากรอกข้อมูลให้ครบ'); return; }
+
+            const rec = { id: Date.now(), date: new Date().toISOString(), name, ageY, ageM_Input: ageM, ageTotalM: (ageY*12)+ageM, w, h, gender, photo };
+
+            // try to send to server so DB gets a new document (do NOT overwrite existing records)
+            try {
+                // extract base64 + mime if photo is a data URL
+                let photoBase64 = null, photoMime = null;
+                if (rec.photo && typeof rec.photo === 'string') {
+                    const m = rec.photo.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+                    if (m) { photoMime = m[1]; photoBase64 = m[2]; }
+                }
+
+                const payload = Object.assign({}, rec, { photoBase64, photoMime });
+                const resp = await fetch('/api/bmi-record', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (resp && resp.ok) {
+                    const j = await resp.json();
+                    // use server id when available
+                    if (j && j.success && j.id) rec._id = j.id;
+
+                    // append locally and persist a synced copy
+                    allRecords.push(rec);
+                    try { localStorage.setItem('bmiRecords', JSON.stringify(allRecords)); } catch(e) {}
+
+                    closeAddModal(); renderSidebar(); selectChild(name);
+                    return;
+                }
+            } catch (e) {
+                console.warn('[dashboard] failed to save to server, falling back to localStorage', e && e.message);
+            }
+
+            // fallback: still append locally so user doesn't lose data
+            allRecords.push(rec);
+            try { localStorage.setItem('bmiRecords', JSON.stringify(allRecords)); } catch(e) {}
+            closeAddModal(); renderSidebar(); selectChild(name);
+        }
+        function exportToCSV() {
+            if(!currentSelectedName) return;
+            const items = allRecords.filter(r => r.name === currentSelectedName).sort((a,b) => new Date(a.date)-new Date(b.date));
+            let csv = "\uFEFFDate,Age_Month,Weight,Height,Status_WH,Status_HA,Status_WA\n";
+            items.forEach(r => {
+                const dr = growthData[r.gender||'boy'];
+                
+                const rWA = evaluateStatus(r.w, getLinearInterpolation(dr.w_a, r.ageTotalM), 'WA').t;
+                const rHA = evaluateStatus(r.h, getLinearInterpolation(dr.h_a, r.ageTotalM), 'HA').t;
+                let rWH = '-';
+                if(r.h>=65) rWH = evaluateStatus(r.w, getLinearInterpolation(dr.w_h, r.h), 'WH').t;
+
+                csv += `${new Date(r.date).toLocaleDateString('en-GB')},${r.ageTotalM},${r.w},${r.h},${rWH},${rHA},${rWA}\n`;
+            });
+            const link = document.createElement("a");
+            link.href = "data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+            link.download = `Growth_${currentSelectedName}.csv`;
+            link.click();
+        }
+
+        async function exportToPNG() {
+            // Capture the main card+charts area
+            const el = document.getElementById('captureAreaDashboard');
+            if (!el) {
+                alert('ไม่พบพื้นที่สำหรับส่งออก');
+                return;
+            }
+
+            // Temporarily expand capture area to include charts section (if collapsed)
+            const prevScroll = window.scrollY;
+            try {
+                // Wait a tick for layout
+                await new Promise(r => setTimeout(r, 50));
+
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    scrollY: -window.scrollY
+                });
+
+                canvas.toBlob((blob) => {
+                    if (!blob) { alert('สร้างรูปภาพล้มเหลว'); return; }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `bmi_dashboard_${(new Date()).toISOString().slice(0,19).replace(/[:T]/g,'-')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 'image/png', 1.0);
+            } catch (err) {
+                console.error('exportToPNG failed', err);
+                alert('ไม่สามารถส่งออกเป็น PNG ได้: ' + (err && err.message));
+            } finally {
+                window.scrollTo(0, prevScroll);
+            }
+        }
+        
+        document.getElementById('searchName').addEventListener('input', e => renderSidebar(e.target.value.trim()));
+        initApp();
+    </script>
+</body>
+</html>

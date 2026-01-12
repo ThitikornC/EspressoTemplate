@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมประเมินการเจริญเติบโตเด็ก 2-5 ปี (สเกลละเอียดกรมอนามัย)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        .gender-selector input:checked + div {
+            border-color: currentColor;
+            background-color: rgba(currentColor, 0.1);
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen pb-20">
+
+    <div class="max-w-7xl mx-auto px-4 py-8 flex justify-center">
+        
+        <div class="space-y-6 w-full max-w-md">
+            <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">สมาร์ทแทรค</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">เพศ</label>
+                    <div class="grid grid-cols-2 gap-3 gender-selector">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender" value="boy" class="hidden" checked onchange="updateTheme()">
+                            <div class="text-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-blue-500">
+                                <span class="text-2xl block">👦</span>
+                                <span class="text-sm font-bold">ชาย</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender" value="girl" class="hidden" onchange="updateTheme()">
+                            <div class="text-center p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all text-pink-500">
+                                <span class="text-2xl block">👧</span>
+                                <span class="text-sm font-bold">หญิง</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อเด็ก</label>
+                        <input type="text" id="childName" placeholder="ชื่อเด็ก" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">อายุ (ปี)</label>
+                            <input type="number" id="ageYears" placeholder="2-5" min="2" max="6" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">อายุ (เดือน)</label>
+                            <input type="number" id="ageMonthsInput" placeholder="0-11" min="0" max="11" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">น้ำหนัก (กก.)</label>
+                            <input type="number" id="weight" step="0.1" placeholder="0.0" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">ส่วนสูง (ซม.)</label>
+                            <input type="number" id="height" step="0.1" placeholder="0.0" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">รูปถ่าย / อัปโหลด</label>
+                        <div class="flex items-center gap-3">
+                            <input id="photoInput" type="file" accept="image/*" capture="environment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                            <img id="photoPreview" src="" alt="preview" style="display:none; width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #e5e7eb;" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button onclick="addRecord()" id="calcBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition-all transform hover:scale-[1.02] flex justify-center items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                        </svg>
+                        บันทึก
+                    </button>
+                    <div class="mt-3 flex justify-center">
+                        <a href="/bmi-dashboard" class="text-sm bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50">Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
+            
+            <div id="captureArea" class="bg-gradient-to-br from-white to-gray-50 p-6 relative">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-100 rounded-bl-full opacity-50 -mr-4 -mt-4 z-0"></div>
+                
+                <div class="text-center relative z-10">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">ผลการประเมินการเจริญเติบโต</h3>
+                    <p class="text-xs text-gray-500" id="resDate">วันที่ -</p>
+                </div>
+
+                <div class="mt-4 flex flex-col items-center relative z-10">
+                    <div class="w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-200 mb-3">
+                        <img id="resPhoto" src="" class="w-full h-full object-cover hidden">
+                        <span id="resPhotoPlaceholder" class="w-full h-full flex items-center justify-center text-2xl">👶</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-blue-600" id="resName">น้อง...</h2>
+                    <p class="text-sm text-gray-600" id="resAge">อายุ - ปี - เดือน</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-4 relative z-10">
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-xs text-gray-500">น้ำหนัก</div>
+                        <div class="text-lg font-bold text-gray-800"><span id="resWeight">-</span> <span class="text-xs font-normal">กก.</span></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-xs text-gray-500">ส่วนสูง</div>
+                        <div class="text-lg font-bold text-gray-800"><span id="resHeight">-</span> <span class="text-xs font-normal">ซม.</span></div>
+                    </div>
+                </div>
+
+                <div class="mt-5 space-y-2 relative z-10">
+                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-600">น้ำหนักตามเกณฑ์ส่วนสูง</span>
+                            <span id="resStatWH" class="text-sm font-bold bg-gray-100">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-600">ส่วนสูงตามเกณฑ์อายุ</span>
+                            <span id="resStatHA" class="text-sm font-bold bg-gray-100">-</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-600">น้ำหนักตามเกณฑ์อายุ</span>
+                            <span id="resStatWA" class="text-sm font-bold bg-gray-100">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                   <p class="text-[10px] text-gray-400">เกณฑ์อ้างอิง: กรมอนามัย (2564)</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 border-t flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 text-gray-600 font-medium text-sm hover:bg-gray-100">ปิด</button>
+                <button onclick="shareResult()" class="flex-1 py-2 rounded-lg bg-green-500 text-white font-medium text-sm hover:bg-green-600 flex justify-center items-center shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                    แชร์รูปภาพ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- HIGH RESOLUTION DATA (2-5 Years) ---
+        // array indices: 0:-2SD, 1:-1.5SD, 2:Median, 3:+1.5SD, 4:+2SD, 5:+3SD
+        const growthData = {
+            boy: { 
+                // Weight for Height (65-140 cm)
+                w_h: [ 
+                    {x:65, y:[6.3, 6.7, 7.6, 8.6, 9.2, 10.5]}, {x:70, y:[7.0, 7.5, 8.5, 9.6, 10.3, 11.7]}, {x:75, y:[7.8, 8.4, 9.5, 10.8, 11.5, 13.1]}, {x:80, y:[8.7, 9.3, 10.5, 12.0, 12.8, 14.6]}, {x:85, y:[9.7, 10.4, 11.7, 13.4, 14.4, 16.3]}, {x:90, y:[10.7, 11.5, 13.0, 14.8, 15.9, 18.1]}, {x:95, y:[11.8, 12.7, 14.3, 16.4, 17.6, 20.0]}, {x:100, y:[12.9, 13.9, 15.7, 18.0, 19.4, 22.1]}, {x:105, y:[14.1, 15.3, 17.3, 19.9, 21.4, 24.4]}, {x:110, y:[15.5, 16.7, 19.0, 21.9, 23.6, 26.9]}, {x:115, y:[16.9, 18.3, 20.9, 24.1, 26.0, 29.8]}, {x:120, y:[18.6, 20.1, 23.0, 26.6, 28.7, 32.9]}, {x:125, y:[20.4, 22.1, 25.3, 29.4, 31.7, 36.4]}, {x:130, y:[22.4, 24.3, 28.0, 32.6, 35.2, 40.5]}, {x:135, y:[24.7, 26.8, 30.9, 36.1, 39.1, 45.0]}, {x:140, y:[27.2, 29.6, 34.2, 40.1, 43.5, 50.3]} 
+                ],
+                // Weight for Age (24-72 mo)
+                w_a: [ {x:24, y:[9.7, 10.4, 12.2, 14.1, 14.8, 16.5]}, {x:30, y:[10.5, 11.3, 13.3, 15.4, 16.3, 18.2]}, {x:36, y:[11.3, 12.1, 14.3, 16.7, 17.6, 19.8]}, {x:42, y:[12.0, 12.9, 15.3, 17.9, 19.0, 21.5]}, {x:48, y:[12.7, 13.7, 16.3, 19.1, 20.4, 23.0]}, {x:54, y:[13.4, 14.5, 17.3, 20.4, 21.8, 24.6]}, {x:60, y:[14.1, 15.3, 18.3, 21.6, 23.2, 26.2]}, {x:72, y:[15.5, 16.8, 20.2, 24.2, 26.0, 30.0]} ],
+                // Height for Age (24-72 mo)
+                h_a: [ {x:24, y:[81.0, 83.0, 87.1, 91.2, 93.2, 96.3]}, {x:36, y:[88.7, 90.8, 96.1, 100.3, 102.4, 105.6]}, {x:48, y:[94.9, 97.2, 103.3, 108.0, 110.3, 113.8]}, {x:60, y:[100.7, 103.2, 110.0, 115.2, 117.8, 121.7]}, {x:72, y:[106.1, 109.0, 116.0, 122.0, 125.0, 129.5]} ]
+            },
+            girl: { 
+                // Weight for Height (65-140 cm)
+                w_h: [ 
+                    {x:65, y:[6.0, 6.4, 7.3, 8.3, 8.9, 10.1]}, {x:70, y:[6.7, 7.1, 8.2, 9.3, 9.9, 11.3]}, {x:75, y:[7.5, 8.0, 9.1, 10.4, 11.1, 12.6]}, {x:80, y:[8.3, 8.9, 10.2, 11.6, 12.4, 14.1]}, {x:85, y:[9.3, 9.9, 11.4, 13.0, 13.9, 15.8]}, {x:90, y:[10.3, 11.0, 12.7, 14.5, 15.6, 17.8]}, {x:95, y:[11.3, 12.2, 14.1, 16.2, 17.4, 19.8]}, {x:100, y:[12.5, 13.5, 15.7, 18.1, 19.4, 22.2]}, {x:105, y:[13.8, 14.9, 17.4, 20.2, 21.7, 24.9]}, {x:110, y:[15.2, 16.5, 19.3, 22.5, 24.3, 27.8]}, {x:115, y:[16.8, 18.2, 21.4, 25.1, 27.1, 31.2]}, {x:120, y:[18.6, 20.2, 23.8, 28.0, 30.3, 34.9]}, {x:125, y:[20.7, 22.5, 26.6, 31.4, 34.0, 39.2]}, {x:130, y:[23.0, 25.1, 29.8, 35.3, 38.3, 44.2]}, {x:135, y:[25.6, 27.9, 33.3, 39.7, 43.1, 49.9]}, {x:140, y:[28.5, 31.2, 37.3, 44.7, 48.6, 56.5]} 
+                ],
+                // Weight for Age (24-72 mo)
+                w_a: [ {x:24, y:[9.0, 9.7, 11.5, 13.3, 14.0, 15.7]}, {x:30, y:[9.9, 10.7, 12.7, 14.7, 15.5, 17.4]}, {x:36, y:[10.8, 11.6, 13.9, 16.1, 17.0, 19.1]}, {x:42, y:[11.6, 12.6, 15.0, 17.5, 18.5, 20.9]}, {x:48, y:[12.3, 13.4, 16.1, 18.9, 20.0, 22.7]}, {x:54, y:[13.0, 14.2, 17.2, 20.3, 21.6, 24.6]}, {x:60, y:[13.7, 15.0, 18.2, 21.7, 23.2, 26.6]}, {x:72, y:[15.0, 16.6, 20.5, 24.8, 26.8, 31.0]} ],
+                // Height for Age (24-72 mo)
+                h_a: [ {x:24, y:[80.0, 81.7, 86.4, 90.6, 92.5, 95.7]}, {x:36, y:[87.4, 89.4, 95.1, 99.7, 101.9, 105.4]}, {x:48, y:[94.1, 96.3, 102.7, 107.8, 110.1, 113.9]}, {x:60, y:[99.9, 102.3, 109.4, 115.0, 117.6, 121.7]}, {x:72, y:[105.0, 107.8, 115.5, 121.8, 124.8, 129.3]} ]
+            }
+        };
+
+        let historyData = [];
+
+        function getGender() { return document.querySelector('input[name="gender"]:checked').value; }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null);
+                const fr = new FileReader();
+                fr.onload = () => resolve(fr.result);
+                fr.onerror = reject;
+                fr.readAsDataURL(file);
+            });
+        }
+        
+        function updateTheme() {
+            const gender = getGender();
+            const btn = document.getElementById('calcBtn');
+            const elements = ['ageYears', 'ageMonthsInput', 'weight', 'height'];
+            const headerDeco = document.querySelector('#captureArea .absolute');
+
+            if (gender === 'boy') {
+                btn.className = btn.className.replace(/pink/g, 'blue');
+                elements.forEach(id => {
+                    document.getElementById(id).className = document.getElementById(id).className.replace(/pink/g, 'blue');
+                });
+                document.body.style.backgroundColor = '#F3F4F6';
+                headerDeco.classList.remove('bg-pink-100');
+                headerDeco.classList.add('bg-blue-100');
+            } else {
+                btn.className = btn.className.replace(/blue/g, 'pink');
+                elements.forEach(id => {
+                    document.getElementById(id).className = document.getElementById(id).className.replace(/blue/g, 'pink');
+                });
+                document.body.style.backgroundColor = '#FFF1F2';
+                headerDeco.classList.remove('bg-blue-100');
+                headerDeco.classList.add('bg-pink-100');
+            }
+        }
+
+        function getLinearInterpolation(dataset, inputX) {
+            if (inputX <= dataset[0].x) return dataset[0].y;
+            if (inputX >= dataset[dataset.length-1].x) return dataset[dataset.length-1].y;
+            for (let i = 0; i < dataset.length - 1; i++) {
+                if (inputX >= dataset[i].x && inputX <= dataset[i+1].x) {
+                    const t = (inputX - dataset[i].x) / (dataset[i+1].x - dataset[i].x);
+                    const yArr = [];
+                    for(let j=0; j<6; j++) yArr.push(dataset[i].y[j] * (1 - t) + dataset[i+1].y[j] * t);
+                    return yArr;
+                }
+            }
+            return dataset[0].y;
+        }
+
+        // --- UPDATED EVALUATION LOGIC ---
+        function evaluateStatus(val, ref, type) {
+            // ref indices correspond to: 0:-2SD, 1:-1.5SD, 2:Median, 3:+1.5SD, 4:+2SD, 5:+3SD
+
+            // 1. Height for Age (HA) - ส่วนสูงตามเกณฑ์อายุ
+            if (type === 'HA') { 
+                if (val > ref[4]) return { t: "สูง", c: "bg-red-100 text-red-700" }; // > +2SD
+                if (val > ref[3]) return { t: "ค่อนข้างสูง", c: "bg-green-100 text-green-700" }; // +1.5 to +2SD
+                if (val >= ref[1]) return { t: "สูงตามเกณฑ์", c: "bg-green-100 text-green-700" }; // -1.5 to +1.5SD
+                if (val >= ref[0]) return { t: "ค่อนข้างเตี้ย", c: "bg-yellow-100 text-yellow-700" }; // -2 to -1.5SD
+                return { t: "เตี้ย", c: "bg-red-100 text-red-700" }; // < -2SD
+            }
+
+            // 2. Weight for Age (WA) - น้ำหนักตามเกณฑ์อายุ
+            if (type === 'WA') {
+                if (val > ref[4]) return { t: "น้ำหนักมาก", c: "bg-red-100 text-red-700" }; // > +2SD (Weight High)
+                if (val > ref[3]) return { t: "น้ำหนักค่อนข้างมาก", c: "bg-orange-100 text-orange-700" }; // +1.5 to +2SD
+                if (val >= ref[1]) return { t: "น้ำหนักตามเกณฑ์", c: "bg-green-100 text-green-700" }; // -1.5 to +1.5SD
+                if (val >= ref[0]) return { t: "น้ำหนักค่อนข้างน้อย", c: "bg-yellow-100 text-yellow-700" }; // -2 to -1.5SD
+                return { t: "น้ำหนักน้อย", c: "bg-red-100 text-red-700" }; // < -2SD
+            }
+
+            // 3. Weight for Height (WH) - น้ำหนักตามเกณฑ์ส่วนสูง (รูปร่าง)
+            if (type === 'WH') {
+                if (val > ref[4]) return { t: "อ้วน", c: "bg-red-100 text-red-700" }; // > +2SD
+                if (val > ref[3]) return { t: "เริ่มอ้วน", c: "bg-orange-100 text-orange-700" }; // +1.5 to +2SD
+                if (val >= ref[1]) return { t: "สมส่วน", c: "bg-green-100 text-green-700" }; // -1.5 to +1.5SD
+                if (val >= ref[0]) return { t: "ค่อนข้างผอม", c: "bg-yellow-100 text-yellow-700" }; // -2 to -1.5SD
+                return { t: "ผอม", c: "bg-red-100 text-red-700" }; // < -2SD
+            }
+        }
+
+        async function addRecord() {
+            const yrsInput = parseInt(document.getElementById('ageYears').value) || 0;
+            const mthsInput = parseInt(document.getElementById('ageMonthsInput').value) || 0;
+            const childName = (document.getElementById('childName').value || '').trim();
+            const photoFile = document.getElementById('photoInput').files && document.getElementById('photoInput').files[0];
+            const w = parseFloat(document.getElementById('weight').value);
+            const h = parseFloat(document.getElementById('height').value);
+            const dateStr = (new Date()).toISOString();
+            const gender = getGender();
+
+            if (isNaN(w) || isNaN(h)) { alert("กรุณากรอกข้อมูลน้ำหนักและส่วนสูง"); return; }
+
+            let totalMonths = (yrsInput * 12) + mthsInput;
+            if (totalMonths < 0) totalMonths = 0;
+            if (totalMonths < 24) { alert("โปรแกรมนี้สำหรับเด็กอายุ 2 ปีขึ้นไปครับ"); return; }
+
+            const normYears = Math.floor(totalMonths / 12);
+            const normMonths = totalMonths % 12;
+
+            const data = growthData[gender];
+            const refWA = getLinearInterpolation(data.w_a, totalMonths);
+            const refHA = getLinearInterpolation(data.h_a, totalMonths);
+            const refWH = getLinearInterpolation(data.w_h, h);
+
+            // Calculate Status
+            const statWA = evaluateStatus(w, refWA, 'WA');
+            const statHA = evaluateStatus(h, refHA, 'HA');
+            const statWH = evaluateStatus(w, refWH, 'WH');
+
+            const record = {
+                id: Date.now(),
+                date: dateStr,
+                ageY: normYears, ageM_Input: normMonths, ageTotalM: totalMonths,
+                name: childName || 'ไม่ระบุชื่อ',
+                photo: null,
+                w: w, h: h,
+                statWA: statWA, statHA: statHA, statWH: statWH
+            };
+            
+            if (photoFile) {
+                try {
+                    record.photo = await readFileAsDataURL(photoFile);
+                } catch (e) { console.warn('Failed to read photo file', e); }
+            }
+
+            // --- 1. Show Modal Immediately ---
+            showResultModal(record);
+
+            // --- 2. Save Data (Background process) ---
+            try {
+                const resp = await fetch('/api/bmi-record', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // include base64 + mime separately so server can store them directly
+                    body: JSON.stringify((() => {
+                        let photoBase64 = null, photoMime = null;
+                        if (record.photo && typeof record.photo === 'string') {
+                            const m = record.photo.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+                            if (m) { photoMime = m[1]; photoBase64 = m[2]; }
+                        }
+                        return {
+                            ...record,
+                            photoBase64,
+                            photoMime,
+                            statWA: statWA.t, statHA: statHA.t, statWH: statWH.t, colorWH: statWH.c
+                        };
+                    })())
+                });
+            } catch (e) { console.error('Error saving record', e); }
+        }
+
+        // --- NEW MODAL & SHARE FUNCTIONS ---
+
+        function showResultModal(data) {
+            const modal = document.getElementById('resultModal');
+            
+            // Populate Data
+            const d = new Date(data.date);
+            document.getElementById('resDate').innerText = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: '2-digit' });
+            document.getElementById('resName').innerText = data.name;
+            document.getElementById('resAge').innerText = `อายุ ${data.ageY} ปี ${data.ageM_Input} เดือน`;
+            document.getElementById('resWeight').innerText = data.w;
+            document.getElementById('resHeight').innerText = data.h;
+            
+            // Photo handling
+            const imgEl = document.getElementById('resPhoto');
+            const phEl = document.getElementById('resPhotoPlaceholder');
+            if (data.photo) {
+                imgEl.src = data.photo;
+                imgEl.classList.remove('hidden');
+                phEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                phEl.classList.remove('hidden');
+            }
+
+            // Set Status & Colors (Updated Code)
+            const setStat = (id, statObj) => {
+                const el = document.getElementById(id);
+                el.innerText = statObj.t;
+                
+                // --- แก้ไขตรงนี้ (ดันข้อความขึ้น) ---
+                // 1. ใช้ h-8 (32px) เพื่อให้กรอบใหญ่ขึ้นนิดนึง ตัวหนังสือจะได้ไม่ดูอึดอัด
+                // 2. ใช้ pb-[3px] (Padding Bottom) เพื่อดันข้อความให้ลอยขึ้นไปด้านบน
+                // 3. leading-none เพื่อตัดช่องว่างระหว่างบรรทัดที่ไม่จำเป็นออก
+                el.className = `text-sm font-bold px-4 h-8 rounded-full inline-flex items-center justify-center min-w-[90px] leading-none pb-[3px] ${statObj.c}`;
+            };
+            
+            setStat('resStatWH', data.statWH);
+            setStat('resStatHA', data.statHA);
+            setStat('resStatWA', data.statWA);
+
+            // Show Modal
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        async function shareResult() {
+            const captureArea = document.getElementById('captureArea');
+            
+            // ซ่อนปุ่มปิด/แชร์ชั่วคราว เพื่อความสวยงาม (กันเหนียว)
+            const buttons = captureArea.nextElementSibling;
+            
+            try {
+                // รอให้รูปโหลดและ layout นิ่งสักนิด
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                const canvas = await html2canvas(captureArea, {
+                    scale: 3, // เพิ่มความละเอียด (2 อาจจะแตกในบางจอ, 3 ชัดกว่า)
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: "#ffffff", // บังคับพื้นหลังสีขาวป้องกันภาพดำ
+                    
+                    // --- ชุดคำสั่งแก้ภาพเบี้ยว/เลื่อน ---
+                    scrollY: -window.scrollY, // แก้ปัญหาภาพเลื่อนตามการ Scroll
+                    windowWidth: document.documentElement.offsetWidth, // บังคับความกว้างให้ตรงจอ
+                    windowHeight: document.documentElement.offsetHeight, // บังคับความสูง
+                    x: 0, // รีเซ็ตพิกัด X (ถ้าจำเป็น)
+                    // --------------------------------
+                    
+                    onclone: (clonedDoc) => {
+                        // ปรับแต่ง element ในหน่วยความจำก่อนถ่ายภาพ (ถ้าจำเป็น)
+                        // เช่น ลบเงาที่อาจจะทำให้ภาพเพี้ยน
+                        const clonedArea = clonedDoc.getElementById('captureArea');
+                        if(clonedArea) {
+                            clonedArea.style.boxShadow = 'none';
+                            clonedArea.style.transform = 'none'; // ลบ CSS Transform ออกชั่วคราว
+                        }
+                    }
+                });
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        alert("เกิดข้อผิดพลาดในการสร้างรูปภาพ");
+                        return;
+                    }
+
+                    const file = new File([blob], "growth_result.png", { type: "image/png" });
+                    
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'ผลการประเมินการเจริญเติบโต',
+                                text: 'ดูผลการประเมินของลูกน้อย'
+                            });
+                        } catch (err) {
+                            console.log('Error sharing', err);
+                            // ถ้าแชร์ไม่ได้ (เช่น user กดยกเลิก) ไม่ต้องทำอะไร
+                        }
+                    } else {
+                        // Fallback: Download image สำหรับ PC หรือ Browser ที่ไม่รองรับ Share
+                        const link = document.createElement('a');
+                        link.download = 'growth_result.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    }
+                }, 'image/png', 1.0); // 1.0 คือคุณภาพสูงสุด
+
+            } catch (err) {
+                console.error("Capture failed", err);
+                alert("ไม่สามารถสร้างรูปภาพได้: " + err.message);
+            }
+        }
+
+        // Init
+        updateTheme();
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+        if (photoInput && photoPreview) {
+            photoInput.addEventListener('change', function(){
+                const f = this.files && this.files[0];
+                if (!f) { photoPreview.style.display = 'none'; photoPreview.src = ''; return; }
+                const fr = new FileReader();
+                fr.onload = () => { photoPreview.src = fr.result; photoPreview.style.display = 'block'; };
+                fr.readAsDataURL(f);
+            });
+        }
+    </script>
+</body>
+</html>

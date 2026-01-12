@@ -143,6 +143,75 @@ app.post('/uploadBase64', async (req, res) => {
   }
 })
 
+// Save BMI / growth record to MongoDB. If `photo` is a data URL, save to /uploads and replace with URL.
+app.post('/api/bmi-record', async (req, res) => {
+  try {
+    const record = req.body || {}
+    if (!record) return res.status(400).json({ success: false, message: 'record required' })
+
+    // If photo is provided as data URL, store its base64 payload in the DB
+    if (record.photo && String(record.photo).startsWith('data:')) {
+      try {
+        const m = String(record.photo).match(/^data:(.+);base64,(.+)$/)
+        if (m) {
+          const mime = m[1]
+          const b64 = m[2]
+          // Save base64 payload and mime type in the document. Keep `photo` as a data URL
+          // so clients can continue to render it. Also add `photoBase64` for DB storage.
+          record.photoMime = mime
+          record.photoBase64 = b64
+          record.photo = `data:${mime};base64,${b64}`
+        }
+      } catch (e) {
+        console.warn('[BMI] failed to extract photo base64', e && e.message)
+      }
+    }
+
+    // insert into collection
+    try {
+      const coll = (typeof bmiDb !== 'undefined' && bmiDb) ? bmiDb.collection('bmi_records') : mdb.collection('bmi_records')
+      const toInsert = Object.assign({}, record, { created_at: new Date().toISOString() })
+      const r = await coll.insertOne(toInsert)
+      return res.json({ success: true, id: r.insertedId, photoUrl: record.photo || null })
+    } catch (dbErr) {
+      console.error('[BMI] DB insert failed', dbErr && dbErr.message)
+      return res.status(500).json({ success: false, message: 'db insert failed' })
+    }
+  } catch (err) {
+    console.error('[ERROR] /api/bmi-record', err)
+    return res.status(500).json({ success: false, message: 'internal error' })
+  }
+})
+
+// Return all BMI records (optionally filter by name via ?name=)
+app.get('/api/bmi-records', async (req, res) => {
+  try {
+    const q = {}
+    if (req.query.name) q.name = req.query.name
+    const coll = (typeof bmiDb !== 'undefined' && bmiDb) ? bmiDb.collection('bmi_records') : mdb.collection('bmi_records')
+    const docs = await coll.find(q).sort({ created_at: -1 }).toArray()
+    // By default do not include large base64 photo payloads in the API response.
+    // Clients can request them explicitly with ?includeBase64=1 or =true
+    const includeBase64 = String(req.query.includeBase64 || '').toLowerCase() === '1' || String(req.query.includeBase64 || '').toLowerCase() === 'true'
+    const safe = docs.map(d => {
+      if (!includeBase64) {
+        const { photoBase64, photoMime, ...rest } = d
+        return rest
+      }
+      return d
+    })
+    return res.json({ success: true, records: safe })
+  } catch (e) {
+    console.error('[ERROR] /api/bmi-records', e && e.message)
+    return res.status(500).json({ success: false, message: 'failed to fetch records' })
+  }
+})
+
+// Dashboard page for BMI records
+app.get('/bmi-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'bmi-dashboard.html'))
+})
+
 // --- Usage tracking endpoints (start / end / event) ---
 app.post('/api/usage/start', async (req, res) => {
   try {
@@ -362,6 +431,7 @@ let dailyPageViewsColl
 let userStatsColl // collection for persistent user stats (total users, etc.)
 let gameResultsColl // collection for game results/reports
 const pageUsageColls = new Map()
+let bmiDb
 
 function safeCollectionNameForPage(page) {
   // normalize page like '/gamemath' -> 'usage_gamemath'
@@ -393,6 +463,9 @@ try {
   mongoClient = new MongoClient(MONGODB_URI)
   await mongoClient.connect()
   mdb = mongoClient.db(MONGODB_DB)
+  // Support a separate DB for BMI records if MONGODB_BMI_DB is provided
+  const BMI_DB_NAME = process.env.MONGODB_BMI_DB || MONGODB_DB
+  bmiDb = mongoClient.db(BMI_DB_NAME)
   dailyUsersColl = mdb.collection('daily_users')
   // sessions collection for recording session durations
   sessionsColl = mdb.collection('sessions')
