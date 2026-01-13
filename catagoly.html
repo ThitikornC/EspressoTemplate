@@ -338,7 +338,31 @@ window.addEventListener('beforeunload', function(){
     if (window.usageTracker && typeof window.usageTracker.end === 'function') {
       window.usageTracker.end(__localUsageId_catagoly);
     }
-  }catch(e){}
+      } catch(e){}
+      // Also attempt to persist this event to server-side DB
+      try {
+        const payload = {
+          clientId: null,
+          page: '/BMI.html',
+          section: 'smart-track',
+          name: 'smartTrack:click',
+          data: { from: location.pathname || 'catagoly.html' },
+          timestamp: new Date().toISOString()
+        };
+        // try to read client id from cookie if present
+        try {
+          const cookie = document.cookie || '';
+          const match = cookie.split(';').map(s=>s.trim()).find(c=>c.indexOf('huaroa_client_id=')===0);
+          if (match) payload.clientId = decodeURIComponent(match.split('=')[1]||'');
+        } catch(e){}
+        // Use keepalive fetch so navigation is not blocked
+        try {
+          fetch('/api/usage/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true, credentials: 'include' }).catch(()=>{});
+        } catch(e) {
+          // final fallback: try navigator.sendBeacon with blob
+          try { navigator.sendBeacon && navigator.sendBeacon('/api/usage/event', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch(e){}
+        }
+      } catch(e){}
 });
 </script>
 </body>
