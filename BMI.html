@@ -9,8 +9,8 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --brand-brown: #74640a; --brand-brown-dark: #3b3305; }
-        body { font-family: 'Sarabun', sans-serif; background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); }
+        :root { --brand-brown: #74640a; --brand-brown-dark: #3b3305; --brand-bg-start: #efe6d0; --brand-bg-end: #e9dcc0; }
+        body { font-family: 'Sarabun', sans-serif; background: linear-gradient(180deg, var(--brand-bg-start) 0%, var(--brand-bg-end) 100%); }
         .header-bg { background-color: var(--brand-brown) !important; color: #fff !important; }
         .brand-btn { background-color: var(--brand-brown) !important; border-color: var(--brand-brown) !important; color: #fff !important; }
         .brand-btn:hover { background-color: #5f4f07 !important; }
@@ -74,6 +74,11 @@
                 </div>
 
                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">ห้องเรียน</label>
+                        <input type="text" id="classroom" placeholder="เช่น 1/1 หรือ ป.1/ก" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold" />
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อ</label>
                         <input type="text" id="childName" placeholder="ชื่อ" class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-center font-semibold" />
@@ -487,6 +492,7 @@ const growthData = {
             const yrsInput = parseInt(document.getElementById('ageYears').value) || 0;
             const mthsInput = parseInt(document.getElementById('ageMonthsInput').value) || 0;
             const childName = (document.getElementById('childName').value || '').trim();
+            const classroom = (document.getElementById('classroom') && document.getElementById('classroom').value) ? document.getElementById('classroom').value.trim() : '';
             const photoFile = document.getElementById('photoInput').files && document.getElementById('photoInput').files[0];
             const w = parseFloat(document.getElementById('weight').value);
             const h = parseFloat(document.getElementById('height').value);
@@ -517,6 +523,8 @@ const growthData = {
                 date: dateStr,
                 ageY: normYears, ageM_Input: normMonths, ageTotalM: totalMonths,
                 name: childName || 'ไม่ระบุชื่อ',
+                classroom: classroom || '',
+                gender: gender,
                 photo: null,
                 w: w, h: h,
                 statWA: statWA, statHA: statHA, statWH: statWH
@@ -545,7 +553,8 @@ const growthData = {
                 statWA: statWA.t,
                 statHA: statHA.t,
                 statWH: statWH.t,
-                colorWH: statWH.c
+                colorWH: statWH.c,
+                classroom: classroom || ''
             };
         }
 
@@ -675,19 +684,37 @@ const growthData = {
                     // If there's a pending record, send it to server when user explicitly saves
                     (async () => {
                         if (pendingRecord) {
+                            let savedToServer = false;
                             try {
-                                await fetch('/api/bmi-record', {
+                                const res = await fetch('/api/bmi-record', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(pendingRecord)
                                 });
-                            } catch (e) { console.error('Error saving record', e); }
+                                if (res && res.ok) savedToServer = true;
+                            } catch (e) { console.error('Error saving record to server', e); }
+
+                            // Fallback: persist to localStorage so dashboard can read it offline
+                            if (!savedToServer) {
+                                try {
+                                    const existing = localStorage.getItem('bmiRecords') ? JSON.parse(localStorage.getItem('bmiRecords')) : [];
+                                    existing.unshift(pendingRecord);
+                                    localStorage.setItem('bmiRecords', JSON.stringify(existing));
+                                    console.log('[BMI] saved pending record to localStorage fallback');
+                                } catch (le) { console.error('Error saving to localStorage', le); }
+                            }
+
                             pendingRecord = null;
                         }
 
                         // Navigate to dashboard for overview.
-                        try { window.location.href = '/bmi-dashboard'; }
-                        catch (e) { location.assign('/bmi-dashboard'); }
+                        // Use a relative file path when running from file://, otherwise use server route
+                        try {
+                            const dest = (window.location.protocol === 'file:') ? 'bmi-dashboard.html' : '/bmi-dashboard';
+                            window.location.href = dest;
+                        } catch (e) {
+                            try { location.assign((window.location.protocol === 'file:') ? 'bmi-dashboard.html' : '/bmi-dashboard'); } catch(e2) { console.warn('Navigation failed', e2); }
+                        }
                     })();
         }
 

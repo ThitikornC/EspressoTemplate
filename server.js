@@ -4,7 +4,7 @@ import { fileURLToPath } from "url"
 import { Server } from "socket.io"
 import http from "http"
 import fs from "fs"
-import { MongoClient } from 'mongodb'
+import { MongoClient, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 import { createProxyMiddleware } from 'http-proxy-middleware'
 
@@ -972,6 +972,30 @@ app.get('/api/settings/:mode/:teacherName', async (req, res) => {
   } catch (e) {
     console.error('[ERROR] GET /api/settings/:mode/:teacherName', e);
     res.status(500).json({ success: false, message: 'Failed to fetch activities' });
+  }
+});
+
+// Delete a BMI record by client-provided numeric id or Mongo _id
+app.delete('/api/bmi-record/:id', async (req, res) => {
+  try {
+    const rawId = req.params.id;
+    const coll = (typeof bmiDb !== 'undefined' && bmiDb) ? bmiDb.collection('bmi_records') : mdb.collection('bmi_records');
+    // Try matching numeric `id` field first
+    let result = null;
+    const asNum = Number(rawId);
+    if (!Number.isNaN(asNum)) {
+      result = await coll.deleteOne({ id: asNum });
+      if (result && result.deletedCount && result.deletedCount > 0) return res.json({ success: true, deletedCount: result.deletedCount });
+    }
+    // Fallback: attempt to delete by MongoDB ObjectId
+    if (ObjectId && ObjectId.isValid && ObjectId.isValid(rawId)) {
+      result = await coll.deleteOne({ _id: new ObjectId(rawId) });
+      if (result && result.deletedCount && result.deletedCount > 0) return res.json({ success: true, deletedCount: result.deletedCount });
+    }
+    return res.status(404).json({ success: false, message: 'record not found' });
+  } catch (e) {
+    console.error('[ERROR] DELETE /api/bmi-record/:id', e && e.message);
+    return res.status(500).json({ success: false, message: 'delete failed' });
   }
 });
 
