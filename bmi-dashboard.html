@@ -1058,14 +1058,16 @@
             const containerWA = document.getElementById('containerWA');
             const containerHA = document.getElementById('containerHA');
             
-            // Colors logic same as before...
-            // Palette matched to sample: strong red, orange, light yellow, green, orange, red
-            const colorsWH_6_19 = ['#ef4444', '#f97316', '#fde68a', '#10b981', '#f97316', '#ef4444'];
-            const colorsHA_6_19 = ['#ef4444', '#f97316', '#10b981', '#10b981', '#065f46'];
-            // Reuse the same palette for 0-5 so both age groups match
+            // Colors logic — updated palette for clearer contrast
+            // Strong -> mid -> neutral -> healthy -> mid -> strong
+            const colorsWH_6_19 = ['#b91c1c', '#ea580c', '#fbbf24', '#16a34a', '#f97316', '#b91c1c'];
+            // HA palette: very low (red), low (orange), median (light green), good (green), very good (dark green)
+            const colorsHA_6_19 = ['#b91c1c', '#f97316', '#34d399', '#10b981', '#065f46'];
+            // Reuse the same palette for 0-5 so both age groups remain consistent
             const colorsWH_0_5 = colorsWH_6_19;
             const colorsHA_0_5 = colorsHA_6_19;
-            const colorsWA_0_5 = colorsWH_6_19;
+            // WA uses same ordering as WH for visual alignment of weight categories
+            const colorsWA_0_5 = colorsWH_0_5;
 
             if (isOlder) {
                 if(containerWA) containerWA.classList.add('hidden');
@@ -1085,18 +1087,19 @@
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (6-19 ปี)`;
 
                 document.getElementById('legendHA').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#065f46"></span><span>สูง (>+2SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน/ค่อนข้างสูง</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ค่อนข้างเตี้ย</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>เตี้ย (<-2SD)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
                 `;
                 document.getElementById('legendWH').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>อ้วน (>+3SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เริ่มอ้วน (+2SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#fde68a"></span><span>ท้วม (+1.5SD)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน (>+3SD)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน (+2SD)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม (+1.5SD)</span></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ค่อนข้างผอม</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>ผอม (<-2SD)</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม (<-2SD)</span></div>
                 `;
 
             } else {
@@ -1117,18 +1120,19 @@
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (0-5 ปี)`;
                 
                 document.getElementById('legendHA').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#065f46"></span><span>สูง</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ค่อนข้างเตี้ย</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>เตี้ย</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
                 `;
                 document.getElementById('legendWH').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>อ้วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เริ่มอ้วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#fde68a"></span><span>ท้วม</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม</span></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ค่อนข้างผอม</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#ef4444"></span><span>ผอม</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม</span></div>
                 `;
             }
         }
@@ -1338,34 +1342,13 @@
         function saveAndGoDashboard() {
             (async () => {
                 if (pendingRecord) {
-                    // Try to persist to server first. If server unavailable, fall back to localStorage.
-                    let savedOnServer = false;
+                    // persist to localStorage (and to in-memory list)
                     try {
-                        const res = await fetch('/api/bmi-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingRecord) });
-                        if (res && res.ok) {
-                            const json = await res.json();
-                            if (json && json.success) {
-                                // server returned insertedId (Mongo _id)
-                                try { pendingRecord._id = json.id || json.insertedId || pendingRecord._id; } catch(e){}
-                                savedOnServer = true;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn('[bmi] saveAndGoDashboard server save failed', e && e.message);
-                    }
-
-                    try {
-                        // Always update local state so UI shows the new record immediately
                         allRecords.unshift(pendingRecord);
-                        // If server saved, also keep local copy but mark persisted
-                        try { localStorage.setItem('bmiRecords', JSON.stringify(allRecords)); } catch (e) { console.error('Failed to save pendingRecord locally', e); }
-                    } catch (e) { console.error('Failed to insert pendingRecord in-memory', e); }
-
+                        localStorage.setItem('bmiRecords', JSON.stringify(allRecords));
+                    } catch (e) { console.error('Failed to save pendingRecord', e); }
                     pendingRecord = null;
-                    // Inform user if server save failed
-                    if (!savedOnServer) alert('บันทึกสำเร็จในเครื่อง แต่ไม่สามารถบันทึกไปยังเซิร์ฟเวอร์ได้ (ออฟไลน์)');
                 }
-
                 // Close modal and refresh view to show saved record
                 closeModal(); closeAddModal();
                 try { renderSidebar('', currentRoom); if (currentRoom) showClassroomSummary(currentRoom); } catch(e) {}
