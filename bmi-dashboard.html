@@ -374,10 +374,10 @@
                         {x:105,y:[14.2,15.1,17.4,20.1,21.7,24.9]}, 
                         {x:110,y:[15.7,16.7,19.3,22.4,24.3,27.8]}, 
                         {x:115,y:[17.3,18.4,21.4,25.0,27.1,31.1]}, 
-                        {x:120,y:[19.1,20.4,23.8,27.9,30.3,34.8]},
-                        {x:125,y:[21.1,22.6,26.6,31.3,34.0,39.1]},
-                        {x:130,y:[23.4,25.1,29.8,35.2,38.3,44.1]},
-                        {x:135,y:[25.9,27.9,33.3,39.6,43.1,49.8]},
+                        {x:120,y:[19.1,20.4,23.8,27.9,30.3,34.8]}, 
+                        {x:125,y:[21.1,22.6,26.6,31.3,34.0,39.1]}, 
+                        {x:130,y:[23.4,25.1,29.8,35.2,38.3,44.1]}, 
+                        {x:135,y:[25.9,27.9,33.3,39.6,43.1,49.8]}, 
                         {x:140,y:[28.7,31.1,37.3,44.6,48.6,56.4]}
                     ],
                     w_a: [
@@ -463,7 +463,9 @@
                 if (group.h_a) refHA = getLinearInterpolation(group.h_a, ageTotalM);
                 if (group.w_h) refWH = getLinearInterpolation(group.w_h, height);
             } else {
-                const ageY = Math.floor(ageTotalM / 12);
+                // For age > 19, cap reference at 19 years (228 months) for standards logic
+                const cappedAgeM = Math.min(ageTotalM, 228); 
+                const ageY = Math.floor(cappedAgeM / 12);
                 if (group.h_a) refHA = getLinearInterpolation(group.h_a, ageY);
                 if (group.w_h) refWH = getLinearInterpolation(group.w_h, height);
                 // For ages 6-19 we do NOT provide Weight-for-Age (WA)
@@ -480,6 +482,7 @@
                 if (inputX >= dataset[i].x && inputX <= dataset[i+1].x) {
                     const t = (inputX - dataset[i].x) / (dataset[i+1].x - dataset[i].x);
                     const yArr = [];
+                    // Handle 5 or 6 items array based on what available
                     const len = dataset[i].y.length;
                     for(let j=0; j<len; j++) yArr.push(dataset[i].y[j] * (1 - t) + dataset[i+1].y[j] * t);
                     return yArr;
@@ -708,22 +711,34 @@
             let refHA = [];
             let minX_HA = 0, maxX_HA = 72;
             let titleHA = "กราฟส่วนสูงตามเกณฑ์อายุ (0-5 ปี)";
+            const containerHA = document.getElementById('containerHA');
 
             if (isOlder) {
+                // For older group, make it full width
+                if(containerHA) containerHA.classList.add('xl:col-span-2');
+
                 // Use 6-19 data. X is Years in data, convert to Months for plot
                 const raw = genderObj.group_6_19 && genderObj.group_6_19.h_a ? genderObj.group_6_19.h_a : [];
                 refHA = raw.map(r => ({ x: r.x * 12, y: r.y }));
                 minX_HA = 72; // 6 years
                 maxX_HA = 228; // 19 years
-                titleHA = "กราฟส่วนสูงตามเกณฑ์อายุ (6-19 ปี)";
+                titleHA = "กราฟส่วนสูงตามเกณฑ์อายุ (6-19 ปี และผู้ใหญ่)";
             } else {
+                // For younger group, standard width
+                if(containerHA) containerHA.classList.remove('xl:col-span-2');
+
                 refHA = genderObj.group_0_5 && genderObj.group_0_5.h_a ? genderObj.group_0_5.h_a : [];
             }
             
             const labelHA = document.getElementById('labelHA');
             if(labelHA) labelHA.innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>${titleHA}`;
             
-            createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.h), refHA, minX_HA, maxX_HA);
+            // Plot logic for HA: cap age at 228 if > 19 years
+            const plotDataHA = data.map(d => {
+                if (isOlder && d.ageTotalM > 228) return 228;
+                return d.ageTotalM;
+            });
+            createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', plotDataHA, data.map(d => d.h), refHA, minX_HA, maxX_HA);
 
             // --- 3. WH Chart logic (Weight for Height) ---
             // Determine based on max height or age. 6-19 WH typically starts from 90cm height.
@@ -738,7 +753,7 @@
                 refWH = genderObj.group_6_19 && genderObj.group_6_19.w_h ? genderObj.group_6_19.w_h : [];
                 minX_WH = 90;
                 maxX_WH = 185;
-                titleWH = "กราฟน้ำหนักตามเกณฑ์ส่วนสูง (6-19 ปี)";
+                titleWH = "กราฟน้ำหนักตามเกณฑ์ส่วนสูง (6-19 ปี และผู้ใหญ่)";
             } else {
                 refWH = genderObj.group_0_5 && genderObj.group_0_5.w_h ? genderObj.group_0_5.w_h : [];
             }
@@ -746,7 +761,14 @@
             const labelWH = document.getElementById('labelWH');
             if(labelWH) labelWH.innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>${titleWH}`;
 
-            createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', data.map(d => ({x: d.h, y: d.w})), refWH, minX_WH, maxX_WH);
+            // Plot logic for WH: clamp height to max Ref height if taller than reference
+            const maxRefHeight = refWH.length > 0 ? refWH[refWH.length-1].x : 185;
+            const plotDataWH = data.map(d => ({
+                x: useOlderWH ? Math.min(d.h, maxRefHeight) : d.h, 
+                y: d.w
+            }));
+
+            createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, minX_WH, maxX_WH);
         }
 
         function createAreaChart(id, yLabel, xLabel, xData, yData, refData, minX, maxX) {
@@ -766,7 +788,7 @@
             datasets.push({ label: 'ข้อมูลเด็ก', data: xData.map((x, i) => ({ x: x, y: yData[i] })), borderColor: '#000', borderWidth: 2, pointBackgroundColor: '#000', pointRadius: 5, pointHoverRadius: 7, showLine: true, fill: false, tension: 0, order: 1 });
 
             // Palette green-yellow-red appropriate for growth charts
-            const palette = ['#065f46', '#059669', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
+            const palette = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#059669', '#065f46'];
 
             for (let i = refCount - 1; i >= 0; i--) {
                 const paletteIndex = (refCount - 1 - i) % palette.length;
@@ -791,7 +813,7 @@
             const datasets = [];
             datasets.push({ type: 'scatter', label: 'ข้อมูลเด็ก', data: points, backgroundColor: '#000', pointRadius: 5, order: 1 });
 
-            const palette = ['#065f46', '#059669', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
+            const palette = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#059669', '#065f46'];
             for (let i = refCount - 1; i >= 0; i--) {
                 const paletteIndex = (refCount - 1 - i) % palette.length;
                 const color = palette[paletteIndex];
