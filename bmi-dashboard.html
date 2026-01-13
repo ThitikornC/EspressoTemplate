@@ -1058,11 +1058,10 @@
             const containerWA = document.getElementById('containerWA');
             const containerHA = document.getElementById('containerHA');
             
-            // Colors logic — updated palette for clearer contrast
-            // Strong -> mid -> neutral -> healthy -> mid -> strong
-            const colorsWH_6_19 = ['#b91c1c', '#ea580c', '#fbbf24', '#16a34a', '#f97316', '#b91c1c'];
-            // HA palette: very low (red), low (orange), median (light green), good (green), very good (dark green)
-            const colorsHA_6_19 = ['#b91c1c', '#f97316', '#34d399', '#10b981', '#065f46'];
+            // Colors logic — reversed order as requested
+            const colorsWH_6_19 = ['#f97316', '#98FB98', '#10b981', '#008000', '#DDA0DD', '#BA55D3'];
+            // HA palette reversed
+            const colorsHA_6_19 = ['#f97316', '#98FB98', '#10b981', '#008000', '#BA55D3'];
             // Reuse the same palette for 0-5 so both age groups remain consistent
             const colorsWH_0_5 = colorsWH_6_19;
             const colorsHA_0_5 = colorsHA_6_19;
@@ -1114,7 +1113,7 @@
 
                 const refWH = genderObj.group_0_5.w_h;
                 const plotDataWH = data.map(d => ({ x: d.h, y: d.w }));
-                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 65, 125, colorsWH_0_5);
+                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 65, 120, colorsWH_0_5);
 
                 document.getElementById('labelHA').innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามอายุ (0-5 ปี)`;
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (0-5 ปี)`;
