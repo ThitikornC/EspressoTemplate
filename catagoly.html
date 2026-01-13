@@ -297,6 +297,33 @@ document.getElementById('feedbackModal')?.addEventListener('click', function(e) 
   try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
 </script>
 <script>
+// Track SmartTrack clicks similarly to other modes
+;(function(){
+  const btn = document.getElementById('smartTrackBtn');
+  if(!btn) return;
+  btn.addEventListener('click', function(e){
+    try {
+      // Prefer a lightweight tracking call if available
+      if (window.usageTracker && typeof window.usageTracker.track === 'function') {
+        try { window.usageTracker.track('smartTrack:click', { from: location.pathname || 'catagoly.html' }); } catch(e){}
+      } else if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+        // Start a short session for SmartTrack before navigation (best-effort)
+        try { window.usageTracker.start('/BMI.html', 'smart-track'); } catch(e){}
+      } else {
+        // fallback: record to localStorage so server-side aggregator can read it later
+        try {
+          const p = { event: 'smartTrack:click', from: location.pathname || 'catagoly.html', ts: new Date().toISOString() };
+          const arr = JSON.parse(localStorage.getItem('localUsageEvents') || '[]');
+          arr.push(p);
+          localStorage.setItem('localUsageEvents', JSON.stringify(arr));
+        } catch(e){}
+      }
+    } catch(e){}
+    // allow normal navigation to proceed
+  });
+})();
+</script>
+<script>
 var __localUsageId_catagoly = null;
 window.addEventListener('load', function(){
   try{
