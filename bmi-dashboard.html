@@ -1090,19 +1090,23 @@
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (6-19 ปี)`;
 
                 document.getElementById('legendHA').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
+                    <div class="flex flex-col gap-2 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
+                    </div>
                 `;
                 document.getElementById('legendWH').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน (>+3SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน (+2SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม (+1.5SD)</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม (<-2SD)</span></div>
+                    <div class="flex flex-col gap-2 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน (&gt;+3SD)</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน (+2SD)</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม (+1.5SD)</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม (&lt;-2SD)</span></div>
+                    </div>
                 `;
 
             } else {
@@ -1123,19 +1127,23 @@
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (0-5 ปี)`;
                 
                 document.getElementById('legendHA').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
+                    <div class="flex flex-col gap-2 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>สูง</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ค่อนข้างสูง</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>ตามเกณฑ์</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างเตี้ย</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>เตี้ย</span></div>
+                    </div>
                 `;
                 document.getElementById('legendWH').innerHTML = `
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม</span></div>
+                    <div class="flex flex-col gap-2 text-xs sm:text-sm">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#BA55D3"></span><span>อ้วน</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#DDA0DD"></span><span>เริ่มอ้วน</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#008000"></span><span>ท้วม</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#10b981"></span><span>สมส่วน</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#98FB98"></span><span>ค่อนข้างผอม</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:#f97316"></span><span>ผอม</span></div>
+                    </div>
                 `;
             }
         }
