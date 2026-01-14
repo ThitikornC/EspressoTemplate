@@ -98,7 +98,7 @@
                 <!-- Individual Card Section -->
                 <div class="flex justify-center">
                     <div class="bg-white rounded-[2rem] shadow-xl p-8 w-full max-w-md text-center border border-gray-100 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full -mr-10 -mt-10 opacity-50 pointer-events-none" style="background-color: rgba(116,100,10,0.06);"></div>
+                        <div class="absolute top-0 right-0 w-20 h-20 rounded-bl-full -mr-6 -mt-6 opacity-30 pointer-events-none" style="background-color: rgba(116,100,10,0.06);"></div>
                         <h2 class="text-xl font-bold text-gray-800 mb-1" id="studentNameDisplay">ผลการประเมิน</h2>
                         <p class="text-gray-400 text-sm mb-6"><span id="studentClassDisplay">-</span> | <span id="cardDate">-</span></p>
                         <div class="flex flex-col items-center mb-6">
@@ -249,7 +249,7 @@
             <div id="resultModal" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
                 <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
                     <div id="captureArea" class="bg-gradient-to-br from-white to-gray-50 p-6 relative">
-                        <div class="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-50 -mr-4 -mt-4 z-0" style="background-color: rgba(116,100,10,0.12);"></div>
+                        <div class="absolute top-0 right-0 w-14 h-14 rounded-bl-full opacity-40 -mr-3 -mt-3 z-0" style="background-color: rgba(116,100,10,0.12);"></div>
                         <div class="text-center relative z-10">
                             <h3 class="text-xl font-bold text-gray-800 mb-1">ผลการประเมินการเจริญเติบโต</h3>
                             <p class="text-xs text-gray-500" id="resDate">วันที่ -</p>
@@ -1079,11 +1079,11 @@
                 const rawHA = genderObj.group_6_19.h_a;
                 const plotDataHA = data.map(d => Math.min(d.ageTotalM, 228));
                 const refHA = rawHA.map(r => ({ x: r.x * 12, y: r.y }));
-                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', plotDataHA, data.map(d => d.h), refHA, 72, 228, colorsHA_6_19);
+                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', plotDataHA, data.map(d => d.h), refHA, 72, 228, colorsHA_6_19, data);
 
                 const refWH = genderObj.group_6_19.w_h;
                 const maxRefH = refWH[refWH.length-1].x;
-                const plotDataWH = data.map(d => ({ x: Math.min(d.h, maxRefH), y: d.w }));
+                const plotDataWH = data.map(d => ({ x: Math.min(d.h, maxRefH), y: d.w, _meta: d }));
                 createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 90, 185, colorsWH_6_19);
                 
                 document.getElementById('labelHA').innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามอายุ (6-19 ปี)`;
@@ -1114,13 +1114,13 @@
                 if(containerHA) containerHA.classList.remove('xl:col-span-2');
 
                 const refWA = genderObj.group_0_5.w_a;
-                createAreaChart('chartWA', 'น้ำหนัก (กก.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.w), refWA, 0, 72, colorsWA_0_5);
+                createAreaChart('chartWA', 'น้ำหนัก (กก.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.w), refWA, 0, 72, colorsWA_0_5, data);
                 
                 const refHA = genderObj.group_0_5.h_a;
-                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.h), refHA, 0, 72, colorsHA_0_5);
+                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.h), refHA, 0, 72, colorsHA_0_5, data);
 
                 const refWH = genderObj.group_0_5.w_h;
-                const plotDataWH = data.map(d => ({ x: d.h, y: d.w }));
+                const plotDataWH = data.map(d => ({ x: d.h, y: d.w, _meta: d }));
                 createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 65, 120, colorsWH_0_5);
 
                 document.getElementById('labelHA').innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามอายุ (0-5 ปี)`;
@@ -1148,23 +1148,105 @@
             }
         }
 
-        function createAreaChart(id, yLabel, xLabel, xData, yData, refData, minX, maxX, colors) {
+        function createAreaChart(id, yLabel, xLabel, xData, yData, refData, minX, maxX, colors, meta) {
             const ctx = document.getElementById(id).getContext('2d');
-            if(chartInstances[id]) chartInstances[id].destroy();
+            if (chartInstances[id]) chartInstances[id].destroy();
             const datasets = [];
-            // Child Line (use brand dark instead of pure black for better match)
-            datasets.push({ label: 'เด็ก', data: xData.map((x, i) => ({ x: x, y: yData[i] })), borderColor: '#0f172a', borderWidth: 2, pointBackgroundColor: '#0f172a', pointRadius: 4, showLine: true, fill: false, tension: 0, order: 10 });
-            // Ref Lines (Top down)
-            const refCount = refData[0].y.length; 
+            const childPoints = xData.map((x, i) => ({ x: x, y: yData[i], _meta: (typeof meta !== 'undefined' && meta && meta[i]) ? meta[i] : null }));
+            datasets.push({ type: 'scatter', label: 'เด็ก', data: childPoints, backgroundColor: '#0f172a', pointRadius: 5, order: 10 });
+            const refCount = (refData && refData[0] && Array.isArray(refData[0].y)) ? refData[0].y.length : 0;
             for (let i = refCount - 1; i >= 0; i--) {
                 const color = colors[i % colors.length] || '#ccc';
                 const d = refData.map(r => ({ x: r.x, y: r.y[i] }));
                 datasets.push({ label: `L${i}`, data: d, borderColor: color, borderWidth: 1, pointRadius: 0, fill: false, tension: 0.3, order: 1 });
             }
+
+            function roundRect(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            }
+
+            const drawLabelsPlugin = {
+                id: 'drawPointLabels',
+                afterDatasetsDraw: function (chart) {
+                    const ctx = chart.ctx;
+                    const meta = chart.getDatasetMeta(0);
+                    if (!meta || !meta.data) return;
+                    const chartArea = chart.chartArea || { left: 0, top: 0, right: chart.width, bottom: chart.height };
+                    ctx.save();
+                    ctx.font = '12px "Sarabun", sans-serif';
+                    ctx.textBaseline = 'top';
+                    const boxes = [];
+                    meta.data.forEach((el, idx) => {
+                        try {
+                            // read the original data point from the dataset (child dataset is first)
+                            const dsPoint = (chart.data && chart.data.datasets && chart.data.datasets[0] && chart.data.datasets[0].data) ? chart.data.datasets[0].data[idx] : null;
+                            if (!dsPoint || !dsPoint._meta) return;
+                            const d = dsPoint._meta;
+                            // compute pixel coordinates using scales
+                            const px = (chart.scales && chart.scales.x) ? chart.scales.x.getPixelForValue(dsPoint.x) : (el.x || 0);
+                            const py = (chart.scales && chart.scales.y) ? chart.scales.y.getPixelForValue(dsPoint.y) : (el.y || 0);
+                            // debug: draw a visible red ring at the point to confirm plugin runs
+                            try { ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,60,60,0.95)'; ctx.lineWidth = 2; ctx.stroke(); } catch(e) {}
+                            const lines = [];
+                            try { lines.push('วันที่: ' + new Date(d.date).toLocaleDateString('th-TH')); } catch (e) { if (d.date) lines.push('วันที่: ' + d.date); }
+                            const totalM = (typeof d.ageTotalM === 'number') ? d.ageTotalM : ((d.ageY || 0) * 12 + (d.ageM_Input || 0));
+                            const years = Math.floor(totalM / 12);
+                            lines.push('อายุ: ' + years + ' ปี');
+                            // include evaluation result for this chart (WA/HA)
+                            try {
+                                const evalKey = (id === 'chartWA') ? 'statWA' : (id === 'chartHA') ? 'statHA' : null;
+                                if (evalKey && dsPoint[evalKey]) {
+                                    lines.push('ผลการประเมิน: ' + formatStatusText(dsPoint[evalKey], evalKey === 'statWA' ? 'WA' : 'HA'));
+                                }
+                            } catch (e) {}
+                            lines.push(xLabel + ': ' + dsPoint.x);
+                            lines.push(yLabel + ': ' + dsPoint.y);
+                            const padding = 6;
+                            const lineHeight = 16;
+                            const textWidths = lines.map(l => ctx.measureText(l).width);
+                            const w = Math.max(...textWidths);
+                            const h = lines.length * lineHeight + padding;
+                            let bx = px + 8;
+                            let by = py - h - 8;
+                            for (let b of boxes) {
+                                const overlapX = !(bx + w < b.x || bx > b.x + b.w);
+                                const overlapY = !(by + h < b.y || by > b.y + b.h);
+                                if (overlapX && overlapY) by = b.y - h - 6;
+                            }
+                            if (bx + w + padding > chartArea.right) bx = chartArea.right - w - padding - 4;
+                            if (bx < chartArea.left) bx = chartArea.left + 4;
+                            if (by < chartArea.top) by = py + 8;
+                            if (by + h > chartArea.bottom) by = chartArea.bottom - h - 4;
+                            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                            ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+                            ctx.lineWidth = 1;
+                            roundRect(ctx, bx - 4, by - 4, w + padding + 8, h + 4, 6);
+                            ctx.fill(); ctx.stroke();
+                            ctx.fillStyle = '#111827';
+                            lines.forEach((l, li) => ctx.fillText(l, bx + padding / 2, by + li * lineHeight + 2));
+                            boxes.push({ x: bx - 4, y: by - 4, w: w + padding + 8, h: h + 4 });
+                        } catch (e) { }
+                    });
+                    ctx.restore();
+                }
+            };
+
             chartInstances[id] = new Chart(ctx, {
                 type: 'line',
                 data: { labels: [minX, maxX], datasets: datasets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } }, plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                },
+                plugins: [drawLabelsPlugin]
             });
         }
 
@@ -1173,7 +1255,9 @@
             if(chartInstances[id]) chartInstances[id].destroy();
             const datasets = [];
             // Child Points (brand dark)
-            datasets.push({ type: 'scatter', label: 'เด็ก', data: points, backgroundColor: '#0f172a', pointRadius: 5, order: 10 });
+            // ensure points carry optional meta (date/age) so tooltip can use them
+            const childPts = points.map(p => ({ x: p.x, y: p.y, _meta: p._meta || p }));
+            datasets.push({ type: 'scatter', label: 'เด็ก', data: childPts, backgroundColor: '#0f172a', pointRadius: 5, order: 10 });
             // Ref Lines
             const refCount = refData[0].y.length;
             for (let i = refCount - 1; i >= 0; i--) {
@@ -1184,7 +1268,86 @@
             chartInstances[id] = new Chart(ctx, {
                 type: 'line',
                 data: { labels: [minX, maxX], datasets: datasets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } }, plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                },
+                plugins: [
+                    {
+                        id: 'alwaysShowLabels',
+                        afterDatasetsDraw: function(chart) {
+                            const ctx = chart.ctx;
+                            const area = chart.chartArea;
+                            const padding = 6;
+                            const lineHeight = 14;
+                            chart.data.datasets.forEach(function(dataset) {
+                                if (!dataset || dataset.label !== 'เด็ก' || !dataset.data) return;
+                                ctx.save();
+                                ctx.font = '12px Sarabun, sans-serif';
+                                ctx.fillStyle = '#0f172a';
+                                ctx.textAlign = 'left';
+                                ctx.textBaseline = 'top';
+                                dataset.data.forEach(function(pt) {
+                                    if (!pt) return;
+                                    const px = chart.scales.x.getPixelForValue(pt.x);
+                                    const py = chart.scales.y.getPixelForValue(pt.y);
+                                    // debug: draw a visible red ring at the point to confirm plugin runs
+                                    try { ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,60,60,0.95)'; ctx.lineWidth = 2; ctx.stroke(); } catch(e) {}
+                                    const meta = pt._meta || null;
+                                    const lines = [];
+                                    if (meta && meta.date) {
+                                        try { lines.push('วันที่: ' + new Date(meta.date).toLocaleDateString('th-TH')); } catch(e) { lines.push('วันที่: ' + meta.date); }
+                                    }
+                                    if (meta && (meta.ageTotalM !== undefined)) {
+                                        const years = (meta.ageTotalM / 12);
+                                        const yrsText = (Math.abs(years % 1) < 0.05) ? years.toFixed(0) : years.toFixed(1);
+                                        lines.push('อายุ: ' + yrsText + ' ปี');
+                                    }
+                                    // include evaluation result for WH chart
+                                    try {
+                                        if (meta && meta.statWH) lines.push('ผลการประเมิน: ' + formatStatusText(meta.statWH, 'WH'));
+                                    } catch(e) {}
+                                    lines.push(xLabel + ': ' + pt.x);
+                                    lines.push(yLabel + ': ' + pt.y);
+
+                                    // measure width
+                                    const textWidth = Math.max(...lines.map(l => ctx.measureText(l).width));
+
+                                    // preferred position (right of point)
+                                    let lx = px + 8;
+                                    let ly = py - (lines.length * lineHeight) / 2;
+
+                                    // clamp horizontally
+                                    if (lx + textWidth + padding * 2 > area.right) lx = px - 8 - textWidth - padding * 2;
+                                    if (lx < area.left + 4) lx = area.left + 4;
+
+                                    // clamp vertically
+                                    if (ly < area.top + 4) ly = area.top + 4;
+                                    if (ly + lines.length * lineHeight + padding * 2 > area.bottom - 4) ly = area.bottom - lines.length * lineHeight - padding * 2 - 4;
+
+                                    // draw background
+                                    const rectX = lx - padding;
+                                    const rectY = ly - padding;
+                                    const rectW = textWidth + padding * 2;
+                                    const rectH = lines.length * lineHeight + padding * 2;
+                                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                                    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+                                    ctx.fillRect(rectX, rectY, rectW, rectH);
+                                    ctx.strokeRect(rectX, rectY, rectW, rectH);
+
+                                    // draw text lines
+                                    ctx.fillStyle = '#0f172a';
+                                    for (let li = 0; li < lines.length; li++) {
+                                        ctx.fillText(lines[li], lx, ly + li * lineHeight);
+                                    }
+                                });
+                                ctx.restore();
+                            });
+                        }
+                    }
+                ]
             });
         }
 
@@ -1353,11 +1516,34 @@
         function saveAndGoDashboard() {
             (async () => {
                 if (pendingRecord) {
-                    // persist to localStorage (and to in-memory list)
+                    // Try to persist to server first (preferred). Include numeric `id` so server can store it.
+                    let savedOnServer = false;
+                    try {
+                        const res = await fetch('/api/bmi-record', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(pendingRecord),
+                            keepalive: true,
+                            credentials: 'include'
+                        });
+                        if (res && res.ok) {
+                            const json = await res.json().catch(()=>null);
+                            if (json && json.success && json.id) {
+                                pendingRecord.serverId = json.id;
+                                savedOnServer = true;
+                            }
+                        } else {
+                            console.warn('Server responded with', res && res.status);
+                        }
+                    } catch (e) {
+                        console.warn('Persist to server failed', e);
+                    }
+
+                    // Persist locally in any case so UI reflects saved data offline
                     try {
                         allRecords.unshift(pendingRecord);
                         localStorage.setItem('bmiRecords', JSON.stringify(allRecords));
-                    } catch (e) { console.error('Failed to save pendingRecord', e); }
+                    } catch (e) { console.error('Failed to save pendingRecord locally', e); }
                     pendingRecord = null;
                 }
                 // Close modal and refresh view to show saved record
@@ -1367,40 +1553,45 @@
         }
         // Delete a saved record by id
         async function deleteRecord(id) {
+            try {
+                if (!confirm('ต้องการลบรายการนี้จริงหรือไม่?')) return;
+                // Find local record first to see if it has a serverId
+                const idx = allRecords.findIndex(r => r.id === id);
+                if (idx === -1) return alert('ไม่พบรายการที่ต้องการลบ');
+                const localRec = allRecords[idx];
+
+                // Attempt server-side delete using serverId if present, otherwise numeric id
+                let serverOk = false;
+                const toDeleteId = localRec.serverId || id;
                 try {
-                    if (!confirm('ต้องการลบรายการนี้จริงหรือไม่?')) return;
-                    // Attempt server-side delete first
-                    let serverOk = false;
-                    try {
-                        const res = await fetch(`/api/bmi-record/${id}`, { method: 'DELETE' });
-                        if (res && res.ok) {
-                            const json = await res.json();
-                            if (json && json.success) serverOk = true;
-                        }
-                    } catch (e) {
-                        console.warn('Server delete failed', e);
+                    const res = await fetch(`/api/bmi-record/${toDeleteId}`, { method: 'DELETE', credentials: 'include' });
+                    if (res && res.ok) {
+                        const json = await res.json().catch(()=>null);
+                        if (json && json.success) serverOk = true;
                     }
+                } catch (e) {
+                    console.warn('Server delete failed', e);
+                }
 
-                    if (!serverOk) {
-                        // If server delete not available, ask user whether to proceed with local delete
-                        if (!confirm('ไม่สามารถลบจากเซิร์ฟเวอร์ได้ — ต้องการลบเฉพาะในเครื่องนี้หรือไม่?')) return;
-                    }
+                if (!serverOk) {
+                    // If server delete not available, ask user whether to proceed with local delete
+                    if (!confirm('ไม่สามารถลบจากเซิร์ฟเวอร์ได้ — ต้องการลบเฉพาะในเครื่องนี้หรือไม่?')) return;
+                }
 
-                    const idx = allRecords.findIndex(r => r.id === id);
-                    if (idx === -1) return alert('ไม่พบรายการที่ต้องการลบ');
-                    allRecords.splice(idx, 1);
-                    try { localStorage.setItem('bmiRecords', JSON.stringify(allRecords)); } catch (e) { console.error('Failed to save after delete', e); }
+                // Remove local record only after either server confirmed or user allowed local-only
+                allRecords.splice(idx, 1);
+                try { localStorage.setItem('bmiRecords', JSON.stringify(allRecords)); } catch (e) { console.error('Failed to save after delete', e); }
 
-                    // Refresh sidebar and tables
-                    renderSidebar('', currentRoom);
-                    if (currentSelectedName) {
-                        const remaining = allRecords.filter(r => (r.name||'').trim() === currentSelectedName);
-                        if (remaining.length > 0) selectChild(currentSelectedName);
-                        else { currentSelectedName = null; if (currentRoom) showClassroomSummary(currentRoom); else updateDashboard(); }
-                    } else {
-                        updateDashboard();
-                    }
-                } catch (e) { console.error('deleteRecord error', e); }
+                // Refresh sidebar and tables
+                renderSidebar('', currentRoom);
+                if (currentSelectedName) {
+                    const remaining = allRecords.filter(r => (r.name||'').trim() === currentSelectedName);
+                    if (remaining.length > 0) selectChild(currentSelectedName);
+                    else { currentSelectedName = null; if (currentRoom) showClassroomSummary(currentRoom); else updateDashboard(); }
+                } else {
+                    updateDashboard();
+                }
+            } catch (e) { console.error('deleteRecord error', e); }
         }
         function toggleSidebarMobile() { document.querySelector('aside').classList.toggle('hidden'); }
         // Search removed — no listener
