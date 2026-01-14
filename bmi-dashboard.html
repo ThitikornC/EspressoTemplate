@@ -34,6 +34,19 @@
         .status-orange { background-color: #ffedd5; color: #c2410c; }
         .status-yellow { background-color: #fef9c3; color: #a16207; } 
         .status-green { background-color: #dcfce7; color: #15803d; }
+
+        /* Responsive table helper: horizontal scroll on small screens */
+        .responsive-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .responsive-scroll table { min-width: 720px; border-collapse: collapse; }
+        .responsive-scroll th, .responsive-scroll td { white-space: nowrap; }
+        .responsive-scroll thead th { position: sticky; top: 0; background: #fff; z-index: 3; }
+
+        @media (max-width: 768px) {
+            .responsive-scroll table { min-width: 520px; }
+            table.w-full.text-sm { font-size: 12px; }
+            .responsive-scroll th, .responsive-scroll td { padding: 6px 8px; }
+            .status-pill { min-width: 64px; font-size: 12px; padding: 4px 8px; }
+        }
         
         canvas{width:100% !important; height:auto !important; display:block}
         #globalSidebarToggle, #mobileToggleBtn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; font-size:20px; }
@@ -68,7 +81,7 @@
                         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         สรุปผลภาวะโภชนาการ <span id="summaryTitle">แยกรายห้อง</span>
                     </h2>
-                    <div class="overflow-x-auto">
+                    <div class="responsive-scroll overflow-x-auto">
                         <table class="w-full text-sm text-center">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 font-bold">
@@ -875,7 +888,8 @@
             if (!detail) {
                 detail = document.createElement('div');
                 detail.id = 'classDetail';
-                detail.className = 'bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-4 overflow-x-auto';
+                // use responsive-scroll helper so large tables can be scrolled horizontally on small screens
+                detail.className = 'bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-4 responsive-scroll overflow-x-auto';
                 const container = document.getElementById('captureAreaDashboard');
                 if (container) container.appendChild(detail);
             }
@@ -1038,6 +1052,23 @@
             // add some spacing then append the detailed summary sections
             html += `<div class="my-6"></div>` + detailedHtml;
             detail.innerHTML = html;
+
+            // Make columns equal width for all tables inside classDetail
+            try {
+                const tables = detail.querySelectorAll('table');
+                tables.forEach(tbl => {
+                    const thead = tbl.querySelector('thead');
+                    const cols = thead ? thead.querySelectorAll('th').length : 0;
+                    if (!cols) return;
+                    const pct = (100 / cols) + '%';
+                    // apply to header cells
+                    thead.querySelectorAll('th').forEach(th => { th.style.width = pct; th.style.minWidth = '0'; });
+                    // apply to body cells (each row)
+                    tbl.querySelectorAll('tbody tr').forEach(tr => {
+                        tr.querySelectorAll('td').forEach(td => { td.style.width = pct; td.style.minWidth = '0'; });
+                    });
+                });
+            } catch (e) { console.warn('equalize table columns failed', e); }
 
             // Hide other sections inside capture area so only the class table remains
             const container = document.getElementById('captureAreaDashboard');
