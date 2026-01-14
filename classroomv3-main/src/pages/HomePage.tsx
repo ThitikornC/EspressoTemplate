@@ -1,5 +1,7 @@
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { GameConfig } from '../services/storage'
+import BoxBreathingApp from './BoxBreathingApp'
 
 // Default games configuration - always shown
 const defaultGameConfig: GameConfig[] = [
@@ -46,6 +48,12 @@ function HomePage() {
             <p>{tile.description}</p>
           </Link>
         ))}
+      </div>
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">Relaxation Tools</h3>
+        <div className="border rounded-lg p-4 bg-white shadow-sm">
+          <BoxBreathingApp />
+        </div>
       </div>
     </div>
   )

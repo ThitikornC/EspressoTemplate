@@ -1052,6 +1052,16 @@
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('contentSection').style.display = 'block';
             if (dashEl) dashEl.classList.add('hidden');
+
+            // On small screens, hide the sidebar and scroll the content into view
+            try {
+                if (window.innerWidth < 1024) {
+                    const aside = document.querySelector('aside');
+                    if (aside) aside.classList.add('hidden');
+                    const content = document.getElementById('contentSection');
+                    if (content && content.scrollIntoView) content.scrollIntoView();
+                }
+            } catch (e) { /* ignore */ }
         }
 
         function updateCharts(data, gender) {
