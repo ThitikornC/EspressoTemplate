@@ -1,0 +1,2 @@
+{"type":"start_buffered","usageId":"local-1769106199480-kcz6xds8eee","client_id":"c-2qezd069em8-mkdga41d","page":"/studio/puzzle","start_at":"2026-01-22T18:23:19.463Z","created_at":"2026-01-22T18:23:19.481Z"}
+{"type":"flush","usageId":"69726b186d78e5543177d577","client_id":"c-2qezd069em8-mkdga41d","page":"/studio/puzzle","section":"puzzle","start_at":"2026-01-22T18:23:19.463Z","end_at":"2026-01-22T18:23:20.959Z","durationMs":1496,"events":[],"created_at":"2026-01-22T18:23:20.966Z","flush_reason":"end","_id":"69726b186d78e5543177d577"}

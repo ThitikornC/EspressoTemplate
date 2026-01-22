@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
-import BoxBreathingPage from './pages/BoxBreathingPage'
 import PlayColoring from './pages/Student/PlayColoring'
 import PlayPuzzle from './pages/Student/PlayPuzzle'
 import PlayCategory from './pages/Student/PlayCategory'
@@ -21,7 +20,7 @@ function AppRoutes() {
       <Route path="/coloring" element={<PlayColoring />} />
       <Route path="/puzzle" element={<PlayPuzzle />} />
       <Route path="/category" element={<PlayCategory />} />
-      <Route path="/boxbreathing" element={<BoxBreathingPage />} />
+      {/* BoxBreathing page removed */}
     </Routes>
   )
 }
