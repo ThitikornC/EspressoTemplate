@@ -1905,6 +1905,85 @@ app.get('/socket-client.js', (req, res) => {
   })();`)
 })
 
+// ==================================================================
+// 🚀 AUTOMATED PROVISIONING API (วางส่วนนี้ก่อน server.listen)
+// ==================================================================
+app.post('/api/provision-trial', async (req, res) => {
+  try {
+    const { companyName } = req.body;
+    
+    if (!companyName) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อบริษัท (companyName)' });
+    }
+
+    // ดึงค่า Config จาก .env
+    const { RAILWAY_API_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_TEMPLATE_ENV_ID, RAILWAY_PROJECT_NAME } = process.env;
+    
+    // Check Config
+    if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_TEMPLATE_ENV_ID) {
+      console.error('[PROVISION ERROR] Missing Railway Config in .env');
+      return res.status(500).json({ success: false, message: 'Server Config Error: Missing Railway Credentials' });
+    }
+
+    console.log(`[PROVISION] Starting provisioning for: ${companyName}`);
+
+    // 1. สร้างชื่อ Environment และ Database ให้ Unique
+    const safeName = companyName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+    const newEnvName = `client-${safeName}-${Date.now().toString().slice(-4)}`;
+    const newDbName = `db_${safeName}`;
+
+    // 2. สั่ง Railway สร้าง Environment ใหม่ (Clone จากต้นฉบับ)
+    const createRes = await fetch('https://backboard.railway.app/graphql/v2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
+      body: JSON.stringify({
+        query: `mutation environmentCreate($projectId: String!, $name: String!, $sourceId: String!) {
+          environmentCreate(input: { projectId: $projectId, name: $name, sourceId: $sourceId }) { id }
+        }`,
+        variables: { projectId: RAILWAY_PROJECT_ID, name: newEnvName, sourceId: RAILWAY_TEMPLATE_ENV_ID }
+      })
+    });
+
+    const createData = await createRes.json();
+    if (createData.errors) throw new Error(createData.errors[0].message);
+    const newEnvId = createData.data.environmentCreate.id;
+
+    // 3. เปลี่ยนชื่อ Database ให้เป็นของลูกค้าคนนั้น
+    const updateRes = await fetch('https://backboard.railway.app/graphql/v2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
+      body: JSON.stringify({
+        query: `mutation variableCollectionUpsert($projectId: String!, $environmentId: String!, $variables: ServiceVariablesInput!) {
+          variableCollectionUpsert(input: { projectId: $projectId, environmentId: $environmentId, variables: $variables })
+        }`,
+        variables: {
+          projectId: RAILWAY_PROJECT_ID,
+          environmentId: newEnvId,
+          variables: {
+            MONGODB_DB: newDbName,        // เปลี่ยนชื่อ DB หลัก
+            MONGODB_BMI_DB: newDbName,    // เปลี่ยนชื่อ DB BMI
+            CUSTOMER_NAME: companyName    // เปลี่ยนชื่อหน้าเว็บ
+          }
+        }
+      })
+    });
+    
+    const updateData = await updateRes.json();
+    if (updateData.errors) throw new Error(updateData.errors[0].message);
+
+    // 4. สร้าง URL และส่งกลับ
+    const projectName = RAILWAY_PROJECT_NAME || 'espresso';
+    const newUrl = `https://${projectName}-${newEnvName}.up.railway.app`;
+
+    res.json({ success: true, url: newUrl, database: newDbName });
+
+  } catch (e) {
+    console.error('[PROVISION ERROR]', e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+// ================================================================== เพิ่มให้หน่อย
+
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => {
   console.log("🚀 Server running on port " + PORT)
