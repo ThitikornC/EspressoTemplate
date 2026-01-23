@@ -1908,6 +1908,20 @@ app.get('/socket-client.js', (req, res) => {
 // ==================================================================
 // 🚀 AUTOMATED PROVISIONING API (วางส่วนนี้ก่อน server.listen)
 // ==================================================================
+// --- API สำหรับหน้าบ้าน ดึงค่า Config ลูกค้าไปแสดง ---
+app.get('/api/client-config', (req, res) => {
+  res.json({
+    clientName: process.env.CUSTOMER_NAME || 'Demo User',
+    runNumber: process.env.CLIENT_RUN_NUMBER || '000',
+    contractNo: process.env.CLIENT_CONTRACT_NO || '-',
+    installDate: process.env.CLIENT_INSTALL_DATE || new Date().toLocaleDateString('th-TH'),
+    expiryDate: process.env.CLIENT_EXPIRY_DATE || '-'
+  });
+});
+
+// ==================================================================
+// 🚀 AUTOMATED PROVISIONING API (ฉบับอัปเดต: คำนวณวันที่ + Config)
+// ==================================================================
 app.post('/api/provision-trial', async (req, res) => {
   try {
     const { companyName } = req.body;
@@ -1916,23 +1930,35 @@ app.post('/api/provision-trial', async (req, res) => {
       return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อบริษัท (companyName)' });
     }
 
-    // ดึงค่า Config จาก .env
     const { RAILWAY_API_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_TEMPLATE_ENV_ID, RAILWAY_PROJECT_NAME } = process.env;
     
-    // Check Config
     if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_TEMPLATE_ENV_ID) {
-      console.error('[PROVISION ERROR] Missing Railway Config in .env');
       return res.status(500).json({ success: false, message: 'Server Config Error: Missing Railway Credentials' });
     }
 
     console.log(`[PROVISION] Starting provisioning for: ${companyName}`);
 
-    // 1. สร้างชื่อ Environment และ Database ให้ Unique
+    // --- 1. คำนวณค่าต่างๆ (Run Number, Dates) ---
+    const now = new Date();
+    // วันที่ติดตั้ง (Format ไทย: 1-11-25)
+    const installDateStr = `${now.getDate()}-${now.getMonth() + 1}-${(now.getFullYear() + 543) % 100}`;
+    
+    // วันหมดอายุ (บวก 30 วัน)
+    const expireDate = new Date(now);
+    expireDate.setDate(expireDate.getDate() + 30);
+    const expireDateStr = `${expireDate.getDate()}-${expireDate.getMonth() + 1}-${(expireDate.getFullYear() + 543) % 100}`;
+
+    // สร้าง Run Number (ใช้ Timestamp ง่ายๆ หรือสุ่ม เพื่อให้ไม่ซ้ำ)
+    // *ถ้าต้องการเลขรันต่อเนื่องจริงๆ (001, 002) ต้องเก็บ Counter ไว้ใน Database กลางแล้วดึงมาบวกครับ*
+    const runNumber = String(Math.floor(Math.random() * 1000)).padStart(3, '0'); 
+    const contractNo = `${(now.getFullYear() + 543) % 100}${String(now.getMonth()+1).padStart(2,'0')}${runNumber}`;
+
+    // เตรียมชื่อ Database และ Env Name
     const safeName = companyName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
     const newEnvName = `client-${safeName}-${Date.now().toString().slice(-4)}`;
     const newDbName = `db_${safeName}`;
 
-    // 2. สั่ง Railway สร้าง Environment ใหม่ (Clone จากต้นฉบับ)
+    // --- 2. สั่ง Railway สร้าง Environment ใหม่ ---
     const createRes = await fetch('https://backboard.railway.app/graphql/v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
@@ -1948,7 +1974,7 @@ app.post('/api/provision-trial', async (req, res) => {
     if (createData.errors) throw new Error(createData.errors[0].message);
     const newEnvId = createData.data.environmentCreate.id;
 
-    // 3. เปลี่ยนชื่อ Database ให้เป็นของลูกค้าคนนั้น
+    // --- 3. อัดตัวแปร (Variables) ทั้งหมดเข้าไป ---
     const updateRes = await fetch('https://backboard.railway.app/graphql/v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
@@ -1960,9 +1986,14 @@ app.post('/api/provision-trial', async (req, res) => {
           projectId: RAILWAY_PROJECT_ID,
           environmentId: newEnvId,
           variables: {
-            MONGODB_DB: newDbName,        // เปลี่ยนชื่อ DB หลัก
-            MONGODB_BMI_DB: newDbName,    // เปลี่ยนชื่อ DB BMI
-            CUSTOMER_NAME: companyName    // เปลี่ยนชื่อหน้าเว็บ
+            MONGODB_DB: newDbName,
+            MONGODB_BMI_DB: newDbName,
+            CUSTOMER_NAME: companyName,
+            // ส่งค่าที่เราคำนวณไปให้ Env ปลายทาง
+            CLIENT_RUN_NUMBER: runNumber,
+            CLIENT_CONTRACT_NO: contractNo,
+            CLIENT_INSTALL_DATE: installDateStr,
+            CLIENT_EXPIRY_DATE: expireDateStr
           }
         }
       })
@@ -1971,18 +2002,17 @@ app.post('/api/provision-trial', async (req, res) => {
     const updateData = await updateRes.json();
     if (updateData.errors) throw new Error(updateData.errors[0].message);
 
-    // 4. สร้าง URL และส่งกลับ
+    // 4. ส่ง URL กลับ
     const projectName = RAILWAY_PROJECT_NAME || 'espresso';
     const newUrl = `https://${projectName}-${newEnvName}.up.railway.app`;
 
-    res.json({ success: true, url: newUrl, database: newDbName });
+    res.json({ success: true, url: newUrl, database: newDbName, runNumber });
 
   } catch (e) {
     console.error('[PROVISION ERROR]', e);
     res.status(500).json({ success: false, message: e.message });
   }
 });
-// ================================================================== เพิ่มให้หน่อย
 
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => {

@@ -888,13 +888,17 @@
 
     <!-- Video + Menu -->
     <!-- Client info (neon) -->
-    <div class="client-row">
+   <div class="client-row">
       <div class="ClientName_Container neon scroll-reveal">
-        <div class="ClientName">Usernumber : 001</div>
-        <div class="ClientName">เทศบาลตำบลหัวรอ</div>
-        <div class="ClientNo">Contractnumber :</div>
-        <div class="Date_install">Date Installed : 1-11-25</div>
-        <div class="ClientNo">Expiration Date : 1-12-25</div>
+        <div class="ClientName" id="disp_clientName">Loading...</div>
+
+        <div class="ClientName">Usernumber : <span id="disp_runNumber">...</span></div>
+                
+        <div class="ClientNo">Contractnumber : <span id="disp_contract">-</span></div>
+        
+        <div class="Date_install">Date Installed : <span id="disp_installDate">...</span></div>
+        
+        <div class="ClientNo">Expiration Date : <span id="disp_expiryDate">...</span></div>
       </div>
       <div class="ClientName_Container neon scroll-reveal">
         <div class="ClientName">Active Users : <span id="active-user-box">0</span></div>
@@ -1157,6 +1161,29 @@ window.addEventListener('beforeunload', function(){
     }
   }catch(e){}
 });
+</script>
+<script>
+  // ฟังก์ชันดึงข้อมูลลูกค้าจาก Server (Env Vars)
+  async function fetchClientConfig() {
+    try {
+      const res = await fetch('/api/client-config');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // เอาข้อมูลมาแปะในหน้าเว็บ
+      if (data.clientName) document.getElementById('disp_clientName').textContent = data.clientName;
+      if (data.runNumber) document.getElementById('disp_runNumber').textContent = data.runNumber;
+      if (data.contractNo) document.getElementById('disp_contract').textContent = data.contractNo;
+      if (data.installDate) document.getElementById('disp_installDate').textContent = data.installDate;
+      if (data.expiryDate) document.getElementById('disp_expiryDate').textContent = data.expiryDate;
+      
+    } catch (e) {
+      console.warn('Could not fetch client config:', e);
+    }
+  }
+
+  // เรียกทำงานทันทีเมื่อโหลดหน้าเว็บ
+  document.addEventListener('DOMContentLoaded', fetchClientConfig);
 </script>
 
 </body>
