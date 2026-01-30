@@ -335,7 +335,13 @@ button { cursor:pointer; }
 
 <div class="main-container">
   <h3>เพิ่มโจทย์คณิตศาสตร์</h3>
-  <input id="questionInput" placeholder="พิมพ์โจทย์เลข (เช่น 2 + 2 = ?)" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:20px;"><br>
+  <input id="questionInput" placeholder="พิมพ์โจทย์เลข (เช่น 2 + 2)" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:10px;"><br>
+  
+  <div style="margin: 15px 0;">
+    <button class="neon-btn-green" onclick="autoGenerateAnswers()" style="font-size:14px; padding:8px 16px; min-height:40px;">สร้างคำตอบอัตโนมัติ</button>
+    <span style="margin-left: 10px; color: #666; font-size: 14px;">หรือกรอกคำตอบเองด้านล่าง</span>
+  </div>
+  
   <div style="display:flex; gap:5px; justify-content:center; margin-top:20px;">
     <div style="flex:1; background:rgba(76, 175, 80, 0.1); padding:15px; border-radius:10px; border:2px solid #4CAF50;">
       <label style="color:#4CAF50; font-weight:bold;">คำตอบที่ถูกต้อง ✅</label><br>
@@ -386,6 +392,126 @@ button { cursor:pointer; }
 let correctAnswers = [];
 let wrongAnswers = [];
 let allQuestions = []; // เก็บโจทย์ทั้งหมด
+
+// ฟังก์ชันแปลงตัวเลขไทยเป็นเลขอารบิก
+function convertThaiToArabicNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  const arabicNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+  let result = text;
+  for (let i = 0; i < thaiNumbers.length; i++) {
+    result = result.split(thaiNumbers[i]).join(arabicNumbers[i]);
+  }
+  return result;
+}
+
+// ฟังก์ชันแปลงเลขอารบิกเป็นตัวเลขไทย
+function convertArabicToThaiNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  const arabicNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+  let result = text.toString();
+  for (let i = 0; i < arabicNumbers.length; i++) {
+    result = result.split(arabicNumbers[i]).join(thaiNumbers[i]);
+  }
+  return result;
+}
+
+// ฟังก์ชันตรวจสอบว่าโจทย์มีตัวเลขไทยหรือไม่
+function hasThaiNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  return thaiNumbers.some(num => text.includes(num));
+}
+
+// ฟังก์ชันสร้างคำตอบอัตโนมัติ
+function autoGenerateAnswers() {
+  const questionInput = document.getElementById('questionInput').value.trim();
+  if (!questionInput) {
+    alert('กรุณาพิมพ์โจทย์ก่อน');
+    return;
+  }
+  
+  try {
+    // ตรวจสอบว่าโจทย์มีตัวเลขไทยหรือไม่
+    const useThaiNumbers = hasThaiNumbers(questionInput);
+    
+    // แปลงตัวเลขไทยเป็นเลขอารบิก
+    let expression = convertThaiToArabicNumbers(questionInput);
+    
+    // ลบ = และ ? ออกจากโจทย์
+    expression = expression.replace(/=/g, '').replace(/\?/g, '').trim();
+    
+    // คำนวณคำตอบที่ถูก
+    let correctAnswer = eval(expression);
+    
+    if (isNaN(correctAnswer) || !isFinite(correctAnswer)) {
+      alert('ไม่สามารถคำนวณโจทย์นี้ได้ กรุณาตรวจสอบรูปแบบโจทย์');
+      return;
+    }
+    
+    // ถ้าเป็นทศนิยม ให้เหลือ 2 ตำแหน่ง
+    if (!Number.isInteger(correctAnswer)) {
+      correctAnswer = parseFloat(correctAnswer.toFixed(2));
+    }
+    
+    // เคลียร์คำตอบเดิม
+    correctAnswers = [];
+    wrongAnswers = [];
+    
+    // เพิ่มคำตอบที่ถูก (แปลงเป็นเลขไทยถ้าโจทย์เป็นเลขไทย)
+    const correctAnswerStr = useThaiNumbers ? convertArabicToThaiNumbers(correctAnswer.toString()) : correctAnswer.toString();
+    correctAnswers.push(correctAnswerStr);
+    
+    // สร้างคำตอบที่ผิด 3-5 คำตอบ
+    const wrongCount = Math.floor(Math.random() * 3) + 3; // 3-5 คำตอบผิด
+    const wrongSet = new Set();
+    
+    while (wrongSet.size < wrongCount) {
+      let wrongAnswer;
+      const rand = Math.random();
+      
+      if (rand < 0.4) {
+        // บวก/ลบ 1-5
+        const offset = Math.floor(Math.random() * 5) + 1;
+        wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+      } else if (rand < 0.7) {
+        // บวก/ลบ 10-30%
+        const percentage = (Math.random() * 0.2 + 0.1); // 10-30%
+        const offset = Math.max(1, Math.floor(Math.abs(correctAnswer) * percentage));
+        wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+      } else {
+        // สุ่มเลขใกล้เคียง
+        wrongAnswer = correctAnswer + Math.floor(Math.random() * 10) - 5;
+      }
+      
+      // ถ้าเป็นทศนิยม ให้เหลือ 2 ตำแหน่ง
+      if (!Number.isInteger(wrongAnswer)) {
+        wrongAnswer = parseFloat(wrongAnswer.toFixed(2));
+      }
+      
+      // ตรวจสอบไม่ให้ซ้ำกับคำตอบถูกหรือคำตอบผิดอื่น (อนุญาตให้เป็นลบได้)
+      if (wrongAnswer !== correctAnswer && !wrongSet.has(wrongAnswer)) {
+        wrongSet.add(wrongAnswer);
+      }
+    }
+    
+    // แปลงคำตอบผิดเป็นเลขไทยถ้าโจทย์เป็นเลขไทย
+    wrongAnswers = Array.from(wrongSet).map(n => {
+      return useThaiNumbers ? convertArabicToThaiNumbers(n.toString()) : n.toString();
+    });
+    
+    // แสดงผลลัพธ์
+    renderAnswers('correct');
+    renderAnswers('wrong');
+    
+    const displayCorrect = useThaiNumbers ? convertArabicToThaiNumbers(correctAnswer.toString()) : correctAnswer;
+    const displayWrong = wrongAnswers.join(', ');
+    alert(`✅ สร้างคำตอบอัตโนมัติสำเร็จ!\n\nคำตอบถูก: ${displayCorrect}\nคำตอบผิด: ${displayWrong}`);
+    
+  } catch (error) {
+    alert('❌ ไม่สามารถคำนวณโจทย์นี้ได้\n\nกรุณาตรวจสอบว่าโจทย์เป็นรูปแบบคณิตศาสตร์ที่ถูกต้อง\nตัวอย่าง: 2 + 3, 10 - 5, 4 * 6, 20 / 4');
+  }
+}
 
 // ฟังก์ชันเพิ่มคำตอบ
 function addAnswer(type) {
