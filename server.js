@@ -1129,6 +1129,450 @@ app.delete('/api/settings/:mode/:teacherName/:activityId', async (req, res) => {
 
 // ===== END SETTINGS API =====
 
+// ===== CUSTOM VOCABULARY API =====
+// GET: ดึงคำศัพท์ custom ทั้งหมด
+app.get('/api/vocabulary/custom', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ success: false, message: 'Database not connected' });
+    }
+    
+    const vocabColl = db.collection('customVocabulary');
+    const vocabularies = await vocabColl.find({}).toArray();
+    
+    // แปลงเป็น object format { word: { reading, meaning } }
+    const vocabDict = {};
+    vocabularies.forEach(v => {
+      vocabDict[v.word.toLowerCase()] = {
+        reading: v.reading,
+        meaning: v.meaning
+      };
+    });
+    
+    res.json({ success: true, data: vocabDict });
+  } catch (e) {
+    console.error('[ERROR] GET /api/vocabulary/custom', e);
+    res.status(500).json({ success: false, message: 'Failed to load custom vocabulary' });
+  }
+});
+
+// POST: เพิ่มคำศัพท์ custom ใหม่
+app.post('/api/vocabulary/custom', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ success: false, message: 'Database not connected' });
+    }
+    
+    const { word, reading, meaning } = req.body;
+    
+    if (!word || !reading || !meaning) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const vocabColl = db.collection('customVocabulary');
+    const wordLower = word.toLowerCase().trim();
+    
+    // อัพเดทถ้ามีอยู่แล้ว หรือเพิ่มใหม่
+    await vocabColl.updateOne(
+      { word: wordLower },
+      { 
+        $set: { 
+          word: wordLower,
+          reading: reading.trim(),
+          meaning: meaning.trim(),
+          updatedAt: new Date()
+        },
+        $setOnInsert: {
+          createdAt: new Date()
+        }
+      },
+      { upsert: true }
+    );
+    
+    console.log(`[VOCABULARY] Saved custom word: "${wordLower}" = ${reading} (${meaning})`);
+    res.json({ success: true, message: 'Vocabulary saved successfully' });
+  } catch (e) {
+    console.error('[ERROR] POST /api/vocabulary/custom', e);
+    res.status(500).json({ success: false, message: 'Failed to save vocabulary' });
+  }
+});
+// ===== END CUSTOM VOCABULARY API =====
+
+// ===== STUDENT MANAGEMENT API =====
+
+// Collections for student management
+let studentsColl;
+let testResultsColl;
+let activitiesColl;
+let questionsColl; // เก็บโจทย์คำถาม
+
+// Initialize collections
+if (mdb) {
+  studentsColl = mdb.collection('students');
+  testResultsColl = mdb.collection('test_results');
+  activitiesColl = mdb.collection('activities');
+  questionsColl = mdb.collection('questions'); // เพิ่ม collection สำหรับโจทย์
+  
+  // Create indexes
+  if (studentsColl) {
+    studentsColl.createIndex({ name: 1, classroom: 1 }, { unique: true }).catch(e => console.warn('[WARN] students index failed', e.message));
+    studentsColl.createIndex({ classroom: 1 }).catch(() => {});
+    studentsColl.createIndex({ lastActivity: -1 }).catch(() => {});
+  }
+  if (testResultsColl) {
+    testResultsColl.createIndex({ studentName: 1, classroom: 1 }).catch(() => {});
+    testResultsColl.createIndex({ activityType: 1 }).catch(() => {});
+    testResultsColl.createIndex({ timestamp: -1 }).catch(() => {});
+  }
+  if (questionsColl) {
+    questionsColl.createIndex({ teacher: 1, type: 1 }).catch(() => {});
+    questionsColl.createIndex({ classroom: 1 }).catch(() => {});
+    questionsColl.createIndex({ createdAt: -1 }).catch(() => {});
+  }
+  console.log('[DEBUG] Student management collections initialized');
+}
+
+// บันทึกหรืออัปเดตข้อมูลผู้ทดสอบ
+app.post('/api/students/save', async (req, res) => {
+  try {
+    if (!studentsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const { name, classroom } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Student name is required' });
+    }
+
+    const studentData = {
+      name: name.trim(),
+      classroom: (classroom || '').trim(),
+      lastActivity: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // ใช้ upsert เพื่ออัปเดตหรือสร้างใหม่
+    const result = await studentsColl.updateOne(
+      { name: studentData.name, classroom: studentData.classroom },
+      { 
+        $set: studentData,
+        $setOnInsert: { createdAt: new Date().toISOString() }
+      },
+      { upsert: true }
+    );
+
+    const studentId = result.upsertedId || result.matchedCount ? 'updated' : null;
+    console.log(`[STUDENTS] Saved/Updated student: ${name} (${classroom || 'no class'})`);
+    
+    res.json({ success: true, studentId: studentId });
+  } catch (error) {
+    console.error('[ERROR] POST /api/students/save', error);
+    res.status(500).json({ success: false, message: 'Failed to save student' });
+  }
+});
+
+// ดึงรายชื่อผู้ทดสอบทั้งหมด
+app.get('/api/students/all', async (req, res) => {
+  try {
+    if (!studentsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const students = await studentsColl.find({}).sort({ lastActivity: -1 }).toArray();
+    
+    // แปลง _id เป็น id
+    const formattedStudents = students.map(s => ({
+      id: s._id.toString(),
+      name: s.name,
+      classroom: s.classroom || '',
+      createdAt: s.createdAt,
+      lastActivity: s.lastActivity
+    }));
+
+    res.json({ success: true, students: formattedStudents });
+  } catch (error) {
+    console.error('[ERROR] GET /api/students/all', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch students' });
+  }
+});
+
+// ดึงข้อมูลผู้ทดสอบตามชื่อและชั้นเรียน
+app.get('/api/students/by-name', async (req, res) => {
+  try {
+    if (!studentsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const { name, classroom } = req.query;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Student name is required' });
+    }
+
+    const query = { name: name.trim() };
+    if (classroom) {
+      query.classroom = classroom.trim();
+    }
+
+    const student = await studentsColl.findOne(query);
+    
+    if (!student) {
+      return res.json({ success: true, student: null });
+    }
+
+    const formattedStudent = {
+      id: student._id.toString(),
+      name: student.name,
+      classroom: student.classroom || '',
+      createdAt: student.createdAt,
+      lastActivity: student.lastActivity
+    };
+
+    res.json({ success: true, student: formattedStudent });
+  } catch (error) {
+    console.error('[ERROR] GET /api/students/by-name', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch student' });
+  }
+});
+
+// ดึงรายชื่อชั้นเรียนทั้งหมด
+app.get('/api/students/classrooms', async (req, res) => {
+  try {
+    if (!studentsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const classrooms = await studentsColl.distinct('classroom');
+    
+    // กรองค่าว่างและเรียงลำดับ
+    const filteredClassrooms = classrooms
+      .filter(c => c && c.trim())
+      .sort();
+
+    res.json({ success: true, classrooms: filteredClassrooms });
+  } catch (error) {
+    console.error('[ERROR] GET /api/students/classrooms', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch classrooms' });
+  }
+});
+
+// บันทึกผลการทดสอบ
+app.post('/api/test-results/save', async (req, res) => {
+  try {
+    if (!testResultsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const resultData = {
+      ...req.body,
+      timestamp: req.body.timestamp || new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    const result = await testResultsColl.insertOne(resultData);
+    
+    console.log(`[TEST-RESULTS] Saved test result for: ${resultData.studentName} - ${resultData.activityType}`);
+    
+    res.json({ success: true, resultId: result.insertedId.toString() });
+  } catch (error) {
+    console.error('[ERROR] POST /api/test-results/save', error);
+    res.status(500).json({ success: false, message: 'Failed to save test result' });
+  }
+});
+
+// ดึงผลการทดสอบของผู้ทดสอบ
+app.get('/api/test-results/by-student', async (req, res) => {
+  try {
+    if (!testResultsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const { studentName, classroom } = req.query;
+    
+    if (!studentName) {
+      return res.status(400).json({ success: false, message: 'Student name is required' });
+    }
+
+    const query = { studentName: studentName.trim() };
+    if (classroom) {
+      query.classroom = classroom.trim();
+    }
+
+    const results = await testResultsColl.find(query).sort({ timestamp: -1 }).toArray();
+    
+    const formattedResults = results.map(r => ({
+      id: r._id.toString(),
+      studentName: r.studentName,
+      classroom: r.classroom || '',
+      activityType: r.activityType,
+      topic: r.topic,
+      score: r.score,
+      totalQuestions: r.totalQuestions,
+      correctAnswers: r.correctAnswers,
+      timeSpent: r.timeSpent,
+      timestamp: r.timestamp
+    }));
+
+    res.json({ success: true, results: formattedResults });
+  } catch (error) {
+    console.error('[ERROR] GET /api/test-results/by-student', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch test results' });
+  }
+});
+
+// Activity Management APIs
+app.post('/api/activities/save', async (req, res) => {
+  try {
+    if (!activitiesColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const activityData = {
+      ...req.body,
+      createdAt: req.body.createdAt || new Date().toISOString(),
+      timestamp: req.body.timestamp || Date.now()
+    };
+
+    const result = await activitiesColl.insertOne(activityData);
+    
+    res.json({ success: true, activityId: result.insertedId.toString() });
+  } catch (error) {
+    console.error('[ERROR] POST /api/activities/save', error);
+    res.status(500).json({ success: false, message: 'Failed to save activity' });
+  }
+});
+
+// Question Management APIs
+app.post('/api/questions/save', async (req, res) => {
+  try {
+    if (!questionsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const questionData = {
+      teacher: req.body.teacher || 'ไม่ระบุ',
+      classroom: req.body.classroom || 'ไม่ระบุ',
+      topic: req.body.topic || 'ไม่ระบุ',
+      type: req.body.type || 'unknown', // 'math' or 'thai'
+      questionData: req.body.questionData,
+      createdAt: req.body.createdAt || new Date().toISOString(),
+      timestamp: Date.now()
+    };
+
+    const result = await questionsColl.insertOne(questionData);
+    
+    res.json({ success: true, questionId: result.insertedId.toString() });
+  } catch (error) {
+    console.error('[ERROR] POST /api/questions/save', error);
+    res.status(500).json({ success: false, message: 'Failed to save question' });
+  }
+});
+
+app.get('/api/questions/all', async (req, res) => {
+  try {
+    if (!questionsColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const { type, teacher, classroom } = req.query;
+    const query = {};
+    
+    if (type) query.type = type;
+    if (teacher) query.teacher = teacher;
+    if (classroom) query.classroom = classroom;
+
+    const questions = await questionsColl.find(query).sort({ createdAt: -1 }).toArray();
+    
+    const formattedQuestions = questions.map(q => ({
+      id: q._id.toString(),
+      teacher: q.teacher,
+      classroom: q.classroom,
+      topic: q.topic,
+      type: q.type,
+      questionData: q.questionData,
+      createdAt: q.createdAt
+    }));
+
+    res.json({ success: true, questions: formattedQuestions });
+  } catch (error) {
+    console.error('[ERROR] GET /api/questions/all', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch questions' });
+  }
+});
+
+app.get('/api/activities/all', async (req, res) => {
+  try {
+    if (!activitiesColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const activities = await activitiesColl.find({}).sort({ timestamp: -1 }).toArray();
+    
+    const formattedActivities = activities.map(a => ({
+      id: a._id.toString(),
+      ...a
+    }));
+
+    res.json({ success: true, activities: formattedActivities });
+  } catch (error) {
+    console.error('[ERROR] GET /api/activities/all', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch activities' });
+  }
+});
+
+app.delete('/api/activities/delete/:id', async (req, res) => {
+  try {
+    if (!activitiesColl) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const { id } = req.params;
+    
+    await activitiesColl.deleteOne({ _id: new ObjectId(id) });
+    
+    res.json({ success: true, message: 'Activity deleted successfully' });
+  } catch (error) {
+    console.error('[ERROR] DELETE /api/activities/delete/:id', error);
+    res.status(500).json({ success: false, message: 'Failed to delete activity' });
+  }
+});
+
+// Generic collection APIs (for compatibility)
+app.post('/api/collections/:name/add', async (req, res) => {
+  try {
+    if (!mdb) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const collection = mdb.collection(req.params.name);
+    const result = await collection.insertOne(req.body);
+    
+    res.json({ success: true, id: result.insertedId.toString() });
+  } catch (error) {
+    console.error(`[ERROR] POST /api/collections/${req.params.name}/add`, error);
+    res.status(500).json({ success: false, message: 'Failed to add document' });
+  }
+});
+
+app.get('/api/collections/:name/all', async (req, res) => {
+  try {
+    if (!mdb) {
+      return res.status(503).json({ success: false, message: 'Database not available' });
+    }
+
+    const collection = mdb.collection(req.params.name);
+    const docs = await collection.find({}).toArray();
+    
+    res.json({ success: true, docs: docs });
+  } catch (error) {
+    console.error(`[ERROR] GET /api/collections/${req.params.name}/all`, error);
+    res.status(500).json({ success: false, message: 'Failed to fetch documents' });
+  }
+});
+
+// ===== END STUDENT MANAGEMENT API =====
+
 app.post("/api/feedback", async (req, res) => {
   try {
     console.log("[FEEDBACK] รับข้อมูล POST /api/feedback:", req.body);

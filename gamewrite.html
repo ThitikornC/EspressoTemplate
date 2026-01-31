@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เกมฝึกเขียนคำศัพท์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Sarabun', sans-serif;
+  background: linear-gradient(135deg, #d4a574 0%, #c19a6b 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 32px;
+  color: #8b6914;
+  margin-bottom: 10px;
+}
+
+.info-bar {
+  background: linear-gradient(135deg, #e8d5b7 0%, #d4a574 100%);
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.info-item strong {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.info-item span {
+  font-size: 16px;
+  color: #2d3436;
+  font-weight: bold;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 30px;
+  background: #e0e0e0;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a67c52 0%, #8b6914 100%);
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.vocab-card {
+  background: linear-gradient(135deg, #faf3e0 0%, #f5e6d3 100%);
+  border: 3px solid #c19a6b;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.vocab-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #8b6914;
+  margin-bottom: 20px;
+}
+
+.vocab-image {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.vocab-image img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 15px;
+  border: 3px solid #ddd;
+}
+
+.vocab-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.vocab-info-item {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.vocab-info-item[onclick] {
+  cursor: pointer;
+}
+
+.vocab-info-item[onclick]:hover {
+  background: #f8f5f0;
+  border-color: #c19a6b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 105, 20, 0.2);
+}
+
+.vocab-info-item strong {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.vocab-info-item span {
+  font-size: 20px;
+  color: #2d3436;
+  font-weight: bold;
+}
+
+.writing-area {
+  margin-top: 30px;
+}
+
+.writing-area h3 {
+  font-size: 20px;
+  color: #8b6914;
+  margin-bottom: 15px;
+}
+
+.writing-canvas-container {
+  background: white;
+  border: 3px dashed #c19a6b;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.writing-input {
+  width: 100%;
+  padding: 15px;
+  font-size: 24px;
+  border: 3px solid #c19a6b;
+  border-radius: 10px;
+  outline: none;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.writing-input:focus {
+  border-color: #8b6914;
+  box-shadow: 0 0 10px rgba(139, 105, 20, 0.3);
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn {
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.btn-check {
+  background: linear-gradient(135deg, #8b6914 0%, #6b5410 100%);
+  color: white;
+}
+
+.btn-clear {
+  background: linear-gradient(135deg, #d4a574 0%, #e8d5b7 100%);
+  color: #2d3436;
+}
+
+.btn-next {
+  background: linear-gradient(135deg, #c19a6b 0%, #a67c52 100%);
+  color: white;
+}
+
+.btn-finish {
+  background: linear-gradient(135deg, #6b5410 0%, #4a3a0d 100%);
+  color: white;
+}
+
+.result-message {
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  display: none;
+}
+
+.result-correct {
+  background: #e8d5b7;
+  color: #6b5410;
+  border: 2px solid #c19a6b;
+}
+
+.result-wrong {
+  background: #f5e6d3;
+  color: #8b6914;
+  border: 2px solid #d4a574;
+}
+
+.summary-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.summary-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.summary-header h2 {
+  font-size: 32px;
+  color: #8b6914;
+  margin-bottom: 10px;
+}
+
+.summary-score {
+  font-size: 48px;
+  font-weight: bold;
+  color: #8b6914;
+  margin: 20px 0;
+}
+
+.summary-list {
+  margin-top: 20px;
+}
+
+.summary-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-item.correct {
+  background: #e8d5b7;
+  border: 2px solid #c19a6b;
+}
+
+.summary-item.wrong {
+  background: #f5e6d3;
+  border: 2px solid #d4a574;
+}
+
+.summary-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+  
+  .header h1 {
+    font-size: 24px;
+  }
+  
+  .info-bar {
+    flex-direction: column;
+  }
+  
+  .vocab-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .button-group {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Volume Control Styles */
+.sound-control-wrapper {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sound-toggle-btn {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.sound-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.sound-control-wrapper.show-volume .sound-toggle-btn {
+  display: none;
+}
+
+.volume-control {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 15px;
+  border-radius: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.sound-control-wrapper.show-volume .volume-control {
+  display: flex;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.volume-icon {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.volume-icon:hover {
+  transform: scale(1.1);
+}
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.volume-slider:hover {
+  height: 6px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c19a6b, #8b6914);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c19a6b, #8b6914);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.volume-display {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+}
+
+/* TTS controls styling */
+.tts-controls {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #3b2a0b;
+}
+.tts-controls .tts-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tts-controls input[type="range"] {
+  width: 120px;
+}
+
+@media (max-width: 768px) {
+  .sound-control-wrapper {
+    right: 15px;
+    top: 10px;
+  }
+  .sound-toggle-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .volume-icon {
+    font-size: 20px;
+  }
+  .volume-slider {
+    width: 80px;
+  }
+  .volume-control {
+    padding: 8px 12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Sound Control with Volume -->
+<div class="sound-control-wrapper" id="soundControlWrapper">
+  <img class="sound-toggle-btn" id="soundToggleButton" onclick="toggleVolumeBar()" src="/picture/open.png" alt="Toggle Sound" title="ควบคุมเสียง">
+  
+  <div class="volume-control">
+    <img class="volume-icon" id="volumeIcon" onclick="toggleMute()" src="/picture/open.png" alt="Volume Icon" title="Mute/Unmute">
+    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" oninput="updateVolume(this.value)">
+    <div class="volume-display" id="volumeDisplay">100%</div>
+    <div class="tts-controls">
+      <div class="tts-row">
+        <label for="ttsRateSlider">Rate:</label>
+        <input id="ttsRateSlider" type="range" min="0.5" max="1.2" step="0.05" value="0.6" oninput="updateTtsRate(this.value)">
+        <span id="ttsRateDisplay">0.60</span>
+      </div>
+      <div class="tts-row">
+        <label for="ttsPitchSlider">Pitch:</label>
+        <input id="ttsPitchSlider" type="range" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateTtsPitch(this.value)">
+        <span id="ttsPitchDisplay">1.0</span>
+      </div>
+    </div>
+    <div class="voice-select" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+      <label for="voiceSelect" style="font-size:12px; color:#3b2a0b;">Voice:</label>
+      <select id="voiceSelect" style="min-width:160px; font-size:12px;" onchange="selectVoice(this.value)"></select>
+      <button class="neon-btn" style="padding:6px 8px; font-size:12px; height:32px;" onclick="previewVoice()">ทดสอบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>✍️ เกมฝึกเขียนคำศัพท์</h1>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-item">
+      <strong>หัวข้อ</strong>
+      <span id="topicDisplay">-</span>
+    </div>
+    <div class="info-item">
+      <strong>สัปดาห์</strong>
+      <span id="weekDisplay">-</span>
+    </div>
+    <div class="info-item">
+      <strong>ครู</strong>
+      <span id="teacherDisplay">-</span>
+    </div>
+    <div class="info-item">
+      <strong>ชื่อผู้ทดสอบ</strong>
+      <span id="userNameDisplay">-</span>
+    </div>
+    <div class="info-item">
+      <strong>คะแนน</strong>
+      <span id="scoreDisplay">0</span>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressBar">0%</div>
+  </div>
+
+  <div class="vocab-card">
+    <div class="vocab-number" id="vocabNumber">คำที่ 1</div>
+    
+    <div class="vocab-image" id="vocabImageContainer" style="display: none;">
+      <img id="vocabImage" src="" alt="รูปภาพประกอบ">
+    </div>
+
+    <div class="vocab-info">
+      <div class="vocab-info-item" style="cursor: pointer;" onclick="speakWord(document.getElementById('englishWord').textContent, 'en-US')" title="คลิกเพื่อฟังการออกเสียง">
+        <strong>📖 คำศัพท์ (อังกฤษ) 🔊</strong>
+        <span id="englishWord">-</span>
+      </div>
+      <div class="vocab-info-item" style="cursor: pointer;" onclick="speakWord(document.getElementById('thaiMeaning').textContent, 'th-TH')" title="คลิกเพื่อฟังการออกเสียง">
+        <strong>💡 ความหมาย 🔊</strong>
+        <span id="thaiMeaning">-</span>
+      </div>
+    </div>
+
+    <div class="writing-area">
+      <h3>✍️ ฝึกเขียนคำศัพท์</h3>
+      <div class="writing-canvas-container">
+        <canvas id="writingCanvas" width="800" height="200"></canvas>
+      </div>
+      
+      <input 
+        type="text" 
+        id="writingInput" 
+        class="writing-input" 
+        placeholder="พิมพ์คำศัพท์ที่นี่..." 
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="result-message" id="resultMessage"></div>
+
+    <div class="button-group">
+      <button class="btn btn-clear" onclick="clearCanvas()">🗑️ ลบ</button>
+      <button class="btn btn-check" onclick="checkAnswer()">✓ ตรวจคำตอบ</button>
+      <button class="btn btn-next" id="nextBtn" onclick="nextVocab()" style="display:none;">➡️ ข้อถัดไป</button>
+      <button class="btn btn-finish" id="finishBtn" onclick="showSummary()" style="display:none;">🏁 สรุปผล</button>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Modal -->
+<div class="summary-modal" id="summaryModal">
+  <div class="summary-content">
+    <div class="summary-header">
+      <h2>🎉 สรุปผลการทำ</h2>
+      <div class="summary-score" id="summaryScore">0/0</div>
+    </div>
+    
+    <div class="summary-list" id="summaryList"></div>
+    
+    <div class="summary-buttons">
+      <button class="btn btn-next" onclick="window.location.href='teacherthai.html'">🏠 กลับหน้าหัวข้อ</button>
+      <button class="btn btn-check" onclick="window.location.href='menu.html'">📋 เมนูหลัก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let config = {};
+let vocabularyList = [];
+let currentIndex = 0;
+let userAnswers = [];
+let score = 0;
+
+// Canvas Drawing
+let canvas, ctx, isDrawing = false;
+let lastX = 0, lastY = 0;
+
+window.addEventListener('load', function() {
+  // โหลด config
+  const configStr = localStorage.getItem('thaiWriteConfig');
+  if (!configStr) {
+    alert('ไม่พบข้อมูลกิจกรรม');
+    window.location.href = 'teacherthai.html';
+    return;
+  }
+  
+  config = JSON.parse(configStr);
+  vocabularyList = config.vocabularyList || [];
+  
+  if (vocabularyList.length === 0) {
+    alert('ไม่มีคำศัพท์ในกิจกรรมนี้');
+    window.location.href = 'teacherthai.html';
+    return;
+  }
+  
+  // แสดงข้อมูลกิจกรรม
+  document.getElementById('topicDisplay').textContent = config.topic || '-';
+  document.getElementById('weekDisplay').textContent = config.week || '-';
+  document.getElementById('teacherDisplay').textContent = config.teacher || '-';
+  document.getElementById('userNameDisplay').textContent = config.userName || '-';
+  
+  // ตั้งค่า Canvas
+  canvas = document.getElementById('writingCanvas');
+  ctx = canvas.getContext('2d');
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#8b6914';
+  
+  // Mouse events
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  
+  // Touch events
+  canvas.addEventListener('touchstart', handleTouchStart);
+  canvas.addEventListener('touchmove', handleTouchMove);
+  canvas.addEventListener('touchend', stopDrawing);
+  
+  // Load first vocab
+  loadVocab(0);
+});
+
+function startDrawing(e) {
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  lastX = e.clientX - rect.left;
+  lastY = e.clientY - rect.top;
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  
+  lastX = x;
+  lastY = y;
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+function handleTouchStart(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  lastX = touch.clientX - rect.left;
+  lastY = touch.clientY - rect.top;
+  isDrawing = true;
+}
+
+function handleTouchMove(e) {
+  e.preventDefault();
+  if (!isDrawing) return;
+  
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  
+  lastX = x;
+  lastY = y;
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('writingInput').value = '';
+  document.getElementById('resultMessage').style.display = 'none';
+}
+
+function loadVocab(index) {
+  if (index >= vocabularyList.length) {
+    showSummary();
+    return;
+  }
+  
+  currentIndex = index;
+  const vocab = vocabularyList[index];
+  
+  // อัพเดทข้อมูลคำศัพท์
+  document.getElementById('vocabNumber').textContent = `คำที่ ${index + 1}`;
+  document.getElementById('englishWord').textContent = vocab.english;
+  document.getElementById('thaiMeaning').textContent = vocab.thaiMeaning;
+  
+  // แสดงรูปภาพ (ถ้ามี)
+  const imageContainer = document.getElementById('vocabImageContainer');
+  if (vocab.image) {
+    document.getElementById('vocabImage').src = vocab.image;
+    imageContainer.style.display = 'block';
+  } else {
+    imageContainer.style.display = 'none';
+  }
+  
+  // อัพเดท progress bar
+  const progress = ((index + 1) / vocabularyList.length) * 100;
+  const progressBar = document.getElementById('progressBar');
+  progressBar.style.width = progress + '%';
+  progressBar.textContent = `${index + 1}/${vocabularyList.length}`;
+  
+  // Clear
+  clearCanvas();
+  
+  // ซ่อนปุ่ม
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('finishBtn').style.display = 'none';
+  document.getElementById('resultMessage').style.display = 'none';
+  
+  // Focus input
+  document.getElementById('writingInput').focus();
+}
+
+function checkAnswer() {
+  const userAnswer = document.getElementById('writingInput').value.trim().toLowerCase();
+  const correctAnswer = vocabularyList[currentIndex].english.toLowerCase();
+  
+  const resultMessage = document.getElementById('resultMessage');
+  
+  if (userAnswer === correctAnswer) {
+    // ถูกต้อง
+    score++;
+    resultMessage.textContent = '✅ ถูกต้อง! เยี่ยมมาก!';
+    resultMessage.className = 'result-message result-correct';
+    resultMessage.style.display = 'block';
+    
+    userAnswers.push({
+      vocab: vocabularyList[currentIndex],
+      userAnswer: userAnswer,
+      isCorrect: true
+    });
+  } else {
+    // ผิด
+    resultMessage.textContent = `❌ ผิด! คำตอบที่ถูกต้องคือ "${vocabularyList[currentIndex].english}"`;
+    resultMessage.className = 'result-message result-wrong';
+    resultMessage.style.display = 'block';
+    
+    userAnswers.push({
+      vocab: vocabularyList[currentIndex],
+      userAnswer: userAnswer || '(ไม่ได้ตอบ)',
+      isCorrect: false
+    });
+  }
+  
+  // อัพเดทคะแนน
+  document.getElementById('scoreDisplay').textContent = score;
+  
+  // แสดงปุ่มถัดไป
+  if (currentIndex < vocabularyList.length - 1) {
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('finishBtn').style.display = 'inline-block';
+  }
+}
+
+function nextVocab() {
+  loadVocab(currentIndex + 1);
+}
+
+function showSummary() {
+  const modal = document.getElementById('summaryModal');
+  const summaryScore = document.getElementById('summaryScore');
+  const summaryList = document.getElementById('summaryList');
+  
+  // คำนวณคะแนน
+  const percentage = Math.round((score / vocabularyList.length) * 100);
+  summaryScore.textContent = `${score}/${vocabularyList.length} (${percentage}%)`;
+  
+  // แสดงรายการคำตอบ
+  summaryList.innerHTML = userAnswers.map((item, index) => `
+    <div class="summary-item ${item.isCorrect ? 'correct' : 'wrong'}">
+      <div>
+        <strong>${index + 1}. ${item.vocab.english}</strong><br>
+        <small>คำตอบของคุณ: ${item.userAnswer}</small>
+      </div>
+      <div style="font-size: 24px;">
+        ${item.isCorrect ? '✅' : '❌'}
+      </div>
+    </div>
+  `).join('');
+  
+  modal.style.display = 'flex';
+  
+  // บันทึกผล
+  saveResult();
+}
+
+async function saveResult() {
+  try {
+    const resultData = {
+      gameType: 'writing',
+      topic: config.topic,
+      week: config.week,
+      teacher: config.teacher,
+      classroom: config.classroom,
+      userName: config.userName,
+      score: score,
+      total: vocabularyList.length,
+      percentage: Math.round((score / vocabularyList.length) * 100),
+      answers: userAnswers,
+      timestamp: new Date().toISOString()
+    };
+    
+    const response = await fetch('/api/results/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resultData)
+    });
+    
+    if (response.ok) {
+      console.log('✅ บันทึกผลสำเร็จ');
+    }
+  } catch (error) {
+    console.error('❌ บันทึกผลล้มเหลว:', error);
+  }
+}
+
+// Enter key to check answer
+document.getElementById('writingInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    checkAnswer();
+  }
+});
+
+// ฟังก์ชันอ่านคำศัพท์ด้วยเสียง
+function speakWord(text, lang = 'en-US') {
+  if (!window.speechSynthesis) {
+    console.warn('Browser does not support Speech Synthesis');
+    return;
+  }
+  
+  if (isMuted || !soundEnabled) {
+    return; // ไม่เล่นเสียงถ้าปิดเสียง
+  }
+  
+  // ถ้าเปิดโหมดขัดจังหวะ ให้ยกเลิกเสียงก่อนหน้า (interrupt)
+  if (ttsInterrupt) {
+    window.speechSynthesis.cancel();
+  }
+
+  if (!text || !text.trim()) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = ttsRate; // ความเร็วในการพูด (ปรับจาก UI)
+  utterance.pitch = ttsPitch; // ระดับเสียง (ปรับจาก UI)
+  utterance.volume = isMuted ? 0 : currentVolume; // ใช้ระดับเสียงที่ตั้งไว้
+
+  // เลือก voice ถ้ามีการโหลดไว้
+  try {
+    let voiceObj = null;
+    if (voicesCache && voicesCache.length > 0) {
+      voiceObj = voicesCache.find(v => v.name === selectedVoiceName) || voicesCache.find(v => /female/i.test(v.name));
+    } else {
+      const vs = window.speechSynthesis.getVoices();
+      voiceObj = vs.find(v => v.name === selectedVoiceName) || vs.find(v => /female/i.test(v.name));
+    }
+    if (voiceObj) {
+      utterance.voice = voiceObj;
+      console.log('🔈 ใช้ voice:', voiceObj.name, voiceObj.lang);
+    }
+  } catch (e) {
+    console.warn('ไม่สามารถตั้งค่า voice ได้:', e);
+  }
+
+  utterance.onend = () => {
+    console.log('🔊 TTS finished:', text);
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Volume Control Variables
+let currentVolume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
+let isMuted = false;
+let previousVolume = currentVolume;
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+// ตั้งค่าว่าให้ TTS ขัดจังหวะเสียงก่อนหน้าหรือไม่ (true = ขัด)
+let ttsInterrupt = true;
+// ค่าเริ่มต้นสำหรับ TTS rate และ pitch (จะอ่านจาก localStorage ถ้ามี)
+let ttsRate = parseFloat(localStorage.getItem('ttsRate') || '0.6');
+let ttsPitch = parseFloat(localStorage.getItem('ttsPitch') || '1.0');
+// ค่าเสียงที่เลือก (เก็บชื่อ voice.name)
+let selectedVoiceName = localStorage.getItem('ttsVoice') || '';
+let voicesCache = [];
+
+// โหลดรายการเสียงจาก SpeechSynthesis และพยายามเลือกเสียงผู้หญิงถ้ายังไม่กำหนด
+function loadVoicesAndChoose() {
+  voicesCache = window.speechSynthesis.getVoices() || [];
+  console.log('🔊 available voices:', voicesCache.map(v=>v.name));
+  if (!selectedVoiceName) {
+    // หาเสียงที่น่าจะเป็นผู้หญิง (ลำดับความชอบ)
+    const prefer = [
+      /female/i,
+      /zira/i,
+      /zira -/i,
+      /google uk english female/i,
+      /zira/i,
+      /pattara/i,
+      /zira/i
+    ];
+
+    let found = null;
+    for (const re of prefer) {
+      found = voicesCache.find(v => re.test(v.name));
+      if (found) break;
+    }
+
+    // ถ้ายังไม่พบ ให้เลือกเสียงที่มี lang เริ่มต้นเป็น th-TH และ localService true
+    if (!found) {
+      found = voicesCache.find(v => /th-?TH/i.test(v.lang) && v.localService);
+    }
+
+    // ถ้ายังไม่พบ ให้เลือกเสียงที่ชื่อมีคำว่า "Google" และไม่เป็น localService (cloud voices)
+    if (!found) {
+      found = voicesCache.find(v => /female|google/i.test(v.name));
+    }
+
+    if (found) {
+      selectedVoiceName = found.name;
+      localStorage.setItem('ttsVoice', selectedVoiceName);
+      console.log('🎯 เลือกเสียงอัตโนมัติ:', selectedVoiceName);
+    } else {
+      console.log('⚠️ ไม่พบเสียงที่ตรงเงื่อนไข — ใช้ค่าเริ่มต้นของเบราว์เซอร์');
+    }
+  } else {
+    // มีการตั้งค่าไว้แล้ว — ตรวจว่าชื่อยังมีในรายการหรือไม่
+    const exists = voicesCache.find(v => v.name === selectedVoiceName);
+    if (!exists) {
+      console.log('⚠️ เสียงที่ตั้งไว้ไม่พบในระบบตอนนี้:', selectedVoiceName);
+    } else {
+      console.log('🔈 ใช้เสียงที่ตั้งไว้:', selectedVoiceName);
+    }
+  }
+}
+
+// เรียกเมื่อ voices เปลี่ยน (บางเบราว์เซอร์โหลดช้า)
+window.speechSynthesis.onvoiceschanged = () => {
+  loadVoicesAndChoose();
+  populateVoiceSelect();
+};
+
+// เติมตัวเลือกเสียงใน select element
+function populateVoiceSelect() {
+  const sel = document.getElementById('voiceSelect');
+  if (!sel) return;
+  const vs = window.speechSynthesis.getVoices() || voicesCache || [];
+  // ล้าง
+  sel.innerHTML = '';
+  vs.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = `${v.name} (${v.lang})${v.default ? ' • default' : ''}`;
+    sel.appendChild(opt);
+  });
+  if (selectedVoiceName) {
+    const exists = Array.from(sel.options).find(o => o.value === selectedVoiceName);
+    if (exists) sel.value = selectedVoiceName;
+  } else if (sel.options.length > 0) {
+    // ถ้าไม่มีค่าที่เลือก ให้พยายามเลือกเสียงผู้หญิงตามที่เราหาไว้
+    const femaleOpt = Array.from(sel.options).find(o => /female|zira|pattara/i.test(o.value));
+    if (femaleOpt) {
+      sel.value = femaleOpt.value;
+      selectVoice(femaleOpt.value);
+    }
+  }
+}
+
+function selectVoice(name) {
+  selectedVoiceName = name;
+  localStorage.setItem('ttsVoice', selectedVoiceName);
+  console.log('✅ ตั้งค่าเสียงเป็น:', selectedVoiceName);
+}
+
+function previewVoice() {
+  const sample = 'This is a sample voice test.';
+  const thaiSample = 'สวัสดี ตัวอย่างการทดสอบเสียง';
+  const lang = selectedVoiceName && selectedVoiceName.toLowerCase().includes('thai') ? 'th-TH' : 'en-US';
+  speakWord(lang === 'th-TH' ? thaiSample : sample, lang);
+}
+
+function toggleVolumeBar() {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper) {
+    wrapper.classList.toggle('show-volume');
+  }
+}
+
+// Close volume bar when clicking outside
+document.addEventListener('click', function(event) {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper && !wrapper.contains(event.target)) {
+    wrapper.classList.remove('show-volume');
+  }
+});
+
+// Prevent closing when clicking inside wrapper
+document.addEventListener('DOMContentLoaded', function() {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper) {
+    wrapper.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+  }
+  updateVolumeDisplay();
+  // เรียกค่า slider ของ TTS (rate, pitch) จาก localStorage
+  const rateSlider = document.getElementById('ttsRateSlider');
+  const rateDisplay = document.getElementById('ttsRateDisplay');
+  const pitchSlider = document.getElementById('ttsPitchSlider');
+  const pitchDisplay = document.getElementById('ttsPitchDisplay');
+  if (rateSlider && rateDisplay) {
+    rateSlider.value = ttsRate;
+    rateDisplay.textContent = parseFloat(ttsRate).toFixed(2);
+  }
+  if (pitchSlider && pitchDisplay) {
+    pitchSlider.value = ttsPitch;
+    pitchDisplay.textContent = parseFloat(ttsPitch).toFixed(1);
+  }
+  // โหลด voices ทันที (บางเบราว์เซอร์ต้องมี user gesture ก่อนจะได้เสียงเต็ม)
+  try { loadVoicesAndChoose(); } catch(e) { console.warn('load voices failed', e); }
+});
+
+function updateTtsRate(value) {
+  ttsRate = parseFloat(value);
+  localStorage.setItem('ttsRate', ttsRate.toString());
+  const disp = document.getElementById('ttsRateDisplay');
+  if (disp) disp.textContent = parseFloat(ttsRate).toFixed(2);
+}
+
+function updateTtsPitch(value) {
+  ttsPitch = parseFloat(value);
+  localStorage.setItem('ttsPitch', ttsPitch.toString());
+  const disp = document.getElementById('ttsPitchDisplay');
+  if (disp) disp.textContent = parseFloat(ttsPitch).toFixed(1);
+}
+
+function updateVolumeDisplay() {
+  const percentage = Math.round(currentVolume * 100);
+  const displayPercentage = (isMuted || !soundEnabled) ? 0 : percentage;
+  
+  const display = document.getElementById('volumeDisplay');
+  if (display) display.textContent = displayPercentage + '%';
+  
+  const slider = document.getElementById('volumeSlider');
+  if (slider) {
+    slider.value = displayPercentage;
+    // Update slider background gradient
+    const gradientValue = `linear-gradient(to right, #c19a6b 0%, #c19a6b ${displayPercentage}%, #ddd ${displayPercentage}%, #ddd 100%)`;
+    slider.style.background = gradientValue;
+  }
+  
+  // Update volume icon
+  const icon = document.getElementById('volumeIcon');
+  if (icon) {
+    if (isMuted || !soundEnabled || currentVolume === 0) {
+      icon.src = '/picture/close.png';
+    } else {
+      icon.src = '/picture/open.png';
+    }
+  }
+  
+  // Update toggle button image
+  const toggleBtn = document.getElementById('soundToggleButton');
+  if (toggleBtn) {
+    toggleBtn.src = (soundEnabled && !isMuted) ? '/picture/open.png' : '/picture/close.png';
+  }
+  
+  localStorage.setItem('gameVolume', currentVolume.toString());
+}
+
+function updateVolume(value) {
+  currentVolume = value / 100;
+  isMuted = false;
+  soundEnabled = true;
+  updateVolumeDisplay();
+}
+
+function toggleMute() {
+  if (isMuted) {
+    // Unmute
+    isMuted = false;
+    soundEnabled = true;
+    currentVolume = previousVolume > 0 ? previousVolume : 1.0;
+  } else {
+    // Mute
+    previousVolume = currentVolume;
+    isMuted = true;
+    soundEnabled = false;
+  }
+  
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
+  updateVolumeDisplay();
+}
+
+// Initialize volume on page load
+window.addEventListener('load', function() {
+  isMuted = !soundEnabled;
+  updateVolumeDisplay();
+});
+</script>
+
+
+<script>
+  try {
+    localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash);
+  } catch (e) { }
+</script>
+</body>
+</html>

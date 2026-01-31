@@ -10,12 +10,18 @@
 <link rel="stylesheet" href="css/gamepicture.css">
 <script src="/js/prevent-image-download.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+  import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  window.showStudentInputDialog = showStudentInputDialog;
+  window.saveStudentTestResult = saveStudentTestResult;
+</script>
 <script>
-let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // ตัวแปรควบคุมสถานะเสียง
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
   isMuted = !soundEnabled;
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
   const soundButton = document.getElementById('soundToggleButton');
   if (soundButton) {
     soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
@@ -197,24 +203,59 @@ function initAudio() {
 }
 
 /* Volume Control Styles - YouTube Style */
-.volume-control {
+.sound-control-wrapper {
   position: fixed;
-  top: 90px;
+  top: 15px;
   right: 50px;
   z-index: 1000;
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sound-toggle-btn {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.sound-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.sound-control-wrapper.show-volume .sound-toggle-btn {
+  display: none;
+}
+
+.volume-control {
+  display: none;
   align-items: center;
   gap: 10px;
   background: rgba(255, 255, 255, 0.95);
   padding: 10px 15px;
   border-radius: 25px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.sound-control-wrapper.show-volume .volume-control {
+  display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .volume-icon {
   font-size: 24px;
   cursor: pointer;
   transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .volume-icon:hover {
@@ -278,16 +319,22 @@ function initAudio() {
 }
 
 @media (max-width: 768px) {
-  .volume-control {
+  .sound-control-wrapper {
     right: 20px;
-    top: 85px;
-    padding: 8px 12px;
+    top: 10px;
+  }
+  .sound-toggle-btn {
+    width: 40px;
+    height: 40px;
   }
   .volume-icon {
     font-size: 20px;
   }
   .volume-slider {
     width: 80px;
+  }
+  .volume-control {
+    padding: 8px 12px;
   }
 }
 </style>
@@ -510,6 +557,7 @@ async function autoSaveGameResult() {
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+let currentStudent = null; // เก็บข้อมูลผู้ทดสอบ
 const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
 document.getElementById('topicName').innerText = activityName;
 document.getElementById('topicDisplay').innerText = activityName;
@@ -946,6 +994,22 @@ function checkEndGame() {
 
     // บันทึกผลเกมอัตโนมัติลง DB
     autoSaveGameResult();
+    
+    // บันทึกผลการทดสอบลง Firebase
+    if (currentStudent && window.saveStudentTestResult) {
+      window.saveStudentTestResult(currentStudent, {
+        activityType: 'gamepicture',
+        topic: teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม',
+        score: score,
+        totalQuestions: teacherConfig.correctImages?.length || 0,
+        correctAnswers: score,
+        timeSpent: 0
+      }).then(() => {
+        console.log('Test result saved to Firebase');
+      }).catch(error => {
+        console.error('Error saving test result:', error);
+      });
+    }
 
     // Try to end usage for this page/section (if usageTracker available)
     try {
@@ -1076,7 +1140,7 @@ function playActivity(activityId) {
 }
 
 // Automatically load and start the game on page load
-window.onload = function() {
+window.onload = async function() {
   const config = localStorage.getItem('emojiGameConfig');
   if (!config) {
     alert('ไม่พบข้อมูลกิจกรรม กรุณากลับไปสร้างกิจกรรมก่อน');
@@ -1088,6 +1152,20 @@ window.onload = function() {
   const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
   document.getElementById('topicName').innerText = activityName;
   document.getElementById('topicDisplay').innerText = activityName;
+
+  // แสดง dialog กรอกข้อมูลผู้ทดสอบ
+  try {
+    // ใช้ข้อมูลจาก config ที่ครูตั้งไว้
+    if (teacherConfig.userName && teacherConfig.classroom) {
+      currentStudent = {
+        name: teacherConfig.userName,
+        classroom: teacherConfig.classroom
+      };
+      console.log('Using student info from config:', currentStudent);
+    }
+  } catch (error) {
+    console.error('Error showing student input dialog:', error);
+  }
 
   // Start the game automatically
   initGame();
@@ -1122,7 +1200,7 @@ window.onload = function() {
   <img class="sound-toggle-btn" id="soundToggleButton" onclick="toggleVolumeBar()" src="/picture/open.png" alt="Toggle Sound">
   
   <div class="volume-control">
-    <div class="volume-icon" onclick="toggleMute()" id="volumeIcon">🔊</div>
+    <div class="volume-icon" onclick="toggleMute()" id="volumeIcon"><img src="/picture/open.png" style="width: 24px; height: 24px; filter: brightness(0);"></div>
     <input type="range" min="0" max="100" value="100" class="volume-slider" id="volumeSlider" oninput="updateVolume(this.value)">
     <div class="volume-display" id="volumeDisplay">100%</div>
   </div>
@@ -1187,6 +1265,8 @@ function toggleMute() {
     previousVolume = currentVolume;
   }
   
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
+  
   const soundButton = document.getElementById('soundToggleButton');
   if (soundButton) {
     soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
@@ -1197,6 +1277,10 @@ function toggleMute() {
 
 // Initialize volume on page load
 window.addEventListener('load', function() {
+  // อัปเดตปุ่มตามสถานะที่โหลด
+  const btn = document.getElementById('soundToggleButton');
+  if (btn) btn.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  isMuted = !soundEnabled;
   updateVolumeDisplay();
 });
 </script>

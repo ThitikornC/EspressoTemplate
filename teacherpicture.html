@@ -15,14 +15,31 @@
 <div class="info-section">
     <h1>สมาร์ทเช็ค</h1>
   <h3>กรอกข้อมูลกิจกรรม</h3>
-  <div class="info-inputs">
-    <input id="weekInput" placeholder="สัปดาห์ที่">
-    <input id="topicInput" placeholder="สาระการเรียนรู้">
-    <input id="unitInput" placeholder="หน่วยการเรียนรู้">
-    <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
-    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
-
-
+  <div class="form-grid">
+    <div class="form-group">
+      <label for="weekInput">สัปดาห์ที่</label>
+      <input type="text" id="weekInput" placeholder="ระบุสัปดาห์">
+    </div>
+    <div class="form-group">
+      <label for="topicInput">สาระการเรียนรู้</label>
+      <input type="text" id="topicInput" placeholder="เช่น ภาษาไทย">
+    </div>
+    <div class="form-group">
+      <label for="unitInput">หน่วยการเรียนรู้</label>
+      <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
+    </div>
+    <div class="form-group">
+      <label for="teacherInput">ครูผู้สอนสอน</label>
+      <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
+    </div>
+    <div class="form-group">
+      <label for="classroomInput">ชั้นเรียน</label>
+      <input type="text" id="classroomInput" placeholder="เช่น ป.1/1, ม.2/3">
+    </div>
+    <div class="form-group">
+      <label for="userNameInput">ชื่อผู้ทดสอบ</label>
+      <input type="text" id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+    </div>
   </div>
 </div>
 
@@ -57,6 +74,7 @@
   <button class="neon-btn" onclick="saveConfig()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เริ่มกิจกรรม</button>
   <button class="neon-btn" onclick="saveActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">บันทึกกิจกรรม</button>
   <button class="neon-btn" onclick="loadActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เลือกกิจกรรม</button>
+  <button class="neon-btn" onclick="window.location.href='student-reports.html'" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">ประวัติผู้ทดสอบ</button>
 </div>
 
 <!-- Activity Selection Modal -->
@@ -240,6 +258,7 @@ function saveConfig() {
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const classroom = document.getElementById('classroomInput')?.value.trim();
   const userName = document.getElementById('userNameInput')?.value.trim();
 
   // Allow saving even when some fields are empty — use sensible defaults
@@ -260,6 +279,7 @@ function saveConfig() {
     unit: cfgUnit,
     teacher: cfgTeacher,
     mainTopic: cfgMainTopic,
+    classroom: classroom || '',
     userName: cfgUserName,
     correctImages: correctImages || [],
     wrongImages: wrongImages || []
@@ -276,6 +296,7 @@ async function saveActivity() {
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const classroom = document.getElementById('classroomInput')?.value.trim();
   const userName = document.getElementById('userNameInput')?.value.trim();
 
   if (!teacher) {
@@ -310,6 +331,7 @@ async function saveActivity() {
             unit: cfgUnit,
             teacher: cfgTeacher,
             mainTopic: cfgMainTopic,
+            classroom: classroom || '',
             userName: cfgUserName,
             correctImages: correctImages,
             wrongImages: wrongImages
@@ -344,6 +366,7 @@ async function saveActivity() {
           unit: cfgUnit,
           teacher: cfgTeacher,
           mainTopic: cfgMainTopic,
+          classroom: classroom || '',
           userName: cfgUserName,
           correctImages: correctImages,
           wrongImages: wrongImages

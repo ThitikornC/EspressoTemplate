@@ -14,6 +14,11 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf-thai-support@1.0.0/dist/jspdf-thai-support.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+  import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  window.showStudentInputDialog = showStudentInputDialog;
+  window.saveStudentTestResult = saveStudentTestResult;
+</script>
 <style>
 body { 
   font-family: 'Roboto', sans-serif; 
@@ -95,6 +100,11 @@ body::before {
   margin-top: 20px;
   position: relative;
   z-index: 5;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  width: calc(99% + 40px);
+  padding: 0 5px;
 }
 
 .zone { 
@@ -152,6 +162,12 @@ body::before {
 
 
 
+#scorePopup {
+  background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  border: 6px solid #74640a;
+  box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);
+}
+
 #scorePopup button { font-size: 18px; padding: 6px 12px; margin-top: 10px; cursor: pointer; }
 
 /* Feedback Overlay */
@@ -205,7 +221,6 @@ body::before {
   height: 50px;
   cursor: pointer;
   transition: transform 0.2s;
-  filter: brightness(0);
 }
 
 .sound-toggle-btn:hover {
@@ -358,6 +373,7 @@ body::before {
 <div id="gameContainer">
   <div class="question-container">
     <div class="question-text" id="questionText"></div>
+    <div id="questionImage" style="text-align: center; margin: 15px 0;"></div>
   </div>
   
   <div id="zones">
@@ -368,38 +384,38 @@ body::before {
 
 <!-- Popup -->
 <div id="scorePopup">
-  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
-  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
+  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#3b3305;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
+  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#3b3305;">ชื่อ: <span id="playerNameDisplay"></span></p>
   <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
-  <p style="font-size:32px; font-weight:700; margin:20px 0;">🎉 Your Score: <span id="finalScore"></span> 🎉</p>
+  <p style="font-size:32px; font-weight:700; margin:20px 0; color:#74640a;">🏆 คะแนนของคุณ: <span id="finalScore" style="color:#8b6914;"></span> ⭐</p>
   
   <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
-    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      🔄
+    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <span style="color: #4dd0e1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔄</span>
     </button>
     <div style="position: relative;">
-      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-        🔗
+      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #ff6b9d; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📊</span>
       </button>
-      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 3px solid #2196F3;">
+      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 4px solid #74640a;">
         <!--<button onclick="shareScore(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #2196F3, #1E88E5); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #1976D2, #1565C0)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #2196F3, #1E88E5)'; this.style.transform='scale(1)';">
           <span style="font-size: 28px;">🔗</span> แชร์ผลกิจกรรม
         </button>
       -->
-        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
-          <span style="font-size: 28px;">📥</span> ดาวน์โหลด
+        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #d4a574, #8b6914); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #c9a668, #74640a)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #d4a574, #8b6914)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">💾</span> ดาวน์โหลด PDF
         </button>
       </div>
     </div>
-    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      ✖
+    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s; font-weight: 700;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      ✕
     </button>
   </div>
 </div>
 
 <script>
 let audioCtx, baseFreq = 200;
-let soundEnabled = true; // global sound toggle (used by audio helpers)
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // global sound toggle (used by audio helpers)
 const sparkleChars = ['✨', '🌟', '💫', '⭐'];
 let createdAnswers = {};
 let score = 0;
@@ -568,21 +584,16 @@ async function autoSaveGameResult() {
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
 document.getElementById('topicName').innerText = teacherConfig.topic || 'Unknown';
 
-// ถ้าเพิ่งเลือกกิจกรรม (loadActivity) ให้ถามชื่อผู้ทดสอบ (optional)
-if (window.location.hash === '#promptUserName') {
-  setTimeout(() => {
-    let userName = prompt('กรุณากรอกชื่อผู้ทดสอบ (ถ้าไม่กรอกจะข้ามได้):', teacherConfig.userName || '');
-    if (userName !== null) {
-      userName = userName.trim();
-      // อัปเดตใน localStorage
-      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
-      config.userName = userName;
-      localStorage.setItem('emojiGameConfig', JSON.stringify(config));
-      teacherConfig.userName = userName;
-    }
-    // ลบ hash เพื่อไม่ให้ถามซ้ำ
-    window.location.hash = '';
-  }, 300);
+// เก็บข้อมูลผู้ทดสอบ
+let currentStudent = null;
+
+// ใช้ข้อมูลจาก config ที่ครูตั้งไว้
+if (teacherConfig && teacherConfig.userName && teacherConfig.classroom) {
+  currentStudent = {
+    name: teacherConfig.userName,
+    classroom: teacherConfig.classroom
+  };
+  console.log('Using student info from config:', currentStudent);
 }
 
 // ตรวจสอบและกำหนดค่าเริ่มต้นให้ teacherConfig
@@ -861,7 +872,7 @@ function nextQuestion() {
 }
 
 // จบเกมทันทีพร้อมผลลัพธ์
-function endGame(message, color) {
+async function endGame(message, color) {
   document.getElementById('topicDisplay').innerText = teacherConfig.topic || 'ไม่ระบุ';
   document.getElementById('playerNameDisplay').innerText = teacherConfig.userName || 'ไม่ระบุชื่อ';
   document.getElementById('resultMessage').innerText = message;
@@ -871,6 +882,23 @@ function endGame(message, color) {
   
   // บันทึกผลเกมอัตโนมัติลง DB
   autoSaveGameResult();
+  
+  // บันทึกผลการทดสอบลง Firebase
+  if (currentStudent && window.saveStudentTestResult) {
+    try {
+      await window.saveStudentTestResult(currentStudent, {
+        activityType: 'gamemath',
+        topic: teacherConfig.topic || 'คณิตศาสตร์',
+        score: score,
+        totalQuestions: allQuestions.length,
+        correctAnswers: totalCorrectAnswers,
+        timeSpent: 0 // สามารถเพิ่ม timer ได้
+      });
+      console.log('Test result saved to Firebase');
+    } catch (error) {
+      console.error('Error saving test result:', error);
+    }
+  }
 }
 
 // ตรวจสอบจบเกม (กรณีหมดคำตอบ)
@@ -1435,6 +1463,25 @@ function loadQuestion(index) {
   
   // แสดงโจทย์
   document.getElementById('questionText').innerText = question.question;
+  
+  // แสดงรูปภาพถ้ามี
+  const imageContainer = document.getElementById('questionImage');
+  const questionContainer = document.querySelector('.question-container');
+  if (question.image) {
+    imageContainer.innerHTML = `<img src="${question.image}" style="max-width: 50%; max-height: 120px; width: auto; height: auto; object-fit: contain; display: block; margin: 5px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" />`;
+    // ลด padding ของ container เมื่อมีรูป
+    if (questionContainer) {
+      questionContainer.style.padding = '15px';
+      questionContainer.style.margin = '5px auto';
+    }
+  } else {
+    imageContainer.innerHTML = '';
+    // คืนค่า padding ปกติเมื่อไม่มีรูป
+    if (questionContainer) {
+      questionContainer.style.padding = '20px';
+      questionContainer.style.margin = '10px auto';
+    }
+  }
 
   // รวมคำตอบทั้งหมดและสุ่มลำดับ
   const allAnswers = [];
@@ -1466,8 +1513,18 @@ function loadQuestion(index) {
   const cols = Math.min(total, maxCols);
   const rows = Math.ceil(total / cols);
 
-  // start from lower area but allow multiple rows upwards
-  const bottomY = window.innerHeight - 160; // baseline from bottom
+  // คำนวณตำแหน่งจากกรอบสีเขียว
+  const zonesElement = document.getElementById('zones');
+  let bottomY;
+  
+  if (zonesElement) {
+    const zoneRect = zonesElement.getBoundingClientRect();
+    // วางคำตอบห่างจากกรอบสีเขียว 150px ให้อยู่ด้านล่างชัดเจน
+    bottomY = zoneRect.bottom + 150;
+  } else {
+    // fallback: ใช้ตำแหน่งจากด้านล่างหน้าจอ
+    bottomY = window.innerHeight - 80;
+  }
 
   // สร้างคำตอบแต่ละข้อ โดยจัดให้แต่ละแถวอยู่ตรงกลางเสมอ
   allAnswers.forEach((answer, i) => {
@@ -1482,7 +1539,7 @@ function loadQuestion(index) {
     const baseX = Math.max(margin, (window.innerWidth - rowWidth) / 2);
     
     const x = baseX + col * (answerWidth + hSpacing);
-    const y = bottomY - row * (answerHeight + vSpacing);
+    const y = bottomY - row * 10; // จัดเรียงในแนวนอนเป็นหลัก แถวบนอยู่สูงขึ้นนิดหน่อย
     createDraggableAnswer(answer.text, answer.id, answer.isCorrect, x, y);
   });
 }
@@ -1554,6 +1611,7 @@ function generatePDF() {
 function toggleSound() {
   soundEnabled = !soundEnabled;
   isMuted = !soundEnabled; // ซิงค์สถานะ
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
   const soundButton = document.getElementById('soundToggleButton');
   if (soundButton) {
     soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
@@ -1677,6 +1735,8 @@ function toggleMute() {
     previousVolume = currentVolume;
   }
   
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
+  
   // อัพเดทไอคอนหลัก
   const soundButton = document.getElementById('soundToggleButton');
   if (soundButton) {
@@ -1695,6 +1755,10 @@ function toggleMute() {
 
 // Initialize volume on page load
 window.addEventListener('load', function() {
+  // อัปเดตปุ่มตามสถานะที่โหลด
+  const btn = document.getElementById('soundToggleButton');
+  if (btn) btn.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  isMuted = !soundEnabled;
   updateVolumeDisplay();
 });
 </script>

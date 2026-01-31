@@ -24,9 +24,52 @@ body {
       -ms-flex-pack: start;
           justify-content: flex-start;
 }
+
+/* Form Grid Layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input {
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
 /* Responsive Design */
 /* Mobile: < 768px */
 @media (max-width: 767px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+  }
+  
+  .form-group input {
+    font-size: 16px;
+    padding: 10px;
+  }
+  
   body {
     padding: 5px !important;
   }
