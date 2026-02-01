@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 * {
   margin: 0;
@@ -184,19 +187,7 @@ canvas {
 }
 
 .writing-input {
-  width: 100%;
-  padding: 15px;
-  font-size: 24px;
-  border: 3px solid #c19a6b;
-  border-radius: 10px;
-  outline: none;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.writing-input:focus {
-  border-color: #8b6914;
-  box-shadow: 0 0 10px rgba(139, 105, 20, 0.3);
+  display: none; /* ซ่อน input text */
 }
 
 .button-group {
@@ -243,25 +234,7 @@ canvas {
 }
 
 .result-message {
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  display: none;
-}
-
-.result-correct {
-  background: #e8d5b7;
-  color: #6b5410;
-  border: 2px solid #c19a6b;
-}
-
-.result-wrong {
-  background: #f5e6d3;
-  color: #8b6914;
-  border: 2px solid #d4a574;
+  display: none; /* ซ่อน result message */
 }
 
 .summary-modal {
@@ -278,14 +251,15 @@ canvas {
 }
 
 .summary-content {
-  background: white;
+  background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
   border-radius: 20px;
+  border: 6px solid #74640a;
   padding: 40px;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .summary-header {
@@ -295,7 +269,7 @@ canvas {
 
 .summary-header h2 {
   font-size: 32px;
-  color: #8b6914;
+  color: #3b3305;
   margin-bottom: 10px;
 }
 
@@ -571,10 +545,6 @@ canvas {
       <strong>ชื่อผู้ทดสอบ</strong>
       <span id="userNameDisplay">-</span>
     </div>
-    <div class="info-item">
-      <strong>คะแนน</strong>
-      <span id="scoreDisplay">0</span>
-    </div>
   </div>
 
   <div class="progress-bar">
@@ -604,23 +574,12 @@ canvas {
       <div class="writing-canvas-container">
         <canvas id="writingCanvas" width="800" height="200"></canvas>
       </div>
-      
-      <input 
-        type="text" 
-        id="writingInput" 
-        class="writing-input" 
-        placeholder="พิมพ์คำศัพท์ที่นี่..." 
-        autocomplete="off"
-      >
     </div>
-
-    <div class="result-message" id="resultMessage"></div>
 
     <div class="button-group">
       <button class="btn btn-clear" onclick="clearCanvas()">🗑️ ลบ</button>
-      <button class="btn btn-check" onclick="checkAnswer()">✓ ตรวจคำตอบ</button>
-      <button class="btn btn-next" id="nextBtn" onclick="nextVocab()" style="display:none;">➡️ ข้อถัดไป</button>
-      <button class="btn btn-finish" id="finishBtn" onclick="showSummary()" style="display:none;">🏁 สรุปผล</button>
+      <button class="btn btn-next" id="nextBtn" onclick="nextVocab()">➡️ ข้อถัดไป</button>
+      <button class="btn btn-finish" id="finishBtn" onclick="showSummary()" style="display:none;">🏁 เสร็จสิ้น</button>
     </div>
   </div>
 </div>
@@ -629,15 +588,24 @@ canvas {
 <div class="summary-modal" id="summaryModal">
   <div class="summary-content">
     <div class="summary-header">
-      <h2>🎉 สรุปผลการทำ</h2>
-      <div class="summary-score" id="summaryScore">0/0</div>
+      <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#3b3305;">เสร็จสิ้นการฝึกเขียน</p>
+      <p style="font-size:16px; color:#666; margin-top:10px;">คุณได้ฝึกเขียนคำศัพท์แล้ว <span id="summaryScore" style="color:#74640a; font-weight:700;">0</span> คำ</p>
     </div>
     
     <div class="summary-list" id="summaryList"></div>
     
-    <div class="summary-buttons">
-      <button class="btn btn-next" onclick="window.location.href='teacherthai.html'">🏠 กลับหน้าหัวข้อ</button>
-      <button class="btn btn-check" onclick="window.location.href='menu.html'">📋 เมนูหลัก</button>
+    <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0; flex-wrap: wrap;">
+      <button onclick="window.location.href='teacherthai.html'" title="กลับหน้าหัวข้อ" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #1a1a1a; filter: drop-shadow(0 1px 2px rgba(255,255,255,0.3));">🔙</span>
+      </button>
+      <div style="position: relative;">
+        <button onclick="downloadWorksheetPDF()" title="ดาวน์โหลด PDF" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+          <span style="color: #1a1a1a; filter: drop-shadow(0 1px 2px rgba(255,255,255,0.3));">📄</span>
+        </button>
+      </div>
+      <button onclick="window.location.href='menu.html'" title="เมนูหลัก" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #1a1a1a; filter: drop-shadow(0 1px 2px rgba(255,255,255,0.3));">🏠</span>
+      </button>
     </div>
   </div>
 </div>
@@ -647,7 +615,7 @@ let config = {};
 let vocabularyList = [];
 let currentIndex = 0;
 let userAnswers = [];
-let score = 0;
+let canvasImages = []; // เก็บ canvas image แต่ละคำ
 
 // Canvas Drawing
 let canvas, ctx, isDrawing = false;
@@ -791,125 +759,283 @@ function loadVocab(index) {
   // Clear
   clearCanvas();
   
-  // ซ่อนปุ่ม
-  document.getElementById('nextBtn').style.display = 'none';
-  document.getElementById('finishBtn').style.display = 'none';
-  document.getElementById('resultMessage').style.display = 'none';
-  
-  // Focus input
-  document.getElementById('writingInput').focus();
-}
-
-function checkAnswer() {
-  const userAnswer = document.getElementById('writingInput').value.trim().toLowerCase();
-  const correctAnswer = vocabularyList[currentIndex].english.toLowerCase();
-  
-  const resultMessage = document.getElementById('resultMessage');
-  
-  if (userAnswer === correctAnswer) {
-    // ถูกต้อง
-    score++;
-    resultMessage.textContent = '✅ ถูกต้อง! เยี่ยมมาก!';
-    resultMessage.className = 'result-message result-correct';
-    resultMessage.style.display = 'block';
-    
-    userAnswers.push({
-      vocab: vocabularyList[currentIndex],
-      userAnswer: userAnswer,
-      isCorrect: true
-    });
-  } else {
-    // ผิด
-    resultMessage.textContent = `❌ ผิด! คำตอบที่ถูกต้องคือ "${vocabularyList[currentIndex].english}"`;
-    resultMessage.className = 'result-message result-wrong';
-    resultMessage.style.display = 'block';
-    
-    userAnswers.push({
-      vocab: vocabularyList[currentIndex],
-      userAnswer: userAnswer || '(ไม่ได้ตอบ)',
-      isCorrect: false
-    });
-  }
-  
-  // อัพเดทคะแนน
-  document.getElementById('scoreDisplay').textContent = score;
-  
-  // แสดงปุ่มถัดไป
-  if (currentIndex < vocabularyList.length - 1) {
+  // แสดงปุ่มถัดไป/เสร็จสิ้น
+  if (index < vocabularyList.length - 1) {
     document.getElementById('nextBtn').style.display = 'inline-block';
+    document.getElementById('finishBtn').style.display = 'none';
   } else {
+    document.getElementById('nextBtn').style.display = 'none';
     document.getElementById('finishBtn').style.display = 'inline-block';
   }
 }
 
 function nextVocab() {
+  // บันทึก canvas image ของคำปัจจุบัน
+  const canvasImage = canvas.toDataURL('image/png');
+  canvasImages.push(canvasImage);
+  
+  userAnswers.push({
+    vocab: vocabularyList[currentIndex],
+    canvasImage: canvasImage
+  });
+  
+  // ไปข้อถัดไป
   loadVocab(currentIndex + 1);
 }
 
 function showSummary() {
+  // บันทึก canvas สุดท้ายก่อน
+  if (currentIndex === vocabularyList.length - 1) {
+    const canvasImage = canvas.toDataURL('image/png');
+    canvasImages.push(canvasImage);
+    userAnswers.push({
+      vocab: vocabularyList[currentIndex],
+      canvasImage: canvasImage
+    });
+  }
+  
   const modal = document.getElementById('summaryModal');
   const summaryScore = document.getElementById('summaryScore');
   const summaryList = document.getElementById('summaryList');
   
-  // คำนวณคะแนน
-  const percentage = Math.round((score / vocabularyList.length) * 100);
-  summaryScore.textContent = `${score}/${vocabularyList.length} (${percentage}%)`;
+  // แสดงจำนวนคำที่ฝึก
+  summaryScore.textContent = vocabularyList.length;
   
-  // แสดงรายการคำตอบ
+  // แสดงรายการคำศัพท์
   summaryList.innerHTML = userAnswers.map((item, index) => `
-    <div class="summary-item ${item.isCorrect ? 'correct' : 'wrong'}">
+    <div class="summary-item correct" style="flex-direction: column; align-items: flex-start;">
       <div>
-        <strong>${index + 1}. ${item.vocab.english}</strong><br>
-        <small>คำตอบของคุณ: ${item.userAnswer}</small>
-      </div>
-      <div style="font-size: 24px;">
-        ${item.isCorrect ? '✅' : '❌'}
+        <strong>${index + 1}. ${item.vocab.english}</strong> - <span style="color: #666;">${item.vocab.thaiMeaning}</span>
       </div>
     </div>
   `).join('');
   
   modal.style.display = 'flex';
   
-  // บันทึกผล
+  // บันทึกผลและสร้าง PDF อัตโนมัติ
   saveResult();
 }
 
 async function saveResult() {
   try {
+    // สร้าง PDF อัตโนมัติ
+    const pdfBase64 = await generateWorksheetPDF();
+    
     const resultData = {
       gameType: 'writing',
+      activityType: 'gamewrite',
       topic: config.topic,
       week: config.week,
       teacher: config.teacher,
       classroom: config.classroom,
+      studentName: config.userName,
       userName: config.userName,
-      score: score,
-      total: vocabularyList.length,
-      percentage: Math.round((score / vocabularyList.length) * 100),
+      score: vocabularyList.length, // จำนวนคำที่ฝึก
+      totalQuestions: vocabularyList.length,
       answers: userAnswers,
+      canvasImages: canvasImages,
+      pdfBase64: pdfBase64,
       timestamp: new Date().toISOString()
     };
     
-    const response = await fetch('/api/results/save', {
+    // บันทึกไปยัง test-results collection
+    const response = await fetch('/api/test-results/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(resultData)
     });
     
     if (response.ok) {
-      console.log('✅ บันทึกผลสำเร็จ');
+      console.log('✅ บันทึกผลและ PDF สำเร็จ');
     }
   } catch (error) {
     console.error('❌ บันทึกผลล้มเหลว:', error);
   }
 }
 
-// Enter key to check answer
-document.getElementById('writingInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    checkAnswer();
+// ฟังก์ชันสร้าง PDF ใบงาน
+async function generateWorksheetPDF() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    
+    const pdfContent = document.createElement('div');
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
+        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
+          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
+          <p style="margin: 5px 0; font-size: 16px;">ใบงานฝึกเขียนคำศัพท์</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.userName || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.classroom || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หัวข้อ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.topic || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.week || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.teacher || 'ไม่ระบุ'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-top: 20px;">
+          <h3 style="color: #251f03; margin-bottom: 15px; font-size: 16px;">การเขียนของนักเรียน</h3>
+          ${userAnswers.map((item, index) => `
+            <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #c19a6b; border-radius: 10px; page-break-inside: avoid;">
+              <div style="font-weight: 700; color: #8b6914; margin-bottom: 8px; font-size: 14px;">
+                ${index + 1}. ${item.vocab.english} (${item.vocab.thaiMeaning})
+              </div>
+              <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                <img src="${item.canvasImage}" style="width: 100%; display: block; border-radius: 5px;" />
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top: 35px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
+          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
+            บริษัท กว้างไม่ จำกัด<br>
+            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+            ติดต่อเราได้ที่<br>
+            โทร : 083-654-9743<br>
+            เว็บไซต์ : www.kwamgunlimit.com
+          </p>
+        </div>
+      </div>
+    `;
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // สร้าง PDF และแปลงเป็น base64
+    const pdf = await html2pdf().set(opt).from(pdfContent).outputPdf('datauristring');
+    return pdf;
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    return null;
   }
-});
+}
+
+// ฟังก์ชันดาวน์โหลด PDF
+window.downloadWorksheetPDF = async function() {
+  try {
+    const date = new Date();
+    const filename = `ใบงานเขียนคำศัพท์_${config.userName || 'student'}_${date.toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
+    
+    const pdfContent = document.createElement('div');
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
+        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
+          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
+          <p style="margin: 5px 0; font-size: 16px;">ใบงานฝึกเขียนคำศัพท์</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.userName || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.classroom || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หัวข้อ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.topic || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.week || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.teacher || 'ไม่ระบุ'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-top: 20px;">
+          <h3 style="color: #251f03; margin-bottom: 15px; font-size: 16px;">การเขียนของนักเรียน</h3>
+          ${userAnswers.map((item, index) => `
+            <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #c19a6b; border-radius: 10px; page-break-inside: avoid;">
+              <div style="font-weight: 700; color: #8b6914; margin-bottom: 8px; font-size: 14px;">
+                ${index + 1}. ${item.vocab.english} (${item.vocab.thaiMeaning})
+              </div>
+              <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                <img src="${item.canvasImage}" style="width: 100%; display: block; border-radius: 5px;" />
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top: 35px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
+          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
+            บริษัท กว้างไม่ จำกัด<br>
+            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+            ติดต่อเราได้ที่<br>
+            โทร : 083-654-9743<br>
+            เว็บไซต์ : www.kwamgunlimit.com
+          </p>
+        </div>
+      </div>
+    `;
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    await html2pdf().set(opt).from(pdfContent).save();
+    console.log('✅ ดาวน์โหลด PDF สำเร็จ');
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    alert('เกิดข้อผิดพลาดในการดาวน์โหลด PDF');
+  }
+}
 
 // ฟังก์ชันอ่านคำศัพท์ด้วยเสียง
 function speakWord(text, lang = 'en-US') {

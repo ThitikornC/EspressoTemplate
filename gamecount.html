@@ -7,7 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 * {
   margin: 0;
@@ -141,15 +143,16 @@ body::before {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #fff;
-  border: 2px solid #333;
-  padding: 30px;
+  background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  border: 6px solid #74640a;
+  padding: 40px 50px;
   font-size: 24px;
   z-index: 999;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);
   text-align: center;
-  min-width: 400px;
+  min-width: 500px;
+  max-width: 600px;
 }
 
 .completion-emoji {
@@ -323,27 +326,27 @@ body::before {
 
 <!-- Completion Screen -->
 <div class="completion-screen" id="completionScreen">
-  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
-  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
-  <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
-  <p style="font-size:32px; font-weight:700; margin:20px 0;">🎉 Your Score: <span id="finalScoreDisplay"></span> 🎉</p>
+  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#3b3305;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
+  <p style="font-size:28px; font-weight:600; margin-bottom:12px; color:#3b3305;">ชื่อ: <span id="playerNameDisplay"></span></p>
+  <p id="resultMessage" style="font-size:32px; font-weight:700; margin-bottom:20px;"></p>
+  <p style="font-size:36px; font-weight:700; margin:25px 0; color:#74640a;">🏆 คะแนนของคุณ: <span id="finalScoreDisplay" style="color:#8b6914;"></span> ⭐</p>
   
-  <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
-    <button onclick="restartGame()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      🔄
+  <div style="display: flex; justify-content: center; gap: 20px; margin: 30px 0; flex-wrap: wrap;">
+    <button onclick="restartGame()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 80px; height: 80px; cursor: pointer; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <span style="color: #4dd0e1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔄</span>
     </button>
     <div style="position: relative;">
-      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-        🔗
+      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 80px; height: 80px; cursor: pointer; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #ff6b9d; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📊</span>
       </button>
-      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 3px solid #2196F3;">
-        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
-          <span style="font-size: 28px;">📥</span> ดาวน์โหลด
+      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 4px solid #74640a;">
+        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #d4a574, #8b6914); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #c9a668, #74640a)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #d4a574, #8b6914)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">💾</span> ดาวน์โหลด PDF
         </button>
       </div>
     </div>
-    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      ✖
+    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 80px; height: 80px; cursor: pointer; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s; font-weight: 700;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      ✕
     </button>
   </div>
 </div>
@@ -753,9 +756,6 @@ function toggleShareMenu() {
 
 async function exportToPDF() {
   try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
     const date = new Date();
     const dateStr = date.toLocaleDateString('th-TH');
     const timeStr = date.toLocaleTimeString('th-TH');
@@ -769,27 +769,86 @@ async function exportToPDF() {
     else if (percentage >= 40) grade = 'พอใจ';
     else grade = 'ควรปรับปรุง';
     
-    // สร้าง PDF (ใช้ฟอนต์ภาษาอังกฤษเนื่องจากไม่มีฟอนต์ไทย)
-    doc.setFontSize(20);
-    doc.text('Game Result - Counting Numbers', 105, 20, { align: 'center' });
+    // สร้าง HTML element สำหรับ PDF แบบเดียวกับ gamemath
+    const element = document.createElement('div');
+    element.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333; position: relative; padding: 15px;">
+        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
+          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
+          <p style="margin: 5px 0; font-size: 16px;">รายงานผลการประเมินกิจกรรมนับจำนวน</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หัวข้อ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.topic || 'เกมนับจำนวน'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้เล่น:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.userName || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.classroom || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.teacher || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ช่วงตัวเลข:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.startNumber} - ${config.endNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ระดับ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${grade} (${percentage}%)</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ตอบผิด:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${mistakes} ครั้ง</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 18px; margin-bottom: 18px; text-align: center;">
+          <p style="font-size: 15px; margin: 0 0 12px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 26px; color: #000000; font-weight: bold;">${score}/${totalNumbers}</p>
+        </div>
+        <div style="margin-top: 35px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
+          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
+            บริษัท กว้างไม่ จำกัด<br>
+            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+            ติดต่อเราได้ที่<br>
+            โทร : 083-654-9743<br>
+            เว็บไซต์ : www.kwamgunlimit.com
+          </p>
+        </div>
+      </div>
+    `;
     
-    doc.setFontSize(14);
-    let y = 40;
-    doc.text(`Date: ${dateStr}`, 20, y); y += 10;
-    doc.text(`Time: ${timeStr}`, 20, y); y += 10;
-    doc.text(`Topic: ${config.topic || 'Counting'}`, 20, y); y += 10;
-    doc.text(`Name: ${config.userName || 'N/A'}`, 20, y); y += 10;
-    doc.text(`Classroom: ${config.classroom || 'N/A'}`, 20, y); y += 10;
-    doc.text(`Teacher: ${config.teacher || 'N/A'}`, 20, y); y += 15;
+    // ตั้งค่า html2pdf
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: `รายงานเกมนับจำนวน-${config.userName || 'ไม่ระบุชื่อ'}-${dateStr}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
     
-    doc.setFontSize(16);
-    doc.text(`Score: ${score}/${totalNumbers}`, 20, y); y += 10;
-    doc.text(`Percentage: ${percentage}%`, 20, y); y += 10;
-    doc.text(`Grade: ${grade}`, 20, y); y += 10;
-    doc.text(`Mistakes: ${mistakes}`, 20, y); y += 10;
-    doc.text(`Range: ${config.startNumber}-${config.endNumber}`, 20, y);
+    // สร้างและดาวน์โหลด PDF
+    await html2pdf().set(opt).from(element).save();
     
-    doc.save(`count-game-${config.userName}-${dateStr}.pdf`);
   } catch (error) {
     console.error('Error exporting PDF:', error);
     alert('ไม่สามารถสร้าง PDF ได้ กรุณาลองอีกครั้ง');

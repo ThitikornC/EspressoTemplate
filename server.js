@@ -1411,7 +1411,9 @@ app.get('/api/test-results/by-student', async (req, res) => {
       totalQuestions: r.totalQuestions,
       correctAnswers: r.correctAnswers,
       timeSpent: r.timeSpent,
-      timestamp: r.timestamp
+      timestamp: r.timestamp,
+      questions: r.questions || [], // เพิ่มข้อมูลคำถาม
+      pdfBase64: r.pdfBase64 || null // เพิ่ม PDF base64
     }));
 
     res.json({ success: true, results: formattedResults });

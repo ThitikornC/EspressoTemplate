@@ -422,6 +422,7 @@ let score = 0;
 let gameStarted = false;
 let currentQuestionIndex = 0;
 let allQuestions = [];
+let userAnswers = []; // เก็บคำตอบของผู้ใช้
 let playCount = 1; // นับจำนวนครั้งที่เล่น
 let gameStartTime = null; // เวลาเริ่มเล่น
 let totalCorrectAnswers = 0; // จำนวนตอบถูก
@@ -833,6 +834,11 @@ function checkDrop(answerDiv, answerId, isCorrect) {
   // ตรวจสอบว่าปล่อยในโซนถูกต้อง
   if (rect.left + rect.width / 2 > correctZone.left && rect.left + rect.width / 2 < correctZone.right &&
       rect.top + rect.height / 2 > correctZone.top && rect.top + rect.height / 2 < correctZone.bottom) {
+    
+    // เก็บคำตอบที่ผู้ใช้เลือก
+    const currentQuestion = allQuestions[currentQuestionIndex];
+    userAnswers[currentQuestionIndex] = answerId;
+    
     if (isCorrect) {
       // ใส่คำตอบถูกในช่อง = ถูกต้อง! ได้คะแนนและไปโจทย์ถัดไป
       showFeedback(true);
@@ -883,7 +889,10 @@ async function endGame(message, color) {
   // บันทึกผลเกมอัตโนมัติลง DB
   autoSaveGameResult();
   
-  // บันทึกผลการทดสอบลง Firebase
+  // สร้าง PDF อัตโนมัติและบันทึกเป็น base64
+  const pdfBase64 = await generatePDFBase64();
+  
+  // บันทึกผลการทดสอบลง Database พร้อม PDF
   if (currentStudent && window.saveStudentTestResult) {
     try {
       await window.saveStudentTestResult(currentStudent, {
@@ -892,9 +901,16 @@ async function endGame(message, color) {
         score: score,
         totalQuestions: allQuestions.length,
         correctAnswers: totalCorrectAnswers,
-        timeSpent: 0 // สามารถเพิ่ม timer ได้
+        timeSpent: 0, // สามารถเพิ่ม timer ได้
+        questions: allQuestions.map((q, i) => ({
+          question: q.question || q.text || `คำถามที่ ${i + 1}`,
+          userAnswer: userAnswers[i] || '-',
+          correctAnswer: q.correctAnswer || q.answer,
+          isCorrect: userAnswers[i] === (q.correctAnswer || q.answer)
+        })),
+        pdfBase64: pdfBase64 // เก็บ PDF เป็น base64
       });
-      console.log('Test result saved to Firebase');
+      console.log('Test result saved with PDF');
     } catch (error) {
       console.error('Error saving test result:', error);
     }
@@ -1348,7 +1364,85 @@ function playAgain() {
   initGame();
 }
 
-// ฟังก์ชันบันทึกผลเป็น PDF
+// ฟังก์ชันสร้าง PDF และแปลงเป็น base64 อัตโนมัติ
+async function generatePDFBase64() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    
+    const pdfContent = document.createElement('div');
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
+        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
+          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
+          <p style="margin: 5px 0; font-size: 16px;">รายงานผลการประเมินกิจกรรมคณิตศาสตร์</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.userName || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">โจทย์:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.topic || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || 'ไม่ระบุ'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 18px; margin-bottom: 18px; text-align: center;">
+          <p style="font-size: 15px; margin: 0 0 12px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 26px; color: #000000; font-weight: bold;">${score}/${allQuestions.length}</p>
+        </div>
+        <div style="margin-top: 35px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
+          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
+            บริษัท กว้างไม่ จำกัด<br>
+            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+            ติดต่อเราได้ที่<br>
+            โทร : 083-654-9743<br>
+            เว็บไซต์ : www.kwamgunlimit.com
+          </p>
+        </div>
+      </div>
+    `;
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // สร้าง PDF และแปลงเป็น base64
+    const pdf = await html2pdf().set(opt).from(pdfContent).outputPdf('datauristring');
+    return pdf; // คืนค่า base64 string
+  } catch (error) {
+    console.error('Error generating PDF base64:', error);
+    return null;
+  }
+}
+
+// ฟังก์ชันบันทึกผลเป็น PDF (ดาวน์โหลด)
 function exportToPDF() {
   try {
     const date = new Date();

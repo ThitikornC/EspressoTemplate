@@ -35,16 +35,7 @@
     <div class="choices-container" id="choicesContainer"></div>
   </div>
 
-  <div class="completion-screen" id="completionScreen">
-    <div class="completion-emoji">🎉</div>
-    <div class="completion-title">เยี่ยมมาก!</div>
-    <div class="percentage-circle" id="percentageDisplay">0%</div>
-    <div class="completion-score" id="completionScore">คะแนน: 0/0</div>
-    <div class="completion-buttons">
-      <button class="btn btn-primary" onclick="restartGame()">🔄 เล่นอีกครั้ง</button>
-      <button class="btn btn-secondary" onclick="window.location.href='teacherthai.html'">🏠 กลับหน้าหลัก</button>
-    </div>
-  </div>
+
 
   <div class="score-board" id="scoreBoard">
     <div class="score-item">
@@ -64,47 +55,49 @@
 
 <!-- Popup -->
 <div id="scorePopup">
-  <div class="popup-content">
-    <h2>📊 ผลคะแนน</h2>
-    <div style="margin: 20px 0;">
-     <!-- Removed player name section -->
-    </div>
-    <div style="margin: 20px 0;">
-      <p style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">ผลการทดสอบ</p>
-      <p style="font-size: 1.8rem; font-weight: 700;" id="resultMessage">-</p>
-    </div>
-    <div style="margin: 20px 0;">
-      <p style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">คะแนน</p>
-      <p style="font-size: 2.5rem; font-weight: 700; color: #8b6914;" id="finalScore">0/0</p>
-    </div>
-    <div class="popup-buttons">
-      <button class="circular-btn btn-playagain" onclick="playAgain()" title="เล่นอีกครั้ง">🔄</button>
+  <div class="popup-content" style="background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); border: 6px solid #74640a; box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);">
+    <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#3b3305;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
+    <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
+    <p style="font-size:32px; font-weight:700; margin:20px 0; color:#74640a;">🏆 คะแนนของคุณ: <span id="finalScore" style="color:#8b6914;">0/0</span> ⭐</p>
+    
+    <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
+      <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #4dd0e1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔄</span>
+      </button>
       <div style="position: relative;">
-        <button class="circular-btn btn-share" onclick="toggleShareMenu()" title="แชร์และบันทึก">🔗</button>
-        <div id="shareMenu" class="share-dropdown">
-          <!--<div class="share-option share" onclick="shareResult()">
-            <span class="icon">🔗</span>
-            <span>แชร์</span>
-          </div>-->
-          <div class="share-option download" onclick="saveResult()">
-            <span class="icon">📥</span>
-            <span>ดาวน์โหลด</span>
-          </div>
+        <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+          <span style="color: #ff6b9d; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📊</span>
+        </button>
+        <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 4px solid #74640a;">
+          <button onclick="saveResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #d4a574, #8b6914); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #c9a668, #74640a)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #d4a574, #8b6914)'; this.style.transform='scale(1)';">
+            <span style="font-size: 28px;">💾</span> ดาวน์โหลด PDF
+          </button>
         </div>
       </div>
-      <button class="circular-btn btn-close" onclick="closePopup()" title="ปิด">✖</button>
+      <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s; font-weight: 700;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        ✕
+      </button>
     </div>
   </div>
 </div>
 
 <script>
+// Audio & Volume Variables
+// เริ่มต้นเสียงเปิดเสมอ
+let audioCtx;
+let soundEnabled = true;
+let currentVolume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
+let isMuted = false;
+let previousVolume = currentVolume;
+
+// Game Variables
 let teacherConfig = {};
-let currentStudent = null; // เก็บข้อมูลผู้ทดสอบ
+let currentStudent = null;
 let currentQuestionIndex = 0;
 let correctAnswers = 0;
 let wrongAnswers = 0;
 let questions = [];
-let gameStartTime = null; // เวลาเริ่มเล่น
+let gameStartTime = null;
 
 // ฟังก์ชันสร้างรายงาน HTML สำหรับแปลงเป็นรูป
 function generateReportHTML(data) {
@@ -350,6 +343,12 @@ function isThaiText(text) {
 
 // ฟังก์ชันอ่านโจทย์และตัวเลือกทั้งหมด
 function speakQuestion() {
+  // ตรวจสอบสถานะเสียงก่อนเล่น
+  if (!soundEnabled || isMuted) {
+    console.log('TTS disabled or muted:', { soundEnabled, isMuted });
+    return;
+  }
+  
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     
@@ -376,6 +375,9 @@ function speakQuestion() {
     utterance.lang = isThai ? 'th-TH' : 'en-US';
     utterance.rate = isThai ? 0.65 : 0.6;
     utterance.pitch = 1.0;
+    utterance.volume = currentVolume || 1.0; // ใช้ระดับเสียงที่ตั้งไว้
+    
+    console.log('Speaking question with volume:', utterance.volume);
     window.speechSynthesis.speak(utterance);
   }
 }
@@ -412,11 +414,6 @@ function selectChoice(isCorrect, button) {
 function showCompletion() {
   document.getElementById('questionSection').style.display = 'none';
   document.getElementById('scoreBoard').style.display = 'none';
-  document.getElementById('completionScreen').style.display = 'block';
-  
-  const percentage = Math.round((correctAnswers / questions.length) * 100);
-  document.getElementById('percentageDisplay').textContent = `${percentage}%`;
-  document.getElementById('completionScore').textContent = `คะแนน: ${correctAnswers}/${questions.length}`;
   
   // บันทึกผลเกมอัตโนมัติลง DB
   autoSaveGameResult();
@@ -438,10 +435,8 @@ function showCompletion() {
     });
   }
   
-  // แสดง Popup
-  setTimeout(() => {
-    showScorePopup();
-  }, 500);
+  // แสดง Popup ทันที
+  showScorePopup();
 }
 
 function showScorePopup() {
@@ -495,8 +490,10 @@ function restartGame() {
   
   document.getElementById('questionSection').style.display = 'flex';
   document.getElementById('scoreBoard').style.display = 'flex';
-  document.getElementById('completionScreen').style.display = 'none';
   document.getElementById('scorePopup').style.display = 'none';
+  
+  // บันทึกเวลาเริ่มเล่นใหม่
+  gameStartTime = Date.now();
   
   loadQuestion();
 }
@@ -670,36 +667,11 @@ function saveResult() {
   }
 }
 
-// ปรับปรุงการเริ่มต้น AudioContext ให้รองรับมือถือ
-let audioCtx;
-let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // ตัวแปรควบคุมสถานุเสียง
-
+// Audio Functions
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-}
-
-document.addEventListener('click', () => {
-  initAudio(); // เริ่มต้น AudioContext เมื่อผู้ใช้คลิก
-});
-
-function toggleSound() {
-  soundEnabled = !soundEnabled;
-  isMuted = !soundEnabled;
-  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
-  const soundButton = document.getElementById('soundToggleButton');
-  if (soundButton) {
-    soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
-  }
-
-  // ควบคุมสถานะของ AudioContext
-  if (!soundEnabled && audioCtx) {
-    audioCtx.suspend();
-  } else if (soundEnabled && audioCtx) {
-    audioCtx.resume();
-  }
-  updateVolumeDisplay();
 }
 
 function toggleVolumeBar() {
@@ -708,6 +680,38 @@ function toggleVolumeBar() {
     wrapper.classList.toggle('show-volume');
   }
 }
+
+function playSound(src) {
+  // ตรวจสอบสถานะเสียงก่อนเล่น
+  if (!soundEnabled || isMuted) {
+    console.log('Sound disabled or muted:', { soundEnabled, isMuted });
+    return;
+  }
+
+  try {
+    const audio = new Audio(src);
+    audio.volume = currentVolume || 1.0;
+    console.log('Playing sound:', src, 'volume:', audio.volume);
+    audio.play().catch(error => {
+      console.error('Error playing sound:', error);
+    });
+  } catch (error) {
+    console.error('Playback failed:', error);
+  }
+}
+
+function playSuccessSound() {
+  playSound('/Sound/winner.mp3');
+}
+
+function playFailSound() {
+  playSound('/Sound/fail.mp3');
+}
+
+// Event Listeners
+document.addEventListener('click', () => {
+  initAudio();
+});
 
 // Close volume bar when clicking outside
 document.addEventListener('click', function(event) {
@@ -725,29 +729,10 @@ document.addEventListener('DOMContentLoaded', function() {
       event.stopPropagation();
     });
   }
+  
+  // Initialize volume display
+  updateVolumeDisplay();
 });
-
-function playSound(src) {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-
-  try {
-    const audio = new Audio(src);
-    audio.volume = currentVolume || 1.0; // ใช้ระดับเสียงที่ตั้งไว้
-    audio.play().catch(error => {
-      console.error('Error playing sound:', error);
-    });
-  } catch (error) {
-    console.error('Playback failed:', error);
-  }
-}
-
-function playSuccessSound() {
-  playSound('/Sound/winner.mp3');
-}
-
-function playFailSound() {
-  playSound('/Sound/fail.mp3');
-}
 </script>
 
 <style>
@@ -901,26 +886,23 @@ function playFailSound() {
 
 <script>
 // Volume Control Functions
-let currentVolume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
-let isMuted = false;
-let previousVolume = currentVolume;
-
 function updateVolumeDisplay() {
   const percentage = Math.round(currentVolume * 100);
-  document.getElementById('volumeDisplay').textContent = percentage + '%';
-  document.getElementById('volumeSlider').value = percentage;
   localStorage.setItem('gameVolume', currentVolume.toString());
   
   // แสดง 0% และตำแหน่ง slider เป็น 0 เมื่อปิดเสียง
   const displayPercentage = (isMuted || !soundEnabled) ? 0 : percentage;
   
-  document.getElementById('volumeDisplay').textContent = displayPercentage + '%';
-  document.getElementById('volumeSlider').value = displayPercentage;
+  const volumeDisplay = document.getElementById('volumeDisplay');
+  const volumeSlider = document.getElementById('volumeSlider');
   
-  // Update slider background gradient
-  const slider = document.getElementById('volumeSlider');
-  if (slider) {
-    slider.style.background = `linear-gradient(to right, #8b6914 0%, #d4a574 ${displayPercentage}%, #ddd ${displayPercentage}%, #ddd 100%)`;
+  if (volumeDisplay) {
+    volumeDisplay.textContent = displayPercentage + '%';
+  }
+  
+  if (volumeSlider) {
+    volumeSlider.value = displayPercentage;
+    volumeSlider.style.background = `linear-gradient(to right, #8b6914 0%, #d4a574 ${displayPercentage}%, #ddd ${displayPercentage}%, #ddd 100%)`;
   }
   
   // Update volume icon
@@ -928,42 +910,44 @@ function updateVolumeDisplay() {
   if (icon) {
     if (displayPercentage === 0 || isMuted || !soundEnabled) {
       icon.innerHTML = '<img src="/picture/close.png" style="width: 24px; height: 24px; filter: brightness(0);">';
-    } else if (displayPercentage < 50) {
-      icon.innerHTML = '<img src="/picture/open.png" style="width: 24px; height: 24px; filter: brightness(0);">';
     } else {
       icon.innerHTML = '<img src="/picture/open.png" style="width: 24px; height: 24px; filter: brightness(0);">';
     }
   }
   
-  // Update all audio elements
-  document.querySelectorAll('audio').forEach(audio => {
-    audio.volume = isMuted ? 0 : currentVolume;
-  });
+  // Update sound toggle button
+  const soundButton = document.getElementById('soundToggleButton');
+  if (soundButton) {
+    soundButton.src = (soundEnabled && !isMuted) ? '/picture/open.png' : '/picture/close.png';
+  }
 }
 
 function updateVolume(value) {
   currentVolume = value / 100;
-  isMuted = false;
+  if (currentVolume > 0) {
+    isMuted = false;
+    soundEnabled = true;
+    previousVolume = currentVolume;
+  }
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
   updateVolumeDisplay();
 }
 
 function toggleMute() {
   if (isMuted) {
+    // เปิดเสียง
     isMuted = false;
     soundEnabled = true;
-    currentVolume = previousVolume;
+    currentVolume = previousVolume > 0 ? previousVolume : 1.0;
   } else {
+    // ปิดเสียง
+    previousVolume = currentVolume;
     isMuted = true;
     soundEnabled = false;
-    previousVolume = currentVolume;
   }
   
+  console.log('Toggle mute:', { isMuted, soundEnabled, currentVolume });
   localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
-  
-  const soundButton = document.getElementById('soundToggleButton');
-  if (soundButton) {
-    soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
-  }
   
   if (!soundEnabled && audioCtx) {
     audioCtx.suspend();
@@ -973,25 +957,6 @@ function toggleMute() {
   
   updateVolumeDisplay();
 }
-
-// Apply volume to audio playback
-function playSound(src) {
-  if (!soundEnabled) return;
-  try {
-    const audio = new Audio(src);
-    audio.volume = isMuted ? 0 : (currentVolume || 1.0);
-    audio.play().catch(error => {
-      console.error('Error playing sound:', error);
-    });
-  } catch (error) {
-    console.error('Playback failed:', error);
-  }
-}
-
-// Initialize volume on page load
-window.addEventListener('load', function() {
-  updateVolumeDisplay();
-});
 </script>
 
 <script>

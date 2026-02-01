@@ -167,7 +167,7 @@ function initAudio() {
     color: #000000;
     border: 6px solid #74640a;
     border-radius: 9999px;
-    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255, 0, 0, 0.45); /* Changed neon color */
+    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255, 0, 0, 0.45);
     font-weight: 700;
     font-size: clamp(0.9rem, 1.2vw, 1.1rem);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
@@ -187,6 +187,11 @@ function initAudio() {
     text-align: center;
   }
 
+  #scorePopup {
+    background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+    border: 6px solid #74640a;
+    box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);
+  }
 
   /* Adjust image size for larger display */
   #zones .zone img {
@@ -355,6 +360,29 @@ function initAudio() {
 
 <!-- Popup -->
 <div id="scorePopup">
+  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#3b3305;">หัวข้อกิจกรรม: <span id="topicDisplay"></span></p>
+  <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
+  <p style="font-size:32px; font-weight:700; margin:20px 0; color:#74640a;">🏆 คะแนนของคุณ: <span id="finalScore" style="color:#8b6914;">0/0</span> ⭐</p>
+  
+  <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
+    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <span style="color: #4dd0e1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔄</span>
+    </button>
+    <div style="position: relative;">
+      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #ff6b9d; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📊</span>
+      </button>
+      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 4px solid #74640a;">
+        <button onclick="saveResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #d4a574, #8b6914); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #c9a668, #74640a)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #d4a574, #8b6914)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">💾</span> ดาวน์โหลด PDF
+        </button>
+      </div>
+    </div>
+    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s; font-weight: 700;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      ✕
+    </button>
+  </div>
+</div>
   <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
   <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
   <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
