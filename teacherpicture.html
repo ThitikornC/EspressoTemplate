@@ -435,16 +435,33 @@ function showTeacherActivities(encodedTeacherName) {
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #2e7d32;">🖼️ กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #2e7d32;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Category Badge -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <span style="padding: 10px 16px; background: #4CAF50; color: white; border-radius: 20px; font-size: 13px; font-weight: bold;">
+        เกมทายรูป (${activities.length})
+      </span>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ยังไม่มีกิจกรรม</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
       ${activities.map(a => `
         <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #4CAF50;">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 8px 0; color: #1b5e20; font-size: 16px;">🖼️ ${a.name}</h4>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #1b5e20; font-size: 16px;">${a.name}</h4>
+                <span style="background: #4CAF50; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">ทายรูป</span>
+              </div>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">หัวข้อ: ${a.config?.mainTopic || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #4CAF50; font-weight: bold;">รูปถูก: ${a.config?.correctImages?.length || 0} / รูปผิด: ${a.config?.wrongImages?.length || 0}</p>
@@ -463,6 +480,7 @@ function showTeacherActivities(encodedTeacherName) {
         </div>
       `).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }

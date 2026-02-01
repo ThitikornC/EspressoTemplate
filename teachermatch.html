@@ -1216,27 +1216,75 @@ async function loadActivity() {
 }
 
 // แสดงกิจกรรมของครู
-function showTeacherActivities(encodedTeacherName) {
+function showTeacherActivities(encodedTeacherName, filterType = 'all') {
   const teacherName = decodeURIComponent(encodedTeacherName);
-  const activities = window.cloudTeacherMap[teacherName] || [];
+  const allActivities = window.cloudTeacherMap[teacherName] || [];
   const teacherList = document.getElementById('teacherList');
   const activityList = document.getElementById('activityList');
+  
+  // กรองกิจกรรมตามประเภท
+  const activities = filterType === 'all' ? allActivities : 
+    allActivities.filter(a => {
+      const gameType = a.config?.gameType || 'question';
+      return gameType === filterType;
+    });
+  
+  // นับจำนวนแต่ละประเภท
+  const countQuestion = allActivities.filter(a => !a.config?.gameType || a.config?.gameType === 'question').length;
+  const countCounting = allActivities.filter(a => a.config?.gameType === 'counting').length;
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #00838f;">📚 กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #00838f;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'all')" 
+              style="padding: 10px 16px; border: 2px solid #00acc1; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'all' ? 'background: #00acc1; color: white;' : 'background: white; color: #00acc1;'}">
+        ทั้งหมด (${allActivities.length})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'question')" 
+              style="padding: 10px 16px; border: 2px solid #2196F3; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'question' ? 'background: #2196F3; color: white;' : 'background: white; color: #2196F3;'}">
+        โจทย์คณิต (${countQuestion})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'counting')" 
+              style="padding: 10px 16px; border: 2px solid #4CAF50; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'counting' ? 'background: #4CAF50; color: white;' : 'background: white; color: #4CAF50;'}">
+        นับจำนวน (${countCounting})
+      </button>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ไม่มีกิจกรรมในหมวดหมู่นี้</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
-      ${activities.map(a => `
+      ${activities.map(a => {
+        const gameType = a.config?.gameType || 'question';
+        const typeBadge = gameType === 'counting' ? 'นับจำนวน' : 'โจทย์คณิต';
+        const badgeColor = gameType === 'counting' ? '#4CAF50' : '#2196F3';
+        const count = gameType === 'counting' ? 
+          `${a.config?.startNumber || 1} - ${a.config?.endNumber || 10}` :
+          (a.config?.questions?.length || 0) + ' ข้อ';
+        
+        return `
         <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #00acc1;">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 8px 0; color: #006064; font-size: 16px;">📖 ${a.name}</h4>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #006064; font-size: 16px;">${a.name}</h4>
+                <span style="background: ${badgeColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${typeBadge}</span>
+              </div>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สาระ: ${a.config?.topic || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
-              <p style="margin: 4px 0; font-size: 13px; color: #00838f; font-weight: bold;">จำนวนโจทย์: ${a.config?.questions?.length || 0} ข้อ</p>
+              <p style="margin: 4px 0; font-size: 13px; color: #00838f; font-weight: bold;">จำนวน: ${count}</p>
               <p style="margin: 4px 0; font-size: 11px; color: #999;">รหัส: ${a.activityId}</p>
               <p style="margin: 4px 0; font-size: 11px; color: #888;">📅 บันทึก: ${a.createdAtThai || a.updatedAtThai || '-'}</p>
             </div>
@@ -1250,8 +1298,10 @@ function showTeacherActivities(encodedTeacherName) {
             </div>
           </div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }

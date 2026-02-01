@@ -1491,24 +1491,70 @@ async function loadActivity() {
   }
 }
 
-function showTeacherActivities(encodedTeacherName) {
+function showTeacherActivities(encodedTeacherName, filterType = 'all') {
   const teacherName = decodeURIComponent(encodedTeacherName);
-  const activities = window.cloudTeacherMap[teacherName] || [];
+  const allActivities = window.cloudTeacherMap[teacherName] || [];
   const teacherList = document.getElementById('teacherList');
   const activityList = document.getElementById('activityList');
+  
+  // กรองกิจกรรมตามประเภท
+  const activities = filterType === 'all' ? allActivities : 
+    allActivities.filter(a => {
+      const gameType = a.config?.gameType || 'question';
+      return gameType === filterType;
+    });
+  
+  // นับจำนวนแต่ละประเภท
+  const countQuestion = allActivities.filter(a => (a.config?.gameType || 'question') === 'question').length;
+  const countWriting = allActivities.filter(a => a.config?.gameType === 'writing').length;
+  const countDialog = allActivities.filter(a => a.config?.gameType === 'dialog').length;
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #e65100;">📚 กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #e65100;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'all')" 
+              style="padding: 10px 16px; border: 2px solid #ff9800; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'all' ? 'background: #ff9800; color: white;' : 'background: white; color: #ff9800;'}">
+        ทั้งหมด (${allActivities.length})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'question')" 
+              style="padding: 10px 16px; border: 2px solid #2196F3; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'question' ? 'background: #2196F3; color: white;' : 'background: white; color: #2196F3;'}">
+        โจทย์ปัญหา (${countQuestion})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'writing')" 
+              style="padding: 10px 16px; border: 2px solid #4CAF50; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'writing' ? 'background: #4CAF50; color: white;' : 'background: white; color: #4CAF50;'}">
+        ฝึกเขียน (${countWriting})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'dialog')" 
+              style="padding: 10px 16px; border: 2px solid #9C27B0; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'dialog' ? 'background: #9C27B0; color: white;' : 'background: white; color: #9C27B0;'}">
+        ฝึกฟัง (${countDialog})
+      </button>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ไม่มีกิจกรรมในหมวดหมู่นี้</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
       ${activities.map(a => {
         const gameType = a.config?.gameType || 'question';
-        const typeBadge = gameType === 'writing' ? '✍️ เขียน' : 
-                         gameType === 'dialog' ? '💬 สนทนา' : 
-                         '📝 โจทย์';
+        const typeBadge = gameType === 'writing' ? 'เขียน' : 
+                         gameType === 'dialog' ? 'สนทนา' : 
+                         'โจทย์';
+        const badgeColor = gameType === 'writing' ? '#4CAF50' : 
+                          gameType === 'dialog' ? '#9C27B0' : 
+                          '#2196F3';
         const count = gameType === 'writing' ? (a.config?.vocabulary?.length || 0) + ' คำ' :
                      gameType === 'dialog' ? (a.config?.dialogs?.length || 0) + ' บท' :
                      (a.config?.questions?.length || 0) + ' ข้อ';
@@ -1518,8 +1564,8 @@ function showTeacherActivities(encodedTeacherName) {
             <div style="display: flex; justify-content: space-between; align-items: start;">
               <div style="flex: 1;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                  <h4 style="margin: 0; color: #e65100; font-size: 16px;">📖 ${a.name}</h4>
-                  <span style="background: #4CAF50; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${typeBadge}</span>
+                  <h4 style="margin: 0; color: #e65100; font-size: 16px;">${a.name}</h4>
+                  <span style="background: ${badgeColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${typeBadge}</span>
                 </div>
                 <p style="margin: 4px 0; font-size: 13px; color: #666;">สาระ: ${a.config?.topic || '-'}</p>
                 <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
@@ -1540,6 +1586,7 @@ function showTeacherActivities(encodedTeacherName) {
         `;
       }).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }
@@ -1567,18 +1614,38 @@ function playCloudActivity(encodedTeacherName, activityId) {
   document.getElementById('userNameInput').value = config.userName || '';
 
   // ตรวจสอบว่าเป็นโหมดไหน
-  if (config.gameType === 'writing' || config.vocabulary) {
+  if (config.gameType === 'dialog' || config.dialogs) {
+    // โหมดสนทนา - บันทึก config แล้วไปหน้าเกมเลย
+    const dialogConfig = {
+      week: config.week || '-',
+      topic: config.topic || 'บทสนทนา',
+      unit: config.unit || '-',
+      teacher: config.teacher || 'ไม่ระบุ',
+      classroom: config.classroom || '',
+      userName: config.userName || 'ไม่ระบุ',
+      dialogs: config.dialogs || [],
+      characterLeftName: config.characterLeftName || 'ตัวละครซ้าย',
+      characterRightName: config.characterRightName || 'ตัวละครขวา',
+      contextTitle: config.contextTitle || '',
+      contextDescription: config.contextDescription || '',
+      backgroundImage: config.backgroundImage || null
+    };
+    localStorage.setItem('thaiDialogConfig', JSON.stringify(dialogConfig));
+    closeActivityModal();
+    window.location.href = 'gamedialog.html';
+  } else if (config.gameType === 'writing' || config.vocabulary) {
     switchMode('write');
     vocabularyList = config.vocabulary || [];
     renderVocabularyList();
+    closeActivityModal();
+    startActivity();
   } else {
     switchMode('question');
     allQuestions = config.questions || [];
     renderQuestionsList();
+    closeActivityModal();
+    startActivity();
   }
-
-  closeActivityModal();
-  startActivity();
 }
 
 function editCloudActivity(encodedTeacherName, activityId) {
@@ -1613,6 +1680,23 @@ function editCloudActivity(encodedTeacherName, activityId) {
     }
     if (document.getElementById('dialogContextDescription')) {
       document.getElementById('dialogContextDescription').value = config.contextDescription || '';
+    }
+    
+    // โหลดชื่อตัวละคร
+    if (document.getElementById('characterLeftName')) {
+      document.getElementById('characterLeftName').value = config.characterLeftName || 'ตัวละครซ้าย';
+    }
+    if (document.getElementById('characterRightName')) {
+      document.getElementById('characterRightName').value = config.characterRightName || 'ตัวละครขวา';
+    }
+    
+    // โหลดภาพพื้นหลัง
+    if (config.backgroundImage) {
+      window.dialogBackgroundImage = config.backgroundImage;
+      const preview = document.getElementById('dialogBgPreview');
+      if (preview) {
+        preview.innerHTML = '<img src="' + config.backgroundImage + '" style="max-width:100%;max-height:150px;border-radius:8px;">';
+      }
     }
     
     renderDialogList();
