@@ -12,8 +12,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
   import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  import { saveStudentToFirebase } from '/js/mongodb-config.js';
   window.showStudentInputDialog = showStudentInputDialog;
   window.saveStudentTestResult = saveStudentTestResult;
+  window.saveStudentToFirebase = saveStudentToFirebase;
 </script>
 <script>
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // ตัวแปรควบคุมสถานะเสียง
@@ -383,33 +385,6 @@ function initAudio() {
     </button>
   </div>
 </div>
-  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
-  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
-  <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
-  <p style="font-size:32px; font-weight:700; margin:20px 0;">🎉 Your Score: <span id="finalScore"></span> 🎉</p>
-  
-  <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
-    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      🔄
-    </button>
-    <div style="position: relative;">
-      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-        🔗
-      </button>
-      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 3px solid #2196F3;">
-        <!--<button onclick="shareResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #2196F3, #1E88E5); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #1976D2, #1565C0)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #2196F3, #1E88E5)'; this.style.transform='scale(1)';">
-          <span style="font-size: 28px;">🔗</span> แชร์
-        </button>-->
-        <button onclick="saveResult(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
-          <span style="font-size: 28px;">📥</span> ดาวน์โหลด
-        </button>
-      </div>
-    </div>
-    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      ✖
-    </button>
-  </div>
-</div>
 
 <!-- Added a modal for selecting saved activities -->
 <div id="activityModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
@@ -432,25 +407,17 @@ let gameStartTime = null; // เวลาเริ่มเล่น
 
 // ฟังก์ชันสร้างรายงาน HTML สำหรับแปลงเป็นรูป
 function generateReportHTML(data) {
-  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher } = data;
+  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher, classroom } = data;
   
-  let grade = '';
-  if (percentage >= 80) grade = 'ดีเยี่ยม';
-  else if (percentage >= 60) grade = 'ดี';
-  else if (percentage >= 40) grade = 'พอใจ';
-  else grade = 'ควรปรับปรุง';
-
   return `
-    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white;">
+    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white; position: relative;">
       <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
       <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
       <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
-        <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:80px; width:auto;" crossorigin="anonymous" />
         <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
       </div>
       <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <h1 style="margin: 5px 0; font-size: 24px;">Espresso</h1>
-        <p style="margin: 5px 0; font-size: 14px;">รายงานผลการประเมินกิจกรรมทายชื่อจากรูป</p>
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมสมาร์ทเช็ค</h1>
       </div>
       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
         <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
@@ -458,7 +425,8 @@ function generateReportHTML(data) {
           <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${week || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${topic || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${unit || '-'}</td></tr>
-          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${classroom || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${userName || '-'}</td></tr>
         </table>
       </div>
@@ -497,7 +465,8 @@ async function generateReportImage() {
       topic: teacherConfig.mainTopic || teacherConfig.topic,
       unit: teacherConfig.unit,
       week: teacherConfig.week,
-      teacher: teacherConfig.teacher
+      teacher: teacherConfig.teacher,
+      classroom: teacherConfig.classroom
     };
     
     // สร้าง element ชั่วคราวสำหรับ render
@@ -556,6 +525,7 @@ async function autoSaveGameResult() {
       week: teacherConfig.week || null,
       teacher: teacherConfig.teacher || null,
       userName: teacherConfig.userName || null,
+      classroom: teacherConfig.classroom || null,
       score: score,
       totalQuestions: teacherConfig.correctImages?.length || 0,
       correctAnswers: score,
@@ -1020,24 +990,8 @@ function checkEndGame() {
     finalScore.innerText = score;
     resultMessage.innerText = score > 0 ? '🎉 ยินดีด้วย! คุณทำได้ดีมาก 🎉' : '😢 ลองใหม่อีกครั้งนะ 😢';
 
-    // บันทึกผลเกมอัตโนมัติลง DB
+    // บันทึกผลเกมอัตโนมัติลง DB (บันทึกที่เดียว)
     autoSaveGameResult();
-    
-    // บันทึกผลการทดสอบลง Firebase
-    if (currentStudent && window.saveStudentTestResult) {
-      window.saveStudentTestResult(currentStudent, {
-        activityType: 'gamepicture',
-        topic: teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม',
-        score: score,
-        totalQuestions: teacherConfig.correctImages?.length || 0,
-        correctAnswers: score,
-        timeSpent: 0
-      }).then(() => {
-        console.log('Test result saved to Firebase');
-      }).catch(error => {
-        console.error('Error saving test result:', error);
-      });
-    }
 
     // Try to end usage for this page/section (if usageTracker available)
     try {
@@ -1190,6 +1144,20 @@ window.onload = async function() {
         classroom: teacherConfig.classroom
       };
       console.log('Using student info from config:', currentStudent);
+      
+      // บันทึกผู้ทดสอบลง Database
+      if (window.saveStudentToFirebase) {
+        try {
+          await window.saveStudentToFirebase({
+            name: currentStudent.name,
+            classroom: currentStudent.classroom,
+            lastActivity: new Date().toISOString()
+          });
+          console.log('Student saved to database:', currentStudent.name);
+        } catch (saveError) {
+          console.error('Error saving student to database:', saveError);
+        }
+      }
     }
   } catch (error) {
     console.error('Error showing student input dialog:', error);

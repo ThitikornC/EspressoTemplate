@@ -16,8 +16,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script type="module">
   import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  import { saveStudentToFirebase } from '/js/mongodb-config.js';
   window.showStudentInputDialog = showStudentInputDialog;
   window.saveStudentTestResult = saveStudentTestResult;
+  window.saveStudentToFirebase = saveStudentToFirebase;
 </script>
 <style>
 body { 
@@ -430,25 +432,17 @@ let totalWrongAnswers = 0; // จำนวนตอบผิด
 
 // ฟังก์ชันสร้างรายงาน HTML สำหรับแปลงเป็นรูป
 function generateReportHTML(data) {
-  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher } = data;
-  
-  let grade = '';
-  if (percentage >= 80) grade = 'ดีเยี่ยม';
-  else if (percentage >= 60) grade = 'ดี';
-  else if (percentage >= 40) grade = 'พอใจ';
-  else grade = 'ควรปรับปรุง';
+  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher, classroom } = data;
 
   return `
-    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white;">
+    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white; position: relative;">
       <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
       <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
       <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
-        <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:80px; width:auto;" crossorigin="anonymous" />
         <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
       </div>
       <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <h1 style="margin: 5px 0; font-size: 24px;">Espresso</h1>
-        <p style="margin: 5px 0; font-size: 14px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
       </div>
       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
         <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
@@ -456,7 +450,8 @@ function generateReportHTML(data) {
           <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${week || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${topic || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${unit || '-'}</td></tr>
-          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${classroom || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${userName || '-'}</td></tr>
         </table>
       </div>
@@ -495,7 +490,8 @@ async function generateReportImage() {
       topic: teacherConfig.topic,
       unit: teacherConfig.unit,
       week: teacherConfig.week,
-      teacher: teacherConfig.teacher
+      teacher: teacherConfig.teacher,
+      classroom: teacherConfig.classroom
     };
     
     // สร้าง element ชั่วคราวสำหรับ render
@@ -595,6 +591,19 @@ if (teacherConfig && teacherConfig.userName && teacherConfig.classroom) {
     classroom: teacherConfig.classroom
   };
   console.log('Using student info from config:', currentStudent);
+  
+  // บันทึกผู้ทดสอบลง Database
+  if (window.saveStudentToFirebase) {
+    window.saveStudentToFirebase({
+      name: currentStudent.name,
+      classroom: currentStudent.classroom,
+      lastActivity: new Date().toISOString()
+    }).then(() => {
+      console.log('Student saved to database:', currentStudent.name);
+    }).catch((saveError) => {
+      console.error('Error saving student to database:', saveError);
+    });
+  }
 }
 
 // ตรวจสอบและกำหนดค่าเริ่มต้นให้ teacherConfig
@@ -886,35 +895,8 @@ async function endGame(message, color) {
   document.getElementById('finalScore').innerText = `${score}/${allQuestions.length}`;
   document.getElementById('scorePopup').style.display = 'block';
   
-  // บันทึกผลเกมอัตโนมัติลง DB
+  // บันทึกผลเกมอัตโนมัติลง DB (บันทึกที่เดียว)
   autoSaveGameResult();
-  
-  // สร้าง PDF อัตโนมัติและบันทึกเป็น base64
-  const pdfBase64 = await generatePDFBase64();
-  
-  // บันทึกผลการทดสอบลง Database พร้อม PDF
-  if (currentStudent && window.saveStudentTestResult) {
-    try {
-      await window.saveStudentTestResult(currentStudent, {
-        activityType: 'gamemath',
-        topic: teacherConfig.topic || 'คณิตศาสตร์',
-        score: score,
-        totalQuestions: allQuestions.length,
-        correctAnswers: totalCorrectAnswers,
-        timeSpent: 0, // สามารถเพิ่ม timer ได้
-        questions: allQuestions.map((q, i) => ({
-          question: q.question || q.text || `คำถามที่ ${i + 1}`,
-          userAnswer: userAnswers[i] || '-',
-          correctAnswer: q.correctAnswer || q.answer,
-          isCorrect: userAnswers[i] === (q.correctAnswer || q.answer)
-        })),
-        pdfBase64: pdfBase64 // เก็บ PDF เป็น base64
-      });
-      console.log('Test result saved with PDF');
-    } catch (error) {
-      console.error('Error saving test result:', error);
-    }
-  }
 }
 
 // ตรวจสอบจบเกม (กรณีหมดคำตอบ)
@@ -986,40 +968,38 @@ async function shareResult(config) {
 
     const pdfContent = `
       <div style="font-family: 'THSarabunNew', sans-serif; color: #333; position: relative;">
-        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(45deg); font-size:110px; color:rgba(0,0,0,0.06); font-weight:700; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-         <div style="text-align: center; margin-bottom: 12px; margin-top: 120px; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:220px; width:auto; max-width:60%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:220px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
-              </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
         </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
         </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
           </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+          <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
+        </div>
+        <div style="margin-top: 30px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
+          บริษัท กว้างไม่ จำกัด<br>
+          263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+          โทร: 083-654-9743 | www.kwamgunlimit.com
         </div>
       </div>
     `;
@@ -1057,71 +1037,41 @@ function saveResult() {
     const pdfContent = document.createElement('div');
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333; position: relative;">
-        <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-        <div style="text-align: center; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:220px; width:auto; max-width:60%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:220px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
-              </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
         </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
         </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
           </table>
         </div>
-      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+          <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
         </div>
-        <div style="margin-top: 70px; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
-      </div>
-       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 50px;">
-      <div style="display: inline-block; text-align: right;">
-        บริษัท กว้างไม่ จำกัด<br>
-        263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-        ติดต่อเราได้ที่<br>
-        โทร : 083-654-9743<br>
-        เว็บไซต์ : www.kwangunlimit.com
-      </div>
+        <div style="margin-top: 30px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
+          บริษัท กว้างไม่ จำกัด<br>
+          263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+          โทร: 083-654-9743 | www.kwamgunlimit.com
+        </div>
       </div>
     `;
-
-    // ตรวจสอบและเพิ่มชื่อผู้ทดสอบใน PDF
-    const activityInfoTable = pdfContent.querySelector('table');
-    const userNameRow = document.createElement('tr');
-    userNameRow.innerHTML = `
-      <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
-    `;
-
-    // เพิ่มชื่อผู้ทดสอบไปที่ล่างสุดของตาราง
-    activityInfoTable.appendChild(userNameRow);
 
     html2pdf().set(opt).from(pdfContent).save();
   } catch (error) {
@@ -1138,56 +1088,39 @@ function buildPdfElement() {
   const element = document.createElement('div');
   element.innerHTML = `
     <div style="font-family: 'Arial', sans-serif; color: #333; position: relative;">
-      <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-      <div style="position: absolute; top: 1px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-      <div style="text-align: center; margin: 40px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
+      <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+      <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+      <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+        <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
       </div>
-      <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h1 style="margin: 5px 0; font-size: 32px;">Espresso</h1>
-        <p style="margin: 5px 0; font-size: 18px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+      <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
       </div>
-      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-          </tr>
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
         </table>
       </div>
-      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-        <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-        <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+        <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+        <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
       </div>
-      <div style="margin-top: 50px; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      <div style="margin-top: 30px; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
       </div>
-    <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 100px;">
-      <div style="display: inline-block; text-align: right;">
+      <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
         บริษัท กว้างไม่ จำกัด<br>
         263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-        ติดต่อเราได้ที่<br>
-        โทร : 083-654-9743<br>
-        เว็บไซต์ : www.kwamgunlimit.com
+        โทร: 083-654-9743 | www.kwamgunlimit.com
       </div>
-    </div>
-      
     </div>
   `;
   return element;

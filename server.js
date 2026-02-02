@@ -324,7 +324,6 @@ app.post('/api/usage/end', async (req, res) => {
       if (usageColl) {
         if (usageId) {
           try {
-            const { ObjectId } = require('mongodb')
             const oId = new ObjectId(usageId)
             const doc = await usageColl.findOne({ _id: oId })
             if (doc) {
@@ -497,12 +496,16 @@ try {
   if (dailyPageViewsColl) {
     await dailyPageViewsColl.createIndex({ page: 1, day: 1 }, { unique: true })
   }
-  // ensure indexes for game_results
+  // ensure indexes for game_results - เพิ่ม compound index สำหรับการค้นหาเร็วขึ้น
   if (gameResultsColl) {
     await gameResultsColl.createIndex({ client_id: 1 })
     await gameResultsColl.createIndex({ game_type: 1 })
     await gameResultsColl.createIndex({ created_at: -1 })
     await gameResultsColl.createIndex({ day: 1 })
+    // compound indexes สำหรับหน้า student-reports (ค้นหาตาม classroom + user_name)
+    await gameResultsColl.createIndex({ classroom: 1, user_name: 1 })
+    await gameResultsColl.createIndex({ user_name: 1, game_type: 1, created_at: -1 })
+    await gameResultsColl.createIndex({ classroom: 1, game_type: 1, created_at: -1 })
   }
   // ensure unique index on client_id + day
   await dailyUsersColl.createIndex({ client_id: 1, day: 1 }, { unique: true })
@@ -1423,6 +1426,64 @@ app.get('/api/test-results/by-student', async (req, res) => {
   }
 });
 
+// ดึงผลการทดสอบทั้งหมด
+app.get('/api/test-results/all', async (req, res) => {
+  try {
+    // ลองดึงจาก game_results ก่อน (collection หลัก)
+    if (gameResultsColl) {
+      const gameResults = await gameResultsColl.find({}).sort({ created_at: -1 }).limit(500).toArray();
+      
+      if (gameResults.length > 0) {
+        const formattedResults = gameResults.map(r => ({
+          id: r._id.toString(),
+          studentName: r.user_name || r.studentName || 'ไม่ระบุ',
+          classroom: r.classroom || 'ไม่ระบุชั้น',  // ใช้ classroom ถ้ามี ไม่งั้นเป็น 'ไม่ระบุชั้น'
+          teacher: r.teacher || '',  // เก็บชื่อครูแยกต่างหาก
+          activityType: r.game_type || r.activityType || 'game',
+          topic: r.topic || r.unit || '',
+          score: r.score || 0,
+          totalQuestions: r.total_questions || r.totalQuestions || 1,
+          correctAnswers: r.correct_answers || r.correctAnswers || 0,
+          timeSpent: r.duration_ms || r.timeSpent || 0,
+          timestamp: r.timestamp || r.created_at,
+          pdfBase64: r.report_image || r.pdfBase64 || null
+        }));
+
+        console.log(`[TEST-RESULTS] Fetched ${formattedResults.length} results from game_results`);
+        return res.json({ success: true, results: formattedResults });
+      }
+    }
+
+    // ถ้าไม่มีข้อมูลใน game_results ลองดึงจาก test_results
+    if (testResultsColl) {
+      const results = await testResultsColl.find({}).sort({ timestamp: -1 }).limit(500).toArray();
+      
+      const formattedResults = results.map(r => ({
+        id: r._id.toString(),
+        studentName: r.studentName,
+        classroom: r.classroom || 'ไม่ระบุชั้น',
+        teacher: r.teacher || '',
+        activityType: r.activityType,
+        topic: r.topic,
+        score: r.score,
+        totalQuestions: r.totalQuestions,
+        correctAnswers: r.correctAnswers,
+        timeSpent: r.timeSpent,
+        timestamp: r.timestamp,
+        pdfBase64: r.pdfBase64 || null
+      }));
+
+      console.log(`[TEST-RESULTS] Fetched ${formattedResults.length} results from test_results`);
+      return res.json({ success: true, results: formattedResults });
+    }
+
+    return res.status(503).json({ success: false, message: 'Database not available' });
+  } catch (error) {
+    console.error('[ERROR] GET /api/test-results/all', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch test results' });
+  }
+});
+
 // Activity Management APIs
 app.post('/api/activities/save', async (req, res) => {
   try {
@@ -1815,12 +1876,15 @@ app.post('/api/game-results', async (req, res) => {
     
     const {
       clientId,
-      gameType,        // 'gamethai', 'gamepicture', 'gamemath'
+      gameType,        // 'gamethai', 'gamepicture', 'gamemath', 'gamewrite'
+      activityType,    // activity type สำหรับ student-reports
       topic,           // หัวข้อกิจกรรม
       unit,            // หน่วยการเรียนรู้
       week,            // สัปดาห์ที่
       teacher,         // ครูผู้รับผิดชอบ
       userName,        // ชื่อผู้เล่น (ถ้ามี)
+      studentName,     // ชื่อนักเรียน (alias)
+      classroom,       // ชั้นเรียน (เช่น ป.1/1)
       score,           // คะแนนที่ได้
       totalQuestions,  // จำนวนคำถามทั้งหมด
       correctAnswers,  // จำนวนตอบถูก
@@ -1828,7 +1892,8 @@ app.post('/api/game-results', async (req, res) => {
       percentage,      // เปอร์เซ็นต์
       duration,        // ระยะเวลาเล่น (ms)
       config,          // config ทั้งหมด (optional)
-      reportImage      // รูปรายงาน PNG base64 (optional)
+      reportImage,     // รูปรายงาน PNG base64 (optional)
+      pdfBase64        // PDF base64 สำหรับ gamewrite (optional)
     } = req.body || {}
     
     const now = new Date()
@@ -1837,11 +1902,14 @@ app.post('/api/game-results', async (req, res) => {
     const doc = {
       client_id: clientId || null,
       game_type: gameType || 'unknown',
+      activity_type: activityType || gameType || 'unknown',
       topic: topic || null,
       unit: unit || null,
       week: week || null,
       teacher: teacher || null,
-      user_name: userName || null,
+      user_name: userName || studentName || null,
+      student_name: studentName || userName || null,
+      classroom: classroom || null,
       score: typeof score === 'number' ? score : 0,
       total_questions: typeof totalQuestions === 'number' ? totalQuestions : 0,
       correct_answers: typeof correctAnswers === 'number' ? correctAnswers : 0,
@@ -1850,6 +1918,7 @@ app.post('/api/game-results', async (req, res) => {
       duration_ms: typeof duration === 'number' ? duration : null,
       config: config || null,
       report_image: reportImage || null, // PNG base64
+      pdf_base64: pdfBase64 || null, // PDF base64 สำหรับ gamewrite
       day,
       created_at: now.toISOString(),
       timestamp: now
@@ -1869,32 +1938,77 @@ app.post('/api/game-results', async (req, res) => {
   }
 })
 
-// ดึงผลเกมตาม clientId หรือ gameType (สำหรับดูรายงาน)
+// ดึงผลเกมตาม clientId หรือ gameType (สำหรับดูรายงาน) - optimized
 app.get('/api/game-results', async (req, res) => {
   try {
     if (!gameResultsColl) {
       return res.status(500).json({ success: false, message: 'DB not available' })
     }
     
-    const { clientId, gameType, day, limit } = req.query
+    const { clientId, gameType, day, limit, classroom, userName, includeImage } = req.query
     const query = {}
     
     if (clientId) query.client_id = clientId
     if (gameType) query.game_type = gameType
     if (day) query.day = day
+    if (classroom) query.classroom = classroom
+    if (userName) query.user_name = userName
     
     const maxLimit = Math.min(parseInt(limit) || 100, 500)
     
-    const results = await gameResultsColl
-      .find(query)
-      .sort({ created_at: -1 })
-      .limit(maxLimit)
-      .toArray()
+    // ใช้ aggregation เพื่อเพิ่ม hasReportImage flag โดยไม่ต้องดึง report_image ทั้งหมด
+    const pipeline = [
+      { $match: query },
+      { $sort: { created_at: -1 } },
+      { $limit: maxLimit },
+      { $addFields: { 
+        hasReportImage: { 
+          $and: [
+            { $ne: ['$report_image', null] },
+            { $ne: ['$report_image', ''] },
+            { $gt: [{ $strLenCP: { $ifNull: ['$report_image', ''] } }, 100] }
+          ]
+        },
+        hasPdfBase64: {
+          $and: [
+            { $ne: ['$pdf_base64', null] },
+            { $ne: ['$pdf_base64', ''] },
+            { $gt: [{ $strLenCP: { $ifNull: ['$pdf_base64', ''] } }, 100] }
+          ]
+        }
+      }},
+      { $project: { report_image: 0 } } // ไม่ส่ง report_image กลับ (ใหญ่เกิน) แต่ส่ง pdf_base64 ได้
+    ]
+    
+    const results = await gameResultsColl.aggregate(pipeline).toArray()
     
     res.json({ success: true, results, count: results.length })
   } catch (e) {
     console.error('[ERROR] GET /api/game-results', e)
     res.status(500).json({ success: false, message: 'Failed to get game results' })
+  }
+})
+
+// ดึงรูปรายงานเฉพาะรายการที่ต้องการ
+app.get('/api/game-results/:id/image', async (req, res) => {
+  try {
+    if (!gameResultsColl) {
+      return res.status(500).json({ success: false, message: 'DB not available' })
+    }
+    
+    const result = await gameResultsColl.findOne(
+      { _id: new ObjectId(req.params.id) },
+      { projection: { report_image: 1 } }
+    )
+    
+    if (!result || !result.report_image) {
+      return res.status(404).json({ success: false, message: 'Image not found' })
+    }
+    
+    res.json({ success: true, reportImage: result.report_image })
+  } catch (e) {
+    console.error('[ERROR] GET /api/game-results/:id/image', e)
+    res.status(500).json({ success: false, message: 'Failed to get image' })
   }
 })
 

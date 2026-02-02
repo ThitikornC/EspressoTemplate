@@ -29,13 +29,35 @@
       <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
     </div>
     <div class="form-group">
-      <label for="teacherInput">ครูผู้สอนสอน</label>
+      <label for="teacherInput">ครูผู้สอน</label>
       <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
     </div>
     <div class="form-group">
-      <label for="classroomInput">ชั้นเรียน</label>
-      <input type="text" id="classroomInput" placeholder="เช่น ป.1/1, ม.2/3">
+      <label for="gradeSelect">ระดับชั้น</label>
+      <select id="gradeSelect">
+        <option value="">-- เลือกระดับชั้น --</option>
+        <option value="อนุบาล 1">อนุบาล 1</option>
+        <option value="อนุบาล 2">อนุบาล 2</option>
+        <option value="อนุบาล 3">อนุบาล 3</option>
+        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+        <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+        <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+        <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+        <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+        <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+        <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+        <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+        <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+        <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+        <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+        <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
+      </select>
     </div>
+    <div class="form-group">
+      <label for="roomInput">ห้อง</label>
+      <input type="text" id="roomInput" placeholder="เช่น 1, 2, 3...">
+    </div>
+    <input type="hidden" id="classroomInput">
     <div class="form-group">
       <label for="userNameInput">ชื่อผู้ทดสอบ</label>
       <input type="text" id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
@@ -253,6 +275,9 @@ if(!savedConfig.date) {
 
 // Updated saveConfig to include userName in the saved configuration
 function saveConfig() {
+  // อัปเดต classroom ก่อนบันทึก
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
@@ -260,6 +285,14 @@ function saveConfig() {
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
   const classroom = document.getElementById('classroomInput')?.value.trim();
   const userName = document.getElementById('userNameInput')?.value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    alert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
 
   // Allow saving even when some fields are empty — use sensible defaults
   const cfgWeek = week || '-';
@@ -291,6 +324,9 @@ function saveConfig() {
 
 // ฟังก์ชันบันทึกกิจกรรม (บันทึกลง Cloud)
 async function saveActivity() {
+  // อัปเดต classroom ก่อนบันทึก
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
@@ -561,6 +597,26 @@ window.closeActivityModal = closeActivityModal;
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+<script>
+// ฟังก์ชันรวม ระดับชั้น + ห้อง เป็น classroom
+function updateClassroomValue() {
+  const grade = document.getElementById('gradeSelect')?.value || '';
+  const room = document.getElementById('roomInput')?.value.trim() || '';
+  const classroomInput = document.getElementById('classroomInput');
+  if (classroomInput) {
+    classroomInput.value = room ? `${grade}/${room}` : grade;
+  }
+}
+// เรียกทุกครั้งที่มีการเปลี่ยนค่า
+document.addEventListener('DOMContentLoaded', function() {
+  const gradeSelect = document.getElementById('gradeSelect');
+  const roomInput = document.getElementById('roomInput');
+  if (gradeSelect) gradeSelect.addEventListener('change', updateClassroomValue);
+  if (roomInput) roomInput.addEventListener('input', updateClassroomValue);
+  // เรียกครั้งแรกเพื่อตั้งค่าเริ่มต้น
+  updateClassroomValue();
+});
+</script>
 <script>
 // เริ่ม/จบการบันทึกการใช้งานสำหรับหน้าครูตั้งค่า (teacherpicture)
 var __localUsageId_teacherpicture = null;

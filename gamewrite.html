@@ -9,7 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+  import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  import { saveStudentToFirebase } from '/js/mongodb-config.js';
+  window.showStudentInputDialog = showStudentInputDialog;
+  window.saveStudentTestResult = saveStudentTestResult;
+  window.saveStudentToFirebase = saveStudentToFirebase;
+</script>
 <style>
 * {
   margin: 0;
@@ -633,6 +640,19 @@ window.addEventListener('load', function() {
   config = JSON.parse(configStr);
   vocabularyList = config.vocabularyList || [];
   
+  // บันทึกผู้ทดสอบลง Database
+  if (config.userName && config.classroom && window.saveStudentToFirebase) {
+    window.saveStudentToFirebase({
+      name: config.userName,
+      classroom: config.classroom,
+      lastActivity: new Date().toISOString()
+    }).then(() => {
+      console.log('Student saved to database:', config.userName);
+    }).catch((saveError) => {
+      console.error('Error saving student to database:', saveError);
+    });
+  }
+  
   if (vocabularyList.length === 0) {
     alert('ไม่มีคำศัพท์ในกิจกรรมนี้');
     window.location.href = 'teacherthai.html';
@@ -784,8 +804,8 @@ function nextVocab() {
 }
 
 function showSummary() {
-  // บันทึก canvas สุดท้ายก่อน
-  if (currentIndex === vocabularyList.length - 1) {
+  // บันทึก canvas สุดท้ายก่อน (เช็คว่ายังไม่ได้บันทึก)
+  if (currentIndex === vocabularyList.length - 1 && userAnswers.length < vocabularyList.length) {
     const canvasImage = canvas.toDataURL('image/png');
     canvasImages.push(canvasImage);
     userAnswers.push({
@@ -818,8 +838,8 @@ function showSummary() {
 
 async function saveResult() {
   try {
-    // สร้าง PDF อัตโนมัติ
-    const pdfBase64 = await generateWorksheetPDF();
+    // สร้างและดาวน์โหลด PDF อัตโนมัติ
+    const pdfBase64 = await generateWorksheetPDF(true); // true = auto download
     
     const resultData = {
       gameType: 'writing',
@@ -838,11 +858,26 @@ async function saveResult() {
       timestamp: new Date().toISOString()
     };
     
-    // บันทึกไปยัง test-results collection
-    const response = await fetch('/api/test-results/save', {
+    // บันทึกไปยัง game-results collection
+    const response = await fetch('/api/game-results', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(resultData)
+      body: JSON.stringify({
+        clientId: localStorage.getItem('huaroa_client_id') || 'unknown',
+        gameType: 'gamewrite',
+        activityType: 'gamewrite',
+        topic: resultData.topic,
+        teacher: resultData.teacher,
+        userName: resultData.userName,
+        studentName: resultData.userName,
+        classroom: resultData.classroom,
+        score: resultData.score,
+        totalQuestions: resultData.totalQuestions,
+        correctAnswers: resultData.score,
+        wrongAnswers: 0,
+        percentage: 100,
+        pdfBase64: pdfBase64 // ส่ง PDF ไปด้วย
+      })
     });
     
     if (response.ok) {
@@ -854,86 +889,108 @@ async function saveResult() {
 }
 
 // ฟังก์ชันสร้าง PDF ใบงาน
-async function generateWorksheetPDF() {
+async function generateWorksheetPDF(autoDownload = false) {
   try {
+    console.log('📄 สร้าง PDF - userAnswers:', userAnswers.length, 'รายการ');
+    
     const date = new Date();
     const dateStr = date.toLocaleDateString('th-TH');
     const timeStr = date.toLocaleTimeString('th-TH');
     
+    // สร้าง HTML สำหรับแสดงการเขียนแต่ละข้อ
+    let writingItemsHtml = '';
+    if (userAnswers && userAnswers.length > 0) {
+      writingItemsHtml = userAnswers.map((item, index) => `
+        <div style="margin-bottom: 8px; padding: 6px; border: 1px solid #c19a6b; border-radius: 5px; background: #fffef8; page-break-inside: avoid;">
+          <div style="font-weight: 600; color: #8b6914; margin-bottom: 4px; font-size: 10px;">
+            ${index + 1}. ${item.vocab.english} (${item.vocab.thaiMeaning})
+          </div>
+          <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 4px; min-height: 80px;">
+            <img src="${item.canvasImage}" style="width: 100%; height: 100px; object-fit: contain; display: block;" />
+          </div>
+        </div>
+      `).join('');
+    } else {
+      writingItemsHtml = '<p style="color: #999; font-size: 10px;">ไม่มีข้อมูลการเขียน</p>';
+    }
+    
     const pdfContent = document.createElement('div');
+    pdfContent.style.width = '200mm';
     pdfContent.innerHTML = `
-      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
-        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
-          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 0; position: relative; width: 100%; box-sizing: border-box;">
+        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:50px; color:rgba(0,0,0,0.03); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+        
+        <!-- Header: Logo + Date -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:40px; width:auto;" crossorigin="anonymous" />
+          <span style="font-size: 10px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</span>
         </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
-          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
-          <p style="margin: 5px 0; font-size: 16px;">ใบงานฝึกเขียนคำศัพท์</p>
+        
+        <!-- Title -->
+        <div style="text-align: center; background: linear-gradient(135deg, #c9a668 0%, #3b3305 100%); color: white; padding: 8px; border-radius: 5px; margin-bottom: 8px;">
+          <h1 style="margin: 0; font-size: 16px; font-weight: bold;">รายงานผลการประเมินกิจกรรมภาษา</h1>
         </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
-          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        
+        <!-- ข้อมูลกิจกรรม -->
+        <div style="background: #faf8f3; border: 1px solid #ddd; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
+          <p style="font-size: 11px; font-weight: bold; margin: 0 0 6px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
             <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.userName || 'ไม่ระบุ'}</td>
+              <td style="padding: 3px 6px; font-weight: bold; width: 18%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 3px 6px; width: 32%; border-bottom: 1px solid #eee;">${config.week || '-'}</td>
+              <td style="padding: 3px 6px; font-weight: bold; width: 18%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 3px 6px; width: 32%; border-bottom: 1px solid #eee;">${config.topic || '-'}</td>
             </tr>
             <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.classroom || 'ไม่ระบุ'}</td>
+              <td style="padding: 3px 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 3px 6px; border-bottom: 1px solid #eee;">${config.unit || '-'}</td>
+              <td style="padding: 3px 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td>
+              <td style="padding: 3px 6px; border-bottom: 1px solid #eee;">${config.teacher || '-'}</td>
             </tr>
             <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หัวข้อ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.topic || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.week || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.teacher || 'ไม่ระบุ'}</td>
+              <td style="padding: 3px 6px; font-weight: bold;">ระดับชั้น/ห้อง:</td>
+              <td style="padding: 3px 6px;">${config.classroom || '-'}</td>
+              <td style="padding: 3px 6px; font-weight: bold;">ผู้ทดสอบ:</td>
+              <td style="padding: 3px 6px;">${config.userName || '-'}</td>
             </tr>
           </table>
         </div>
-        <div style="margin-top: 20px;">
-          <h3 style="color: #251f03; margin-bottom: 15px; font-size: 16px;">การเขียนของนักเรียน</h3>
-          ${userAnswers.map((item, index) => `
-            <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #c19a6b; border-radius: 10px; page-break-inside: avoid;">
-              <div style="font-weight: 700; color: #8b6914; margin-bottom: 8px; font-size: 14px;">
-                ${index + 1}. ${item.vocab.english} (${item.vocab.thaiMeaning})
-              </div>
-              <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
-                <img src="${item.canvasImage}" style="width: 100%; display: block; border-radius: 5px;" />
-              </div>
-            </div>
-          `).join('')}
+        
+        <!-- การเขียนของนักเรียน -->
+        <div style="margin-top: 6px;">
+          <h3 style="color: #251f03; margin: 0 0 6px 0; font-size: 11px; font-weight: bold;">การเขียนของนักเรียน</h3>
+          ${writingItemsHtml}
         </div>
-        <div style="margin-top: 35px; text-align: center;">
-          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
-          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
-          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        
+        <!-- ลายเซ็น -->
+        <div style="margin-top: 15px; text-align: center; page-break-inside: avoid;">
+          <p style="margin: 0; font-size: 10px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 3px 0 0 0; font-size: 10px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 3px 0 0 0; font-size: 10px; color: #333;">( _______________________ )</p>
         </div>
-        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
-          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
-            บริษัท กว้างไม่ จำกัด<br>
-            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-            ติดต่อเราได้ที่<br>
-            โทร : 083-654-9743<br>
-            เว็บไซต์ : www.kwamgunlimit.com
-          </p>
+        
+        <!-- Footer -->
+        <div style="font-size: 9px; color: #666; text-align: right; margin-top: 10px; line-height: 1.3; page-break-inside: avoid;">
+          บริษัท กว้างไม่ จำกัด | 263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+          โทร: 083-654-9743 | www.kwamgunlimit.com
         </div>
       </div>
     `;
     
     const opt = {
-      margin: [10, 10, 10, 10],
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: [5, 5, 5, 5],
+      filename: `ใบงานเขียนคำศัพท์_${config.userName || 'student'}_${dateStr.replace(/\//g, '-')}.pdf`,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
+    
+    // ถ้าต้องการ auto download
+    if (autoDownload) {
+      await html2pdf().set(opt).from(pdfContent).save();
+      console.log('✅ Auto download PDF สำเร็จ');
+    }
     
     // สร้าง PDF และแปลงเป็น base64
     const pdf = await html2pdf().set(opt).from(pdfContent).outputPdf('datauristring');
@@ -944,93 +1001,10 @@ async function generateWorksheetPDF() {
   }
 }
 
-// ฟังก์ชันดาวน์โหลด PDF
+// ฟังก์ชันดาวน์โหลด PDF (ใช้ generateWorksheetPDF แทน)
 window.downloadWorksheetPDF = async function() {
   try {
-    const date = new Date();
-    const filename = `ใบงานเขียนคำศัพท์_${config.userName || 'student'}_${date.toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`;
-    
-    const pdfContent = document.createElement('div');
-    const dateStr = date.toLocaleDateString('th-TH');
-    const timeStr = date.toLocaleTimeString('th-TH');
-    
-    pdfContent.innerHTML = `
-      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
-        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-          <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:95px; width:auto; max-width:38%; margin-bottom:8px; display:block;" />
-          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
-        </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
-          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
-          <p style="margin: 5px 0; font-size: 16px;">ใบงานฝึกเขียนคำศัพท์</p>
-        </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
-          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.userName || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.classroom || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หัวข้อ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.topic || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.week || 'ไม่ระบุ'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 7px; border-bottom: 1px solid #eee;">${config.teacher || 'ไม่ระบุ'}</td>
-            </tr>
-          </table>
-        </div>
-        <div style="margin-top: 20px;">
-          <h3 style="color: #251f03; margin-bottom: 15px; font-size: 16px;">การเขียนของนักเรียน</h3>
-          ${userAnswers.map((item, index) => `
-            <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #c19a6b; border-radius: 10px; page-break-inside: avoid;">
-              <div style="font-weight: 700; color: #8b6914; margin-bottom: 8px; font-size: 14px;">
-                ${index + 1}. ${item.vocab.english} (${item.vocab.thaiMeaning})
-              </div>
-              <div style="background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
-                <img src="${item.canvasImage}" style="width: 100%; display: block; border-radius: 5px;" />
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div style="margin-top: 35px; text-align: center;">
-          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
-          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
-          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
-        </div>
-        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
-          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
-            บริษัท กว้างไม่ จำกัด<br>
-            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-            ติดต่อเราได้ที่<br>
-            โทร : 083-654-9743<br>
-            เว็บไซต์ : www.kwamgunlimit.com
-          </p>
-        </div>
-      </div>
-    `;
-    
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    
-    await html2pdf().set(opt).from(pdfContent).save();
-    console.log('✅ ดาวน์โหลด PDF สำเร็จ');
+    await generateWorksheetPDF(true); // true = auto download
   } catch (error) {
     console.error('Error downloading PDF:', error);
     alert('เกิดข้อผิดพลาดในการดาวน์โหลด PDF');

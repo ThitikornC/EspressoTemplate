@@ -68,23 +68,41 @@ export async function getStudentByName(name, classroom = '') {
   }
 }
 
-// บันทึกผลการทดสอบของผู้ทดสอบ
+// บันทึกผลการทดสอบของผู้ทดสอบ (ใช้ game-results แทน test-results)
 export async function saveTestResult(resultData) {
   try {
-    const response = await fetch('/api/test-results/save', {
+    // แปลง field ให้ตรงกับ game_results schema
+    const gameResultData = {
+      clientId: localStorage.getItem('huaroa_client_id') || 'unknown',
+      gameType: resultData.activityType || 'unknown',
+      topic: resultData.topic || '',
+      teacher: resultData.teacher || '',
+      userName: resultData.studentName || '',
+      classroom: resultData.classroom || '',
+      score: resultData.score || 0,
+      totalQuestions: resultData.totalQuestions || 0,
+      correctAnswers: resultData.correctAnswers || 0,
+      wrongAnswers: (resultData.totalQuestions || 0) - (resultData.correctAnswers || 0),
+      percentage: resultData.totalQuestions > 0 
+        ? Math.round((resultData.score / resultData.totalQuestions) * 100) 
+        : 0,
+      duration: resultData.timeSpent || null
+    };
+    
+    const response = await fetch('/api/game-results', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(resultData)
+      body: JSON.stringify(gameResultData)
     });
     
     if (!response.ok) {
-      throw new Error('Failed to save test result');
+      throw new Error('Failed to save game result');
     }
     
     const result = await response.json();
     return result.resultId || result.id;
   } catch (error) {
-    console.error('Error saving test result:', error);
+    console.error('Error saving game result:', error);
     throw error;
   }
 }
@@ -122,6 +140,23 @@ export async function getAllClassrooms() {
     return data.classrooms || [];
   } catch (error) {
     console.error('Error fetching classrooms:', error);
+    return [];
+  }
+}
+
+// ดึงผลการทดสอบทั้งหมด
+export async function getAllTestResults() {
+  try {
+    const response = await fetch('/api/test-results/all');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch all test results');
+    }
+    
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error fetching all test results:', error);
     return [];
   }
 }
