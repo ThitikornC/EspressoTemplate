@@ -497,7 +497,7 @@ async function generateReportImage() {
     // สร้าง element ชั่วคราวสำหรับ render
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
+    tempDiv.style.left = '-9998px';
     tempDiv.style.top = '0';
     tempDiv.innerHTML = generateReportHTML(reportData);
     document.body.appendChild(tempDiv);
@@ -878,7 +878,7 @@ function nextQuestion() {
     if (score === allQuestions.length) {
       endGame('🎉 ผ่านทุกข้อ!', '#4CAF50');
     } else {
-      endGame('✅ จบกิจกรรม', '#FF9800');
+      endGame('✅ จบกิจกรรม', '#FF9807');
     }
   } else {
     // โหลดโจทย์ถัดไป
