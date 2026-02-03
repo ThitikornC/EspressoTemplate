@@ -1546,11 +1546,11 @@ function loadQuestion(index) {
   
   if (zonesElement) {
     const zoneRect = zonesElement.getBoundingClientRect();
-    // วางคำตอบห่างจากกรอบสีเขียว 150px ให้อยู่ด้านล่างชัดเจน
-    bottomY = zoneRect.bottom + 150;
+    // วางคำตอบห่างจากกรอบสีเขียว 20px ให้อยู่ใกล้กรอบมากขึ้น
+    bottomY = zoneRect.bottom + 20;
   } else {
     // fallback: ใช้ตำแหน่งจากด้านล่างหน้าจอ
-    bottomY = window.innerHeight - 80;
+    bottomY = window.innerHeight - 200;
   }
 
   // สร้างคำตอบแต่ละข้อ โดยจัดให้แต่ละแถวอยู่ตรงกลางเสมอ
