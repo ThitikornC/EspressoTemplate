@@ -64,8 +64,79 @@
   box-shadow: 0 5px 15px rgba(255, 107, 157, 0.3);
 }
 </style>
+<style>
+/* Custom Alert Modal */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+.custom-alert-overlay.show {
+  display: flex;
+}
+.custom-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: alertSlideIn 0.3s ease;
+}
+@keyframes alertSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.custom-alert-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-alert-btn {
+  background: linear-gradient(135deg, #a67c52 0%, #8b6914 100%);
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.custom-alert-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(139, 105, 20, 0.4);
+}
+</style>
 </head>
 <body>
+
+<!-- Custom Alert Modal -->
+<div id="customAlertOverlay" class="custom-alert-overlay" onclick="closeCustomAlert(event)">
+  <div class="custom-alert-box" onclick="event.stopPropagation()">
+    <div id="customAlertMessage" class="custom-alert-message"></div>
+    <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+  </div>
+</div>
+
+<script>
+function showCustomAlert(message) {
+  document.getElementById('customAlertMessage').innerHTML = message;
+  document.getElementById('customAlertOverlay').classList.add('show');
+}
+function closeCustomAlert(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('customAlertOverlay').classList.remove('show');
+}
+</script>
 
 <div class="container">
   <h1>กิจกรรมภาษา</h1>
@@ -541,7 +612,7 @@ async function translateToThai() {
     // ถ้า API ล้มเหลว ให้แสดงให้กรอกเอง
     thaiMeaningInput.value = '';
     thaiMeaningInput.style.background = '#ffebee'; // สีแดงอ่อน = ต้องกรอกเอง
-    alert('ไม่สามารถแปลอัตโนมัติได้ กรุณากรอกคำแปลเอง\n(ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต)');
+    showCustomAlert('ไม่สามารถแปลอัตโนมัติได้<br>กรุณากรอกคำแปลเอง<br>(ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต)');
   }
 }
 
@@ -671,7 +742,7 @@ function addVocabulary() {
   const thaiMeaning = document.getElementById('thaiMeaning').value.trim();
   
   if (!englishWord || !thaiMeaning) {
-    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+    showCustomAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
     return;
   }
   
@@ -748,13 +819,13 @@ function startWriteActivity() {
 
   // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
   if (!gradeSelected) {
-    alert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
     document.getElementById('gradeSelect')?.focus();
     return;
   }
 
   if (vocabularyList.length === 0) {
-    alert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนเริ่มกิจกรรม');
+    showCustomAlert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนเริ่มกิจกรรม');
     return;
   }
 
@@ -812,7 +883,7 @@ function addQuestion() {
   const choice4 = document.getElementById('choice4').value.trim();
 
   if (!question || !choice1 || !choice2 || !choice3 || !choice4) {
-    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+    showCustomAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
     return;
   }
 
@@ -959,7 +1030,7 @@ function addDialogLine() {
   const text = currentBubblePosition === 'left' ? textLeft : textRight;
   
   if (!text) {
-    alert('กรุณากรอกข้อความ');
+    showCustomAlert('กรุณากรอกข้อความ');
     return;
   }
   
@@ -1144,7 +1215,7 @@ function testVoice(id) {
   const text = textArea ? textArea.value.trim() : dialog.text;
   
   if (!text) {
-    alert('ไม่มีข้อความให้อ่าน');
+    showCustomAlert('ไม่มีข้อความให้อ่าน');
     return;
   }
   
@@ -1224,7 +1295,7 @@ function testVoice(id) {
       loadVoices();
     }
   } else {
-    alert('เบราว์เซอร์ของคุณไม่รองรับการอ่านออกเสียง');
+    showCustomAlert('เบราว์เซอร์ของคุณไม่รองรับการอ่านออกเสียง');
   }
 }
 
@@ -1277,13 +1348,13 @@ function startDialogActivity() {
 
   // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
   if (!gradeSelected) {
-    alert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
     document.getElementById('gradeSelect')?.focus();
     return;
   }
 
   if (dialogList.length === 0) {
-    alert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บท');
+    showCustomAlert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บท');
     return;
   }
 
@@ -1341,7 +1412,7 @@ function startActivity() {
 
   // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
   if (!gradeSelected) {
-    alert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
     document.getElementById('gradeSelect')?.focus();
     return;
   }
@@ -1384,7 +1455,7 @@ async function saveActivity() {
   const userName = document.getElementById('userNameInput').value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
@@ -1396,17 +1467,17 @@ async function saveActivity() {
 
   // ตรวจสอบตามโหมด
   if (currentMode === 'question' && allQuestions.length === 0) {
-    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อก่อนบันทึก');
     return;
   }
   
   if (currentMode === 'write' && vocabularyList.length === 0) {
-    alert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนบันทึก');
     return;
   }
   
   if (currentMode === 'dialog' && dialogList.length === 0) {
-    alert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บทก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บทก่อนบันทึก');
     return;
   }
 
@@ -1462,7 +1533,7 @@ async function saveActivity() {
         })
       });
       if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      showCustomAlert('✅ อัพเดทกิจกรรมสำเร็จ!');
       delete window.editingCloudActivity;
       delete window.editingCloudActivityName;
     } else {
@@ -1478,10 +1549,10 @@ async function saveActivity() {
       });
       if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
       const data = await res.json();
-      alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+      showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!<br>รหัส: ${data.data?.activityId || '-'}`);
     }
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -1657,7 +1728,7 @@ function playCloudActivity(encodedTeacherName, activityId) {
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
   if (!activity) { 
-    alert('ไม่พบกิจกรรมนี้'); 
+    showCustomAlert('ไม่พบกิจกรรมนี้'); 
     return; 
   }
 
@@ -1709,7 +1780,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
   if (!activity) { 
-    alert('ไม่พบกิจกรรมนี้'); 
+    showCustomAlert('ไม่พบกิจกรรมนี้'); 
     return; 
   }
 
@@ -1766,7 +1837,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   window.editingCloudActivityName = activity.name;
 
   closeActivityModal();
-  alert('📝 กำลังแก้ไขกิจกรรม "' + activity.name + '"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท');
+  showCustomAlert('📝 กำลังแก้ไขกิจกรรม "' + activity.name + '"<br><br>แก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท');
 }
 
 async function deleteCloudActivity(encodedTeacherName, activityId) {
@@ -1775,10 +1846,10 @@ async function deleteCloudActivity(encodedTeacherName, activityId) {
   try {
     const res = await fetch(`/api/settings/thai/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('ลบไม่สำเร็จ');
-    alert('✅ ลบกิจกรรมสำเร็จ!');
+    showCustomAlert('✅ ลบกิจกรรมสำเร็จ!');
     loadActivity();
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 

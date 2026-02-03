@@ -9,8 +9,79 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/teacherpicture.css">
 <script src="/js/prevent-image-download.js"></script>
+<style>
+/* Custom Alert Modal */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+.custom-alert-overlay.show {
+  display: flex;
+}
+.custom-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: alertSlideIn 0.3s ease;
+}
+@keyframes alertSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.custom-alert-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-alert-btn {
+  background: linear-gradient(135deg, #a67c52 0%, #8b6914 100%);
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.custom-alert-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(139, 105, 20, 0.4);
+}
+</style>
 </head>
 <body>
+
+<!-- Custom Alert Modal -->
+<div id="customAlertOverlay" class="custom-alert-overlay" onclick="closeCustomAlert(event)">
+  <div class="custom-alert-box" onclick="event.stopPropagation()">
+    <div id="customAlertMessage" class="custom-alert-message"></div>
+    <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+  </div>
+</div>
+
+<script>
+function showCustomAlert(message) {
+  document.getElementById('customAlertMessage').innerHTML = message;
+  document.getElementById('customAlertOverlay').classList.add('show');
+}
+function closeCustomAlert(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('customAlertOverlay').classList.remove('show');
+}
+</script>
 
 <div class="info-section">
     <h1>สมาร์ทเช็ค</h1>
@@ -289,7 +360,7 @@ function saveConfig() {
 
   // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
   if (!gradeSelected) {
-    alert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
     document.getElementById('gradeSelect')?.focus();
     return;
   }
@@ -336,7 +407,7 @@ async function saveActivity() {
   const userName = document.getElementById('userNameInput')?.value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
@@ -348,7 +419,7 @@ async function saveActivity() {
   const cfgUserName = userName || 'ไม่ระบุ';
 
   if (correctImages.length === 0 && wrongImages.length === 0) {
-    alert('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปก่อนบันทึก');
     return;
   }
 
@@ -375,12 +446,12 @@ async function saveActivity() {
         })
       });
       if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      showCustomAlert('✅ อัพเดทกิจกรรมสำเร็จ!');
       delete window.editingCloudActivity;
       delete window.editingCloudActivityName;
       return;
     } catch (err) {
-      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+      showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
       return;
     }
   }
@@ -411,9 +482,9 @@ async function saveActivity() {
     });
     if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
     const data = await res.json();
-    alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+    showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!<br>รหัส: ${data.data?.activityId || '-'}`);
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -530,7 +601,7 @@ function playCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
   localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
   window.location.href = 'gamepicture.html';
 }
@@ -539,7 +610,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
 
   const config = activity.config || {};
   if(document.getElementById('weekInput')) document.getElementById('weekInput').value = config.week || '';
@@ -558,7 +629,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   window.editingCloudActivityName = activity.name;
 
   closeActivityModal();
-  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
+  showCustomAlert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"<br><br>แก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
 }
 
 async function deleteCloudActivity(encodedTeacherName, activityId) {
@@ -567,10 +638,10 @@ async function deleteCloudActivity(encodedTeacherName, activityId) {
   try {
     const res = await fetch(`/api/settings/picture/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('ลบไม่สำเร็จ');
-    alert('✅ ลบกิจกรรมสำเร็จ!');
+    showCustomAlert('✅ ลบกิจกรรมสำเร็จ!');
     loadActivity();
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
