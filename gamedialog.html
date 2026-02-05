@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เกมฝึกสนทนา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/gamedialog.css">
+<script src="/js/prevent-image-download.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header" style="display: none;">
+    <div class="header-content">
+      <h1 id="activityTitle">ฝึกอ่านบทสนทนา</h1>
+      <div id="contextInfo" style="display: none; background: #fff3e0; padding: 12px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #ff9800;">
+        <strong id="contextTitle" style="color: #e65100; display: block; margin-bottom: 5px;"></strong>
+        <p id="contextDescription" style="margin: 0; color: #666; font-size: 14px;"></p>
+      </div>
+      <div class="info" style="display: none;">
+        <span id="topicDisplay">หัวข้อ: -</span>
+        <span id="progressDisplay">บทที่: 0/0</span>
+      </div>
+    </div>
+ </div>
+
+  <!-- Dialog Display Area -->
+  <div class="dialog-area">
+    <div class="dialog-container" id="dialogContainer">
+      <div class="character-left" id="characterLeft">
+        <img src="picture/RM.png" alt="RM Character" class="character-img">
+        <p id="characterLeftName" style="margin-top: 12px; font-weight: bold; color: #4CAF50; font-size: 18px; text-align: center;">ตัวละครซ้าย</p>
+      </div>
+      
+      <div class="dialog-content" id="dialogContent">
+        <div class="speech-bubble left" id="speechBubble">
+          <p class="dialog-text-thai" id="dialogTextThai">กดปุ่มสีเขียวเพื่อเริ่มบทสนทนา</p>
+          <p class="dialog-text-english" id="dialogTextEnglish"></p>
+        </div>
+      </div>
+      
+      <div class="character-right" id="characterRight">
+        <img src="picture/WL.png" alt="WL Character" class="character-img">
+        <p id="characterRightName" style="margin-top: 12px; font-weight: bold; color: #FF6B9D; font-size: 18px; text-align: center;">ตัวละครขวา</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-control btn-prev" id="btnPrev" onclick="previousDialog()" disabled>
+     <
+    </button>
+    
+    <button class="btn-control btn-start" id="btnStart" onclick="startGame()">
+      ▶
+    </button>
+    
+    <button class="btn-control btn-next" id="btnNext" onclick="nextDialog()" style="display:none;">
+      >
+    </button>
+    
+    <button class="btn-control" id="btnRepeat" onclick="repeatDialog()" style="display:none; background: linear-gradient(135deg, #7d4a16 0%, #7d4a16  100%);">
+      ⟲▶
+    </button>
+    
+    <button class="btn-control btn-restart" id="btnRestart" onclick="restartGame()" style="display:none;">
+      ↻
+    </button>
+  </div>
+  
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<script>
+console.log('🚀 gamedialog.html loaded');
+
+let config = null;
+let dialogs = [];
+let currentIndex = -1;
+let gameStarted = false;
+
+// โหลด config
+function loadConfig() {
+  const configStr = localStorage.getItem('thaiDialogConfig');
+  if (!configStr) {
+    alert('ไม่พบข้อมูลบทสนทนา กรุณากลับไปตั้งค่าใหม่');
+    window.location.href = 'teacherthai.html';
+    return false;
+  }
+  
+  config = JSON.parse(configStr);
+  dialogs = config.dialogs || [];
+  
+  if (dialogs.length === 0) {
+    alert('ไม่มีบทสนทนา กรุณากลับไปเพิ่มบทสนทนา');
+    window.location.href = 'teacherthai.html';
+    return false;
+  }
+  
+  // แสดงข้อมูล header
+  document.getElementById('activityTitle').textContent = config.topic || 'ฝึกอ่านบทสนทนา';
+  document.getElementById('topicDisplay').textContent = `หัวข้อ: ${config.topic || '-'}`;
+  document.getElementById('progressDisplay').textContent = `บทที่: 0/${dialogs.length}`;
+  
+  // อัปเดตชื่อตัวละคร
+  if (config.characterLeftName) {
+    document.getElementById('characterLeftName').textContent = config.characterLeftName;
+  }
+  if (config.characterRightName) {
+    document.getElementById('characterRightName').textContent = config.characterRightName;
+  }
+  
+  // แสดงบริบท (ถ้ามี)
+  if (config.contextTitle || config.contextDescription) {
+    const contextInfo = document.getElementById('contextInfo');
+    const contextTitle = document.getElementById('contextTitle');
+    const contextDescription = document.getElementById('contextDescription');
+    
+    if (config.contextTitle) {
+      contextTitle.textContent = '📌 ' + config.contextTitle;
+    }
+    if (config.contextDescription) {
+      contextDescription.textContent = config.contextDescription;
+    }
+    contextInfo.style.display = 'block';
+  }
+  
+  // ตั้งค่ารูปพื้นหลัง (ถ้ามี)
+  if (config.backgroundImage) {
+    const dialogArea = document.querySelector('.dialog-area');
+    dialogArea.style.backgroundImage = `url(${config.backgroundImage})`;
+    dialogArea.style.backgroundSize = 'cover';
+    dialogArea.style.backgroundPosition = 'center';
+    dialogArea.style.backgroundRepeat = 'no-repeat';
+    dialogArea.style.backgroundAttachment = 'scroll';
+    dialogArea.style.imageRendering = 'high-quality';
+    console.log('🖼️ ตั้งรูปพื้นหลังสำเร็จ');
+  }
+  
+  console.log('✅ โหลด config สำเร็จ:', config);
+  console.log('📋 จำนวนบทสนทนา:', dialogs.length);
+  
+  return true;
+}
+
+// เริ่มเกม
+function startGame() {
+  gameStarted = true;
+  currentIndex = 0;
+  
+  // ซ่อน/แสดงปุ่ม
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnNext').style.display = 'inline-block';
+  document.getElementById('btnRepeat').style.display = 'inline-block';
+  document.getElementById('btnRestart').style.display = 'inline-block';
+  
+  // แสดงบทสนทนาแรก
+  showDialog(currentIndex);
+}
+
+// ฟังซ้ำ
+function repeatDialog() {
+  if (currentIndex >= 0 && currentIndex < dialogs.length) {
+    const dialog = dialogs[currentIndex];
+    playDialogSound(dialog);
+  }
+}
+
+// แสดงบทสนทนา
+function showDialog(index) {
+  if (index < 0 || index >= dialogs.length) return;
+  
+  const dialog = dialogs[index];
+  const characterLeft = document.getElementById('characterLeft');
+  const characterRight = document.getElementById('characterRight');
+  const speechBubble = document.getElementById('speechBubble');
+  const dialogTextThai = document.getElementById('dialogTextThai');
+  const dialogTextEnglish = document.getElementById('dialogTextEnglish');
+  
+  // อัพเดทความคืบหน้า
+  document.getElementById('progressDisplay').textContent = `บทที่: ${index + 1}/${dialogs.length}`;
+  updateProgressBar();
+  
+  // กำหนดตำแหน่ง speech bubble และ highlight ตัวละคร
+  const isLeft = dialog.position === 'left';
+  if (isLeft) {
+    // ซ้ายพูด
+    speechBubble.className = 'speech-bubble left';
+    characterLeft.classList.add('active');
+    characterRight.classList.remove('active');
+  } else {
+    // ขวาพูด
+    speechBubble.className = 'speech-bubble right';
+    characterLeft.classList.remove('active');
+    characterRight.classList.add('active');
+  }
+  
+  // แสดงข้อความ
+  dialogTextThai.textContent = dialog.text;
+  dialogTextEnglish.style.display = 'none';
+  
+  // Animation
+  speechBubble.style.animation = 'none';
+  setTimeout(() => {
+    speechBubble.style.animation = 'fadeIn 0.5s ease-in-out';
+  }, 10);
+  
+  // อัพเดทปุ่ม
+  document.getElementById('btnPrev').disabled = (index === 0);
+  document.getElementById('btnNext').disabled = (index === dialogs.length - 1);
+  
+  // เล่นเสียง (ถ้ามี)
+  playDialogSound(dialog);
+}
+
+// บทสนทนาถัดไป
+function nextDialog() {
+  if (currentIndex < dialogs.length - 1) {
+    currentIndex++;
+    showDialog(currentIndex);
+  } else {
+    // จบเกม
+    showCompletionMessage();
+  }
+}
+
+// บทสนทนาก่อนหน้า
+function previousDialog() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    showDialog(currentIndex);
+  }
+}
+
+// เริ่มเกมใหม่
+function restartGame() {
+  currentIndex = 0;
+  showDialog(currentIndex);
+}
+
+// อัพเดท Progress Bar
+function updateProgressBar() {
+  const progress = ((currentIndex + 1) / dialogs.length) * 100;
+  document.getElementById('progressFill').style.width = progress + '%';
+}
+
+// แสดงข้อความเมื่อจบเกม
+function showCompletionMessage() {
+  const dialogTextThai = document.getElementById('dialogTextThai');
+  const dialogTextEnglish = document.getElementById('dialogTextEnglish');
+  
+  dialogTextThai.textContent = 'ยินดีด้วย! คุณอ่านบทสนทนาครบทุกบทแล้ว';
+  dialogTextEnglish.style.display = 'none';
+  
+  document.getElementById('characterLeft').classList.add('active');
+  document.getElementById('characterRight').classList.add('active');
+  
+  document.getElementById('btnNext').disabled = true;
+}
+
+// เล่นเสียง TTS
+let speechSynthesis = window.speechSynthesis;
+let currentUtterance = null;
+let speechRate = 0.9; // ความเร็วคงที่
+
+// ฟังก์ชันแบ่งประโยคตามเครื่องหมายวรรคตอน
+function splitSentences(text) {
+  // แบ่งประโยคตามเครื่องหมายวรรคตอนเพื่อให้มีการหยุดพัก
+  const sentences = [];
+  let current = '';
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = i < text.length - 1 ? text[i + 1] : '';
+    
+    current += char;
+    
+    // ตรวจจับเครื่องหมายวรรคตอนทั้งหมด
+    const isFullStop = char === '.' || char === '?' || char === '!' || char === '。'; // จบประโยค
+    const isComma = char === ',' || char === '、'; // จุลภาค
+    const isPunctuation = isFullStop || isComma;
+    
+    // แบ่งประโยคเมื่อเจอเครื่องหมายวรรคตอนและตามด้วยช่องว่าง
+    const shouldSplit = isPunctuation && (nextChar === '' || nextChar === ' ' || nextChar === '\n');
+    
+    if (shouldSplit) {
+      const sentence = current.trim();
+      if (sentence) {
+        // เพิ่ม ... เพื่อให้ TTS หยุดพักนานขึ้น (ใช้กับประโยคจบ)
+        if (isFullStop) {
+          sentences.push(sentence + '...');
+        } else {
+          sentences.push(sentence + '.');
+        }
+      }
+      current = '';
+    }
+  }
+  
+  // เพิ่มส่วนที่เหลือ
+  if (current.trim()) {
+    sentences.push(current.trim() + '...');
+  }
+  
+  return sentences.length > 0 ? sentences : [text];
+}
+
+function playDialogSound(dialog) {
+  // หยุดเสียงเดิมก่อน (ถ้ามี)
+  if (currentUtterance) {
+    speechSynthesis.cancel();
+    currentUtterance = null;
+  }
+  
+  // เล่นเสียง TTS
+  if (dialog.text && speechSynthesis) {
+    try {
+      // แบ่งประโยคออกเป็นส่วนๆ
+      const sentences = splitSentences(dialog.text);
+      console.log('📝 แบ่งประโยค:', sentences.length, 'ส่วน');
+      
+      // สร้าง queue สำหรับเล่นประโยคต่อเนื่อง
+      let currentIndex = 0;
+      
+      function speakNext() {
+        if (currentIndex >= sentences.length) {
+          console.log('✅ อ่านจบทุกประโยค');
+          return;
+        }
+        
+        const sentence = sentences[currentIndex];
+        if (!sentence.trim()) {
+          currentIndex++;
+          speakNext();
+          return;
+        }
+        
+        currentUtterance = new SpeechSynthesisUtterance(sentence);
+        
+        // ตั้งค่าเสียง
+        currentUtterance.lang = 'th-TH';
+        currentUtterance.rate = speechRate * 0.75; // ลดความเร็วลงอีกให้รื่นไหล
+        currentUtterance.volume = 1;
+        
+        // กำหนด pitch ตามเพศของตัวละคร (ปรับให้เป็นธรรมชาติ)
+        const voiceType = dialog.voiceType || (dialog.position === 'left' ? 'male' : 'female');
+        let pitch = 1.0;
+        if (voiceType === 'male') {
+          pitch = 0.9; // เสียงเบสลงนิดหน่อย
+        } else if (voiceType === 'female') {
+          pitch = 1.05; // สูงขึ้นนิดหน่อย
+        } else if (voiceType === 'female-soft') {
+          pitch = 1.0;
+        } else if (voiceType === 'female-high') {
+          pitch = 1.15;
+        }
+        currentUtterance.pitch = pitch;
+        
+        // หาเสียงภาษาไทยทั้งหมดก่อน
+        const voices = speechSynthesis.getVoices();
+        const thaiVoices = voices.filter(v => v.lang.includes('th') || v.lang.includes('TH'));
+        
+        let selectedVoice = null;
+        
+        // ถ้ามีเสียงไทย ให้เลือกตามเพศ (แต่ไม่เข้มงวด)
+        if (thaiVoices.length > 0) {
+          if (voiceType.startsWith('female')) {
+            // พยายามหาเสียงผู้หญิงก่อน
+            selectedVoice = thaiVoices.find(v => 
+              v.name.toLowerCase().includes('female') || 
+              v.name.toLowerCase().includes('woman') ||
+              v.name.includes('Kanya') ||
+              v.name.includes('Premwadee')
+            );
+          } else if (voiceType === 'male') {
+            // พยายามหาเสียงผู้ชายก่อน
+            selectedVoice = thaiVoices.find(v => 
+              v.name.toLowerCase().includes('male') || 
+              v.name.toLowerCase().includes('man') ||
+              v.name.includes('Pattara')
+            );
+          }
+          
+          // ถ้ายังไม่เจอ ใช้เสียงไทยตัวแรกที่มี
+          if (!selectedVoice) {
+            selectedVoice = thaiVoices[0];
+          }
+        }
+        
+        if (selectedVoice) {
+          currentUtterance.voice = selectedVoice;
+          console.log(`🎤 ใช้เสียง: ${selectedVoice.name} (${voiceType}, pitch: ${currentUtterance.pitch})`);
+        } else {
+          console.log(`⚠️ ไม่พบเสียงภาษาไทย ใช้เสียงเริ่มต้น (${voiceType}, pitch: ${currentUtterance.pitch})`);
+        }
+        
+        // เมื่ออ่านจบประโยคนี้ ให้หยุดชั่วคราว แล้วอ่านประโยคถัดไป
+        currentUtterance.onend = function() {
+          currentIndex++;
+          
+          // หยุดช่วง 500ms ระหว่างประโยคเพื่อให้รื่นไหล
+          if (currentIndex < sentences.length) {
+            setTimeout(speakNext, 500);
+          }
+        };
+        
+        currentUtterance.onerror = function(event) {
+          console.error('TTS Error:', event);
+          currentIndex++;
+          speakNext();
+        };
+        
+        // เล่นเสียง
+        speechSynthesis.speak(currentUtterance);
+        console.log(`🔊 กำลังอ่านส่วนที่ ${currentIndex + 1}/${sentences.length} (${voiceType}):`, sentence);
+      }
+      
+      // เริ่มอ่านประโยคแรก
+      speakNext();
+      
+    } catch (err) {
+      console.log('ไม่สามารถเล่นเสียงได้:', err);
+    }
+  }
+}
+
+// โหลดเสียงเมื่อหน้าโหลด
+window.addEventListener('load', () => {
+  // รอให้ voices โหลดเสร็จ
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.addEventListener('voiceschanged', () => {
+      const voices = speechSynthesis.getVoices();
+      console.log('📢 เสียงที่มี:', voices.length, 'เสียง');
+      const thaiVoices = voices.filter(v => v.lang.includes('th') || v.lang.includes('TH'));
+      console.log('🇹🇭 เสียงภาษาไทย:', thaiVoices.length, 'เสียง');
+    });
+  }
+});
+
+// กลับหน้าหลัก
+function goHome() {
+  // หยุดเสียงก่อนออก
+  if (speechSynthesis) {
+    speechSynthesis.cancel();
+  }
+  
+  if (confirm('ต้องการกลับหน้าหลักหรือไม่?')) {
+    window.location.href = 'teacherthai.html';
+  }
+}
+
+// หยุดเสียงเมื่อออกจากหน้า
+window.addEventListener('beforeunload', () => {
+  if (speechSynthesis) {
+    speechSynthesis.cancel();
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (!gameStarted) return;
+  
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    if (currentIndex < dialogs.length - 1) nextDialog();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (currentIndex > 0) previousDialog();
+  } else if (e.key === 'r' || e.key === 'R') {
+    restartGame();
+  }
+});
+
+// โหลด config เมื่อหน้าโหลด
+window.addEventListener('load', () => {
+  if (loadConfig()) {
+    console.log('✅ พร้อมเริ่มเกม');
+  }
+});
+</script>
+
+<!-- Socket client -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+<script>
+  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
+<script>
+var __localUsageId_gamedialog = null;
+window.addEventListener('load', function(){
+  try{
+    if(typeof io === 'undefined') return;
+    const socket = io();
+    socket.emit('usageStart', { page: 'gamedialog.html', params: {} }, function(resp){
+      if(resp && resp.usageId) __localUsageId_gamedialog = resp.usageId;
+    });
+  }catch(e){ console.warn('usageTracker.start failed (gamedialog)', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if(typeof io === 'undefined' || !__localUsageId_gamedialog) return;
+    const socket = io();
+    socket.emit('usageEnd', { usageId: __localUsageId_gamedialog });
+  }catch(e){}
+});
+</script>
+</body>
+</html>

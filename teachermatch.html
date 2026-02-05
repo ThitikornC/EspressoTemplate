@@ -10,6 +10,58 @@
 <link rel="stylesheet" href="css/teachermatch.css">
 <script src="/js/prevent-image-download.js"></script>
 <style>
+/* Custom Alert Modal */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+.custom-alert-overlay.show {
+  display: flex;
+}
+.custom-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: alertSlideIn 0.3s ease;
+}
+@keyframes alertSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.custom-alert-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-alert-btn {
+  background: linear-gradient(135deg, #a67c52 0%, #8b6914 100%);
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.custom-alert-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(139, 105, 20, 0.4);
+}
+</style>
+<style>
 * {
   font-family: 'Roboto', sans-serif !important;
 }
@@ -162,6 +214,32 @@ button { cursor:pointer; }
 }
 
 /* Responsive Design */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input {
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
 .info-inputs {
   display: flex;
   gap: 5px;
@@ -183,7 +261,9 @@ button { cursor:pointer; }
 
 .info-inputs input:nth-child(2),
 .info-inputs input:nth-child(3),
-.info-inputs input:nth-child(4) {
+.info-inputs input:nth-child(4),
+.info-inputs input:nth-child(5),
+.info-inputs input:nth-child(6) {
   width: 180px;
 }
 
@@ -199,6 +279,20 @@ button { cursor:pointer; }
 
 /* Mobile: < 768px */
 @media (max-width: 767px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .form-group label {
+    font-size: 14px;
+  }
+  
+  .form-group input {
+    font-size: 16px;
+    padding: 10px;
+  }
+  
   body {
     padding: 5px;
   }
@@ -313,29 +407,138 @@ button { cursor:pointer; }
   width: 100%;
 }
 
+.info-section h1 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
 .info-section h2 {
   margin-top: 0;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.image-preview {
+  max-width: 200px;
+  max-height: 200px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  margin: 5px;
+}
+
+.remove-image-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
 }
 </style>
 </head>
 <body>
 
-<div class="info-section">
-  <h1>กิจกรรมเลข</h1>
-  <h3>กรอกข้อมูลกิจกรรม</h3>
-  
-  <div class="info-inputs">  
-    <input id="weekInput" placeholder="สัปดาห์ที่">
-    <input id="topicInput" placeholder="สาระการเรียนรู้">
-    <input id="unitInput" placeholder="หน่วยการเรียนรู้">
-    <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
-    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+<!-- Custom Alert Modal -->
+<div id="customAlertOverlay" class="custom-alert-overlay" onclick="closeCustomAlert(event)">
+  <div class="custom-alert-box" onclick="event.stopPropagation()">
+    <div id="customAlertMessage" class="custom-alert-message"></div>
+    <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
   </div>
 </div>
 
-<div class="main-container">
+<script>
+function showCustomAlert(message) {
+  document.getElementById('customAlertMessage').innerHTML = message;
+  document.getElementById('customAlertOverlay').classList.add('show');
+}
+function closeCustomAlert(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('customAlertOverlay').classList.remove('show');
+}
+</script>
+
+<div class="info-section">
+  <h1>กิจกรรมเลข</h1>
+  <h2 class="section-title">กรอกข้อมูลกิจกรรม</h2>
+  
+  <div class="form-grid">
+    <div class="form-group">
+      <label for="weekInput">สัปดาห์ที่</label>
+      <input type="text" id="weekInput" placeholder="ระบุสัปดาห์">
+    </div>
+    <div class="form-group">
+      <label for="topicInput">สาระการเรียนรู้</label>
+      <input type="text" id="topicInput" placeholder="เช่น คณิตศาสตร์">
+    </div>
+    <div class="form-group">
+      <label for="unitInput">หน่วยการเรียนรู้</label>
+      <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
+    </div>
+    <div class="form-group">
+      <label for="teacherInput">ครูผู้สอน</label>
+      <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
+    </div>
+    <div class="form-group">
+      <label for="gradeSelect">ระดับชั้น</label>
+      <select id="gradeSelect">
+        <option value="">-- เลือกระดับชั้น --</option>
+        <option value="อนุบาล 1">อนุบาล 1</option>
+        <option value="อนุบาล 2">อนุบาล 2</option>
+        <option value="อนุบาล 3">อนุบาล 3</option>
+        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+        <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+        <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+        <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+        <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+        <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+        <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+        <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+        <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+        <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+        <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+        <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="roomInput">ห้อง</label>
+      <input type="text" id="roomInput" placeholder="เช่น 1, 2, 3...">
+    </div>
+    <input type="hidden" id="classroomInput">
+    <div class="form-group">
+      <label for="userNameInput">ชื่อผู้ทดสอบ</label>
+      <input type="text" id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+    </div>
+  </div>
+</div>
+
+<!-- Mode Selection -->
+<div style="display: flex; justify-content: center; gap: 20px; margin: 20px auto; max-width: 900px; flex-wrap: wrap;">
+  <button id="modeQuestion" class="neon-btn-green" onclick="switchMode('question')" style="font-size: 18px; padding: 15px 30px;">โจทย์ปัญหา</button>
+  <button id="modeCount" class="neon-btn" onclick="switchMode('count')" style="font-size: 18px; padding: 15px 30px;">จำนวนนับ</button>
+</div>
+
+<!-- Question Mode -->
+<div id="questionMode" class="main-container">
   <h3>เพิ่มโจทย์คณิตศาสตร์</h3>
-  <input id="questionInput" placeholder="พิมพ์โจทย์เลข (เช่น 2 + 2 = ?)" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:20px;"><br>
+  <input id="questionInput" placeholder="พิมพ์โจทย์เลข (เช่น 2 + 2)" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:10px;"><br>
+  
+  <div style="margin: 15px 0;">
+    <label style="font-weight: 600; color: #333; display: block; margin-bottom: 8px;">รูปภาพประกอบโจทย์ (ถ้ามี)</label>
+    <input type="file" id="questionImageInput" accept="image/*" onchange="handleQuestionImage(event)" style="padding: 8px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer; max-width: 500px;">
+    <div id="questionImagePreview" style="margin-top: 10px; text-align: center;"></div>
+  </div>
+  
+  <div style="margin: 15px 0;">
+    <button class="neon-btn-green" onclick="autoGenerateAnswers()" style="font-size:14px; padding:8px 16px; min-height:40px;">สร้างคำตอบอัตโนมัติ</button>
+    <span style="margin-left: 10px; color: #666; font-size: 14px;">หรือกรอกคำตอบเองด้านล่าง</span>
+  </div>
+  
   <div style="display:flex; gap:5px; justify-content:center; margin-top:20px;">
     <div style="flex:1; background:rgba(76, 175, 80, 0.1); padding:15px; border-radius:10px; border:2px solid #4CAF50;">
       <label style="color:#4CAF50; font-weight:bold;">คำตอบที่ถูกต้อง ✅</label><br>
@@ -360,11 +563,29 @@ button { cursor:pointer; }
   <div id="questionsList" style="max-height:400px; overflow-y:auto;"></div>
 </div>
 
+<!-- Count Mode -->
+<div id="countMode" class="main-container" style="display:none;">
+  <h3>ตั้งค่าโจทย์จำนวนนับ</h3>
+  <p style="color: #666; margin: 15px 0;">ผู้เล่นต้องกดตัวเลขตามลำดับ ถ้ากดผิดจะโดนลบคะแนน</p>
+  
+  <div style="display: flex; gap: 20px; justify-content: center; align-items: center; margin: 30px 0; flex-wrap: wrap;">
+    <div style="text-align: left;">
+      <label style="font-weight: 600; color: #333; display: block; margin-bottom: 8px;">เริ่มจากตัวเลข:</label>
+      <input type="number" id="countStartInput" value="1" min="1" max="100" style="width: 150px; padding: 12px; font-size: 20px; border-radius: 10px; border: 2px solid #74640a;">
+    </div>
+    <div style="text-align: left;">
+      <label style="font-weight: 600; color: #333; display: block; margin-bottom: 8px;">ถึงตัวเลข:</label>
+      <input type="number" id="countEndInput" value="10" min="1" max="100" style="width: 150px; padding: 12px; font-size: 20px; border-radius: 10px; border: 2px solid #74640a;">
+    </div>
+  </div>
+</div>
+
 <!-- Control Buttons -->
-<div style="display: flex; justify-content: center; gap: 15px; margin: 20px auto; max-width: 900px; flex-wrap: wrap;">
+<div id="controlButtons" style="display: flex; justify-content: center; gap: 15px; margin: 20px auto; max-width: 900px; flex-wrap: wrap;">
   <button class="neon-btn" onclick="saveConfig()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เริ่มกิจกรรม</button>
   <button class="neon-btn" onclick="saveActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">บันทึกกิจกรรม</button>
   <button class="neon-btn" onclick="loadActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เลือกกิจกรรม</button>
+  <button class="neon-btn" onclick="window.location.href='student-reports.html'" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">ประวัติผู้ทดสอบ</button>
 </div>
 
 <!-- Activity Selection Modal -->
@@ -386,6 +607,194 @@ button { cursor:pointer; }
 let correctAnswers = [];
 let wrongAnswers = [];
 let allQuestions = []; // เก็บโจทย์ทั้งหมด
+let currentQuestionImage = null; // เก็บรูปภาพของโจทย์ปัจจุบัน
+let currentMode = 'question'; // โหมดปัจจุบัน: 'question' หรือ 'count'
+
+// ฟังก์ชันสลับโหมด
+function switchMode(mode) {
+  currentMode = mode;
+  
+  const questionMode = document.getElementById('questionMode');
+  const countMode = document.getElementById('countMode');
+  const btnQuestion = document.getElementById('modeQuestion');
+  const btnCount = document.getElementById('modeCount');
+  
+  if (mode === 'question') {
+    questionMode.style.display = 'block';
+    countMode.style.display = 'none';
+    btnQuestion.className = 'neon-btn-green';
+    btnCount.className = 'neon-btn';
+  } else {
+    questionMode.style.display = 'none';
+    countMode.style.display = 'block';
+    btnQuestion.className = 'neon-btn';
+    btnCount.className = 'neon-btn-green';
+  }
+  
+  updateCountInfo();
+}
+
+// อัปเดตข้อมูลจำนวนนับ
+function updateCountInfo() {
+  const start = parseInt(document.getElementById('countStartInput').value) || 1;
+  const end = parseInt(document.getElementById('countEndInput').value) || 10;
+  const total = Math.max(0, end - start + 1);
+  
+  document.getElementById('countTotal').textContent = total;
+  document.getElementById('countRange').textContent = `${start}-${end}`;
+}
+
+// เรียกใช้เมื่อเปลี่ยนค่า input
+document.addEventListener('DOMContentLoaded', function() {
+  const startInput = document.getElementById('countStartInput');
+  const endInput = document.getElementById('countEndInput');
+  
+  if (startInput) startInput.addEventListener('input', updateCountInfo);
+  if (endInput) endInput.addEventListener('input', updateCountInfo);
+});
+
+function handleQuestionImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    currentQuestionImage = e.target.result;
+    const preview = document.getElementById('questionImagePreview');
+    preview.innerHTML = `
+      <img src="${e.target.result}" class="image-preview" />
+      <br>
+      <button class="remove-image-btn" onclick="removeQuestionImage()">ลบรูป</button>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeQuestionImage() {
+  currentQuestionImage = null;
+  document.getElementById('questionImageInput').value = '';
+  document.getElementById('questionImagePreview').innerHTML = '';
+}
+
+// ฟังก์ชันแปลงตัวเลขไทยเป็นเลขอารบิก
+function convertThaiToArabicNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  const arabicNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+  let result = text;
+  for (let i = 0; i < thaiNumbers.length; i++) {
+    result = result.split(thaiNumbers[i]).join(arabicNumbers[i]);
+  }
+  return result;
+}
+
+// ฟังก์ชันแปลงเลขอารบิกเป็นตัวเลขไทย
+function convertArabicToThaiNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  const arabicNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+  let result = text.toString();
+  for (let i = 0; i < arabicNumbers.length; i++) {
+    result = result.split(arabicNumbers[i]).join(thaiNumbers[i]);
+  }
+  return result;
+}
+
+// ฟังก์ชันตรวจสอบว่าโจทย์มีตัวเลขไทยหรือไม่
+function hasThaiNumbers(text) {
+  const thaiNumbers = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+  return thaiNumbers.some(num => text.includes(num));
+}
+
+// ฟังก์ชันสร้างคำตอบอัตโนมัติ
+function autoGenerateAnswers() {
+  const questionInput = document.getElementById('questionInput').value.trim();
+  if (!questionInput) {
+    showCustomAlert('กรุณาพิมพ์โจทย์ก่อน');
+    return;
+  }
+  
+  try {
+    // ตรวจสอบว่าโจทย์มีตัวเลขไทยหรือไม่
+    const useThaiNumbers = hasThaiNumbers(questionInput);
+    
+    // แปลงตัวเลขไทยเป็นเลขอารบิก
+    let expression = convertThaiToArabicNumbers(questionInput);
+    
+    // ลบ = และ ? ออกจากโจทย์
+    expression = expression.replace(/=/g, '').replace(/\?/g, '').trim();
+    
+    // คำนวณคำตอบที่ถูก
+    let correctAnswer = eval(expression);
+    
+    if (isNaN(correctAnswer) || !isFinite(correctAnswer)) {
+      showCustomAlert('ไม่สามารถคำนวณโจทย์นี้ได้<br>กรุณาตรวจสอบรูปแบบโจทย์');
+      return;
+    }
+    
+    // ถ้าเป็นทศนิยม ให้เหลือ 2 ตำแหน่ง
+    if (!Number.isInteger(correctAnswer)) {
+      correctAnswer = parseFloat(correctAnswer.toFixed(2));
+    }
+    
+    // เคลียร์คำตอบเดิม
+    correctAnswers = [];
+    wrongAnswers = [];
+    
+    // เพิ่มคำตอบที่ถูก (แปลงเป็นเลขไทยถ้าโจทย์เป็นเลขไทย)
+    const correctAnswerStr = useThaiNumbers ? convertArabicToThaiNumbers(correctAnswer.toString()) : correctAnswer.toString();
+    correctAnswers.push(correctAnswerStr);
+    
+    // สร้างคำตอบที่ผิด 3-5 คำตอบ
+    const wrongCount = Math.floor(Math.random() * 3) + 3; // 3-5 คำตอบผิด
+    const wrongSet = new Set();
+    
+    while (wrongSet.size < wrongCount) {
+      let wrongAnswer;
+      const rand = Math.random();
+      
+      if (rand < 0.4) {
+        // บวก/ลบ 1-5
+        const offset = Math.floor(Math.random() * 5) + 1;
+        wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+      } else if (rand < 0.7) {
+        // บวก/ลบ 10-30%
+        const percentage = (Math.random() * 0.2 + 0.1); // 10-30%
+        const offset = Math.max(1, Math.floor(Math.abs(correctAnswer) * percentage));
+        wrongAnswer = correctAnswer + (Math.random() > 0.5 ? offset : -offset);
+      } else {
+        // สุ่มเลขใกล้เคียง
+        wrongAnswer = correctAnswer + Math.floor(Math.random() * 10) - 5;
+      }
+      
+      // ถ้าเป็นทศนิยม ให้เหลือ 2 ตำแหน่ง
+      if (!Number.isInteger(wrongAnswer)) {
+        wrongAnswer = parseFloat(wrongAnswer.toFixed(2));
+      }
+      
+      // ตรวจสอบไม่ให้ซ้ำกับคำตอบถูกหรือคำตอบผิดอื่น (อนุญาตให้เป็นลบได้)
+      if (wrongAnswer !== correctAnswer && !wrongSet.has(wrongAnswer)) {
+        wrongSet.add(wrongAnswer);
+      }
+    }
+    
+    // แปลงคำตอบผิดเป็นเลขไทยถ้าโจทย์เป็นเลขไทย
+    wrongAnswers = Array.from(wrongSet).map(n => {
+      return useThaiNumbers ? convertArabicToThaiNumbers(n.toString()) : n.toString();
+    });
+    
+    // แสดงผลลัพธ์
+    renderAnswers('correct');
+    renderAnswers('wrong');
+    
+    const displayCorrect = useThaiNumbers ? convertArabicToThaiNumbers(correctAnswer.toString()) : correctAnswer;
+    const displayWrong = wrongAnswers.join(', ');
+    showCustomAlert(`✅ สร้างคำตอบอัตโนมัติสำเร็จ!<br><br>คำตอบถูก: ${displayCorrect}<br>คำตอบผิด: ${displayWrong}`);
+    
+  } catch (error) {
+    showCustomAlert('❌ ไม่สามารถคำนวณโจทย์นี้ได้<br><br>กรุณาตรวจสอบว่าโจทย์เป็นรูปแบบคณิตศาสตร์ที่ถูกต้อง<br>ตัวอย่าง: 2 + 3, 10 - 5, 4 * 6, 20 / 4');
+  }
+}
 
 // ฟังก์ชันเพิ่มคำตอบ
 function addAnswer(type) {
@@ -394,7 +803,7 @@ function addAnswer(type) {
   const answer = input.value.trim();
   
   if (!answer) {
-    alert('กรุณากรอกคำตอบ');
+    showCustomAlert('กรุณากรอกคำตอบ');
     return;
   }
   
@@ -439,26 +848,32 @@ function addQuestion() {
   const question = document.getElementById('questionInput').value.trim();
   
   if (!question) {
-    alert('กรุณาพิมพ์โจทย์เลข');
+    showCustomAlert('กรุณาพิมพ์โจทย์เลข');
     return;
   }
   
   if (correctAnswers.length === 0) {
-    alert('กรุณาเพิ่มคำตอบที่ถูกต้องอย่างน้อย 1 คำตอบ');
+    showCustomAlert('กรุณาเพิ่มคำตอบที่ถูกต้องอย่างน้อย 1 คำตอบ');
     return;
   }
   
   if (wrongAnswers.length === 0) {
-    alert('กรุณาเพิ่มคำตอบที่ผิดอย่างน้อย 1 คำตอบ');
+    showCustomAlert('กรุณาเพิ่มคำตอบที่ผิดอย่างน้อย 1 คำตอบ');
     return;
   }
   
   // เพิ่มโจทย์เข้า array
-  allQuestions.push({
+  const questionData = {
     question: question,
+    image: currentQuestionImage || null, // เพิ่มรูปภาพ
     correctAnswers: [...correctAnswers],
     wrongAnswers: [...wrongAnswers]
-  });
+  };
+  
+  allQuestions.push(questionData);
+  
+  // บันทึกโจทย์ลง MongoDB
+  saveQuestionToDB(questionData, 'math');
   
   // Clear form
   document.getElementById('questionInput').value = '';
@@ -466,6 +881,7 @@ function addQuestion() {
   wrongAnswers = [];
   renderAnswers('correct');
   renderAnswers('wrong');
+  removeQuestionImage(); // ล้างรูปภาพ
   
   // แสดงรายการโจทย์
   renderQuestionsList();
@@ -482,6 +898,7 @@ function renderQuestionsList() {
         <div style="display:flex; justify-content:space-between; align-items:start; gap:5px;">
           <div style="flex:1; text-align:left;">
             <div style="margin:0 0 4px 0; color:#333; font-weight:bold; font-size:13px;">ข้อ ${i + 1}: ${q.question}</div>
+            ${q.image ? '<div style="margin:4px 0;"><img src="' + q.image + '" style="max-width: 100%; max-height: 80px; border-radius: 4px; border: 1px solid #ddd;" /></div>' : ''}
             <div style="margin:2px 0; font-size:12px;">
               <span style="color:#4CAF50; font-weight:bold;">✓</span> ${q.correctAnswers.join(', ')}
             </div>
@@ -651,12 +1068,59 @@ if(savedConfig.questions) {
 renderAnswers('correct');
 renderAnswers('wrong');
 
+// ฟังก์ชันบันทึกโจทย์ลง MongoDB
+async function saveQuestionToDB(questionData, type) {
+  const teacher = document.getElementById('teacherInput')?.value.trim() || 'ไม่ระบุ';
+  const classroom = document.getElementById('classroomInput')?.value.trim() || 'ไม่ระบุ';
+  const topic = document.getElementById('topicInput')?.value.trim() || 'ไม่ระบุ';
+  
+  try {
+    const response = await fetch('/api/questions/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        teacher: teacher,
+        classroom: classroom,
+        topic: topic,
+        type: type, // 'math' หรือ 'thai'
+        questionData: questionData,
+        createdAt: new Date().toISOString()
+      })
+    });
+    
+    if (response.ok) {
+      console.log('✅ บันทึกโจทย์ลง MongoDB สำเร็จ');
+    } else {
+      console.error('❌ บันทึกโจทย์ล้มเหลว');
+    }
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาด:', error);
+  }
+}
+
 function saveConfig(){
   const week = document.getElementById('weekInput').value.trim();
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const classroom = document.getElementById('classroomInput').value.trim();
   const userName = document.getElementById('userNameInput').value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
+  
+  if (currentMode === 'count') {
+    // โหมดจำนวนนับ
+    startCountGame();
+    return;
+  }
+  
+  // โหมดตั้งโจทย์
   // Allow saving even with missing fields — use defaults
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
@@ -671,6 +1135,7 @@ function saveConfig(){
     topic: cfgTopic,
     unit: cfgUnit,
     teacher: cfgTeacher,
+    classroom: classroom || '',
     userName: cfgUserName,
     questions: allQuestions || []  // เก็บเป็น array ของโจทย์
   };
@@ -686,10 +1151,11 @@ async function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const classroom = document.getElementById('classroomInput')?.value.trim() || '';
   const userName = document.getElementById('userNameInput').value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
@@ -699,37 +1165,62 @@ async function saveActivity() {
   const cfgTeacher = teacher;
   const cfgUserName = userName || 'ไม่ระบุ';
 
-  if (allQuestions.length === 0) {
-    alert('กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อก่อนบันทึก');
+  // ตรวจสอบตามโหมด
+  if (currentMode === 'question' && allQuestions.length === 0) {
+    showCustomAlert('กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อก่อนบันทึก');
     return;
+  }
+  
+  if (currentMode === 'count') {
+    const startNum = parseInt(document.getElementById('countStartInput').value);
+    const endNum = parseInt(document.getElementById('countEndInput').value);
+    
+    if (!startNum || !endNum || startNum < 1 || endNum < 1 || startNum >= endNum) {
+      showCustomAlert('กรุณากรอกช่วงตัวเลขให้ถูกต้อง');
+      return;
+    }
   }
 
   // ถ้ากำลังแก้ไขกิจกรรมจากคลาวด์
   if (window.editingCloudActivity) {
     const { teacherName, activityId } = window.editingCloudActivity;
+    
+    const activityConfig = currentMode === 'count' ? {
+      week: cfgWeek,
+      topic: cfgTopic,
+      unit: cfgUnit,
+      teacher: cfgTeacher,
+      classroom: classroom || '',
+      userName: cfgUserName,
+      gameType: 'counting',
+      startNumber: parseInt(document.getElementById('countStartInput').value),
+      endNumber: parseInt(document.getElementById('countEndInput').value)
+    } : {
+      week: cfgWeek,
+      topic: cfgTopic,
+      unit: cfgUnit,
+      teacher: cfgTeacher,
+      classroom: classroom || '',
+      userName: cfgUserName,
+      questions: allQuestions
+    };
+    
     try {
       const res = await fetch(`/api/settings/math/${encodeURIComponent(teacherName)}/${activityId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: window.editingCloudActivityName || `${cfgTopic} - สัปดาห์ ${cfgWeek}`,
-          config: {
-            week: cfgWeek,
-            topic: cfgTopic,
-            unit: cfgUnit,
-            teacher: cfgTeacher,
-            userName: cfgUserName,
-            questions: allQuestions
-          }
+          config: activityConfig
         })
       });
       if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      showCustomAlert('✅ อัพเดทกิจกรรมสำเร็จ!');
       delete window.editingCloudActivity;
       delete window.editingCloudActivityName;
       return;
     } catch (err) {
-      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+      showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
       return;
     }
   }
@@ -738,6 +1229,26 @@ async function saveActivity() {
   const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
   if (!activityName) return;
 
+  const activityConfig = currentMode === 'count' ? {
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    classroom: classroom || '',
+    userName: cfgUserName,
+    gameType: 'counting',
+    startNumber: parseInt(document.getElementById('countStartInput').value),
+    endNumber: parseInt(document.getElementById('countEndInput').value)
+  } : {
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    classroom: classroom || '',
+    userName: cfgUserName,
+    questions: allQuestions
+  };
+
   try {
     const res = await fetch('/api/settings/math', {
       method: 'POST',
@@ -745,21 +1256,14 @@ async function saveActivity() {
       body: JSON.stringify({
         teacherName: cfgTeacher,
         name: activityName,
-        config: {
-          week: cfgWeek,
-          topic: cfgTopic,
-          unit: cfgUnit,
-          teacher: cfgTeacher,
-          userName: cfgUserName,
-          questions: allQuestions
-        }
+        config: activityConfig
       })
     });
     if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
     const data = await res.json();
-    alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+    showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!<br>รหัส: ${data.data?.activityId || '-'}`);
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -813,27 +1317,75 @@ async function loadActivity() {
 }
 
 // แสดงกิจกรรมของครู
-function showTeacherActivities(encodedTeacherName) {
+function showTeacherActivities(encodedTeacherName, filterType = 'all') {
   const teacherName = decodeURIComponent(encodedTeacherName);
-  const activities = window.cloudTeacherMap[teacherName] || [];
+  const allActivities = window.cloudTeacherMap[teacherName] || [];
   const teacherList = document.getElementById('teacherList');
   const activityList = document.getElementById('activityList');
+  
+  // กรองกิจกรรมตามประเภท
+  const activities = filterType === 'all' ? allActivities : 
+    allActivities.filter(a => {
+      const gameType = a.config?.gameType || 'question';
+      return gameType === filterType;
+    });
+  
+  // นับจำนวนแต่ละประเภท
+  const countQuestion = allActivities.filter(a => !a.config?.gameType || a.config?.gameType === 'question').length;
+  const countCounting = allActivities.filter(a => a.config?.gameType === 'counting').length;
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #00838f;">📚 กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #00838f;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'all')" 
+              style="padding: 10px 16px; border: 2px solid #00acc1; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'all' ? 'background: #00acc1; color: white;' : 'background: white; color: #00acc1;'}">
+        ทั้งหมด (${allActivities.length})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'question')" 
+              style="padding: 10px 16px; border: 2px solid #2196F3; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'question' ? 'background: #2196F3; color: white;' : 'background: white; color: #2196F3;'}">
+        โจทย์คณิต (${countQuestion})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'counting')" 
+              style="padding: 10px 16px; border: 2px solid #4CAF50; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'counting' ? 'background: #4CAF50; color: white;' : 'background: white; color: #4CAF50;'}">
+        นับจำนวน (${countCounting})
+      </button>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ไม่มีกิจกรรมในหมวดหมู่นี้</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
-      ${activities.map(a => `
+      ${activities.map(a => {
+        const gameType = a.config?.gameType || 'question';
+        const typeBadge = gameType === 'counting' ? 'นับจำนวน' : 'โจทย์คณิต';
+        const badgeColor = gameType === 'counting' ? '#4CAF50' : '#2196F3';
+        const count = gameType === 'counting' ? 
+          `${a.config?.startNumber || 1} - ${a.config?.endNumber || 10}` :
+          (a.config?.questions?.length || 0) + ' ข้อ';
+        
+        return `
         <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #00acc1;">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 8px 0; color: #006064; font-size: 16px;">📖 ${a.name}</h4>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #006064; font-size: 16px;">${a.name}</h4>
+                <span style="background: ${badgeColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${typeBadge}</span>
+              </div>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สาระ: ${a.config?.topic || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
-              <p style="margin: 4px 0; font-size: 13px; color: #00838f; font-weight: bold;">จำนวนโจทย์: ${a.config?.questions?.length || 0} ข้อ</p>
+              <p style="margin: 4px 0; font-size: 13px; color: #00838f; font-weight: bold;">จำนวน: ${count}</p>
               <p style="margin: 4px 0; font-size: 11px; color: #999;">รหัส: ${a.activityId}</p>
               <p style="margin: 4px 0; font-size: 11px; color: #888;">📅 บันทึก: ${a.createdAtThai || a.updatedAtThai || '-'}</p>
             </div>
@@ -847,8 +1399,10 @@ function showTeacherActivities(encodedTeacherName) {
             </div>
           </div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }
@@ -864,9 +1418,18 @@ function playCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
-  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
-  window.location.href = 'gamemath.html';
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
+  
+  const config = activity.config || {};
+  
+  // ตรวจสอบว่าเป็นเกมจำนวนนับหรือไม่
+  if (config.gameType === 'counting') {
+    localStorage.setItem('countGameConfig', JSON.stringify(config));
+    window.location.href = 'gamecount.html';
+  } else {
+    localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+    window.location.href = 'gamemath.html';
+  }
 }
 
 // แก้ไขกิจกรรมจากคลาวด์
@@ -874,7 +1437,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
 
   const config = activity.config || {};
   document.getElementById('weekInput').value = config.week || '';
@@ -883,14 +1446,23 @@ function editCloudActivity(encodedTeacherName, activityId) {
   document.getElementById('teacherInput').value = config.teacher || '';
   document.getElementById('userNameInput').value = config.userName || '';
 
-  allQuestions = config.questions || [];
-  renderQuestionsList();
+  // ตรวจสอบว่าเป็นเกมจำนวนนับหรือไม่
+  if (config.gameType === 'counting') {
+    switchMode('count');
+    document.getElementById('countStartInput').value = config.startNumber || 1;
+    document.getElementById('countEndInput').value = config.endNumber || 10;
+    updateCountInfo();
+  } else {
+    switchMode('question');
+    allQuestions = config.questions || [];
+    renderQuestionsList();
+  }
 
   window.editingCloudActivity = { teacherName, activityId };
   window.editingCloudActivityName = activity.name;
 
   closeActivityModal();
-  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
+  showCustomAlert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"<br><br>แก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
 }
 
 // ลบกิจกรรมจากคลาวด์
@@ -900,10 +1472,10 @@ async function deleteCloudActivity(encodedTeacherName, activityId) {
   try {
     const res = await fetch(`/api/settings/math/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('ลบไม่สำเร็จ');
-    alert('✅ ลบกิจกรรมสำเร็จ!');
+    showCustomAlert('✅ ลบกิจกรรมสำเร็จ!');
     loadActivity(); // รีโหลด
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -925,12 +1497,12 @@ async function saveToCloud() {
   const userName = document.getElementById('userNameInput').value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
   if (allQuestions.length === 0) {
-    alert('กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อก่อนบันทึก');
     return;
   }
 
@@ -960,12 +1532,12 @@ async function saveToCloud() {
         })
       });
       if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมบนคลาวด์สำเร็จ!');
+      showCustomAlert('✅ อัพเดทกิจกรรมบนคลาวด์สำเร็จ!');
       delete window.editingCloudActivity;
       delete window.editingCloudActivityName;
       return;
     } catch (err) {
-      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+      showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
       return;
     }
   }
@@ -993,10 +1565,59 @@ async function saveToCloud() {
     });
     if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
     const data = await res.json();
-    alert(`✅ บันทึกกิจกรรม "${activityName}" บนคลาวด์สำเร็จ!\nรหัส: ${data.activityId}`);
+    showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" บนคลาวด์สำเร็จ!<br>รหัส: ${data.activityId}`);
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
+}
+
+// ฟังก์ชันเริ่มเกมจำนวนนับ
+function startCountGame() {
+  const startNum = parseInt(document.getElementById('countStartInput').value);
+  const endNum = parseInt(document.getElementById('countEndInput').value);
+  
+  // ตรวจสอบข้อมูล
+  if (!startNum || !endNum || startNum < 1 || endNum < 1) {
+    showCustomAlert('⚠️ กรุณากรอกตัวเลขที่ถูกต้อง (ต้องมากกว่า 0)');
+    return;
+  }
+  
+  if (startNum >= endNum) {
+    showCustomAlert('⚠️ ตัวเลขเริ่มต้นต้องน้อยกว่าตัวเลขสิ้นสุด');
+    return;
+  }
+  
+  if (endNum - startNum > 50) {
+    showCustomAlert('⚠️ จำนวนตัวเลขไม่ควรเกิน 50 ตัว');
+    return;
+  }
+  
+  // ดึงข้อมูลจากฟอร์ม
+  const week = document.getElementById('weekInput').value || 'ไม่ระบุ';
+  const topic = document.getElementById('topicInput').value || 'จำนวนนับ';
+  const unit = document.getElementById('unitInput').value || 'ไม่ระบุ';
+  const teacher = document.getElementById('teacherInput').value || 'ไม่ระบุ';
+  const classroom = document.getElementById('classroomInput').value || 'ไม่ระบุ';
+  const userName = document.getElementById('userNameInput').value || 'ไม่ระบุ';
+  
+  // สร้าง config สำหรับเกมจำนวนนับ
+  const countConfig = {
+    week,
+    topic,
+    unit,
+    teacher,
+    classroom,
+    userName,
+    startNumber: startNum,
+    endNumber: endNum,
+    gameType: 'counting'
+  };
+  
+  // บันทึก config
+  localStorage.setItem('countGameConfig', JSON.stringify(countConfig));
+  
+  // ไปหน้าเกม
+  window.location.href = 'gamecount.html';
 }
 
 </script>
@@ -1006,6 +1627,24 @@ async function saveToCloud() {
 <script src="/socket-client.js"></script>
 <script>
   try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
+<script>
+// ฟังก์ชันรวม ระดับชั้น + ห้อง เป็น classroom
+function updateClassroomValue() {
+  const grade = document.getElementById('gradeSelect')?.value || '';
+  const room = document.getElementById('roomInput')?.value.trim() || '';
+  const classroomInput = document.getElementById('classroomInput');
+  if (classroomInput) {
+    classroomInput.value = room ? `${grade}/${room}` : grade;
+  }
+}
+// เรียกทุกครั้งที่มีการเปลี่ยนค่า
+document.addEventListener('DOMContentLoaded', function() {
+  const gradeSelect = document.getElementById('gradeSelect');
+  const roomInput = document.getElementById('roomInput');
+  if (gradeSelect) gradeSelect.addEventListener('change', updateClassroomValue);
+  if (roomInput) roomInput.addEventListener('input', updateClassroomValue);
+});
 </script>
 <script>
 var __localUsageId_teachermatch = null;

@@ -1,1 +1,50 @@
+# Dependencies
 node_modules
+**/node_modules
+package-lock.json
+
+# Build outputs
+dist
+**/dist
+build
+**/build
+.next
+out
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+logs
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.temp
+
+# Media files (ถ้าไม่ต้องการ track)
+*.mp4
+*.mov
+*.avi
+*.zip
+
+# Uploads (ถ้าเป็น user uploads)
+uploads/*
+!uploads/.gitkeep

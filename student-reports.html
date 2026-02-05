@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานผู้ทดสอบ - Espresso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(180deg, #ebd09e 0%, #251f03 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Category Tabs */
+.main-category-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  border-bottom: 3px solid #74640a;
+  padding-bottom: 15px;
+}
+
+.main-category-tab {
+  padding: 15px 30px;
+  background: #f5f0e5;
+  border: 3px solid #c9a668;
+  border-radius: 15px 15px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.main-category-tab:hover {
+  background: #ebd09e;
+  transform: translateY(-2px);
+}
+
+.main-category-tab.active {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  border-color: #74640a;
+  color: #74640a;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: -3px;
+  border-bottom: 3px solid white;
+}
+
+.main-category-tab .tab-count {
+  background: #74640a;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.main-category-tab.active .tab-count {
+  background: #27ae60;
+}
+
+.main-category-content {
+  display: none;
+}
+
+.main-category-content.active {
+  display: block;
+}
+
+/* Subject Category Cards */
+.subject-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.subject-category-card {
+  background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%);
+  border: 3px solid #74640a;
+  border-radius: 15px;
+  padding: 25px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.subject-category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(116, 100, 10, 0.3);
+}
+
+.subject-category-card.active {
+  background: linear-gradient(135deg, #74640a 0%, #a08c1a 100%);
+  color: white;
+}
+
+.subject-category-card.active h3,
+.subject-category-card.active .category-stats {
+  color: white;
+}
+
+.subject-category-card .category-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.subject-category-card h3 {
+  font-size: 22px;
+  color: #74640a;
+  margin-bottom: 10px;
+}
+
+.subject-category-card .category-stats {
+  display: flex;
+  gap: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.subject-category-card .category-stats span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Collapsible Section */
+.collapsible-section {
+  margin-bottom: 20px;
+  border: 3px solid #74640a;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.collapsible-header:hover {
+  background: #ebd09e;
+}
+
+.collapsible-header h3 {
+  font-size: 20px;
+  color: #74640a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collapsible-header .header-stats {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.collapsible-header .stat-badge {
+  background: #74640a;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.collapsible-header .expand-icon {
+  font-size: 24px;
+  transition: transform 0.3s;
+  color: #74640a;
+}
+
+.collapsible-section.expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+.collapsible-body {
+  display: none;
+  padding: 20px;
+  background: white;
+}
+
+.collapsible-section.expanded .collapsible-body {
+  display: block;
+}
+
+/* Student Grid in Category */
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.student-mini-card {
+  background: #f8f9fa;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 15px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.student-mini-card:hover {
+  border-color: #74640a;
+  box-shadow: 0 4px 12px rgba(116, 100, 10, 0.2);
+}
+
+.student-mini-card .student-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.student-mini-card .student-name-small {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.student-mini-card .student-score {
+  font-size: 18px;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.student-mini-card .student-score.low {
+  color: #e74c3c;
+}
+
+.student-mini-card .student-score.medium {
+  color: #f39c12;
+}
+
+.student-mini-card .student-meta {
+  font-size: 13px;
+  color: #999;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Subject Summary Stats */
+.subject-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f5f0e5;
+  border-radius: 12px;
+}
+
+.summary-stat-item {
+  text-align: center;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #74640a;
+}
+
+.summary-stat-item .stat-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.summary-stat-item .stat-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.summary-stat-item .stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #74640a;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #74640a;
+}
+
+.header h1 {
+  font-size: 42px;
+  color: #74640a;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 18px;
+  color: #666;
+}
+
+.filters {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 250px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.filter-group select,
+.filter-group input {
+  width: 100%;
+  padding: 12px;
+  border: 3px solid #74640a;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+  background: white;
+}
+
+.btn-refresh {
+  padding: 12px 30px;
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  color: #000;
+  border: 4px solid #74640a;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  align-self: flex-end;
+}
+
+.btn-refresh:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%);
+  border: 3px solid #74640a;
+  border-radius: 15px;
+  padding: 25px;
+  text-align: center;
+}
+
+.stat-card h3 {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.stat-card .stat-value {
+  font-size: 36px;
+  color: #74640a;
+  font-weight: 700;
+}
+
+.students-list {
+  margin-top: 30px;
+}
+
+.student-card {
+  background: white;
+  border: 3px solid #74640a;
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 20px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.student-card:hover {
+  box-shadow: 0 6px 20px rgba(116, 100, 10, 0.3);
+  transform: translateY(-2px);
+}
+
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.student-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #74640a;
+}
+
+.student-classroom {
+  font-size: 18px;
+  color: #666;
+  background: #f5f0e5;
+  padding: 8px 16px;
+  border-radius: 20px;
+}
+
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.result-item {
+  text-align: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.result-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.result-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #74640a;
+}
+
+.test-history {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+  display: none;
+}
+
+.test-history.expanded {
+  display: block;
+}
+
+.test-item {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.test-info {
+  flex: 1;
+}
+
+.test-topic {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.test-date {
+  font-size: 14px;
+  color: #999;
+}
+
+.test-score {
+  font-size: 24px;
+  font-weight: 700;
+  color: #27ae60;
+  min-width: 80px;
+  text-align: right;
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 18px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 20px;
+  color: #74640a;
+}
+
+.btn-back {
+  display: inline-block;
+  padding: 12px 30px;
+  background: linear-gradient(180deg, #e0e0e0 0%, #c0c0c0 100%);
+  color: #333;
+  border: 4px solid #999;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: 'Roboto', sans-serif;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.classroom-section {
+  margin-bottom: 40px;
+  background: white;
+  border: 4px solid #74640a;
+  border-radius: 20px;
+  padding: 30px;
+}
+
+.classroom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid #eee;
+}
+
+.classroom-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #74640a;
+}
+
+.classroom-count {
+  font-size: 18px;
+  color: #666;
+  background: #f5f0e5;
+  padding: 8px 20px;
+  border-radius: 20px;
+}
+
+.subject-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.subject-tab {
+  padding: 12px 24px;
+  background: #f5f0e5;
+  border: 3px solid #c9a668;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.subject-tab:hover {
+  background: #ebd09e;
+  transform: translateY(-2px);
+}
+
+.subject-tab.active {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  border-color: #74640a;
+  color: #74640a;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.subject-content {
+  display: none;
+}
+
+.subject-content.active {
+  display: block;
+}
+
+.question-details {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 10px;
+}
+
+.question-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #74640a;
+}
+
+.question-text {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.question-answer {
+  font-size: 14px;
+  color: #666;
+}
+
+.answer-correct {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.answer-wrong {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.btn-export-pdf {
+  padding: 10px 20px;
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  color: #000;
+  border: 3px solid #74640a;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  transition: all 0.3s;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn-export-pdf:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.auto-save-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  background: #27ae60;
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: none;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.test-item-detailed {
+  background: white;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.test-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* PDF Modal Styles */
+.pdf-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.pdf-modal-overlay.active {
+  display: flex;
+}
+
+.pdf-modal {
+  background: white;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  border-bottom: 3px solid #74640a;
+}
+
+.pdf-modal-header h3 {
+  color: #74640a;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pdf-modal-close {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pdf-modal-close:hover {
+  background: #c0392b;
+  transform: scale(1.1);
+}
+
+.pdf-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.pdf-modal-body iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+}
+
+.pdf-modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  background: #f8f6f0;
+  border-top: 2px solid #eee;
+}
+
+.pdf-modal-btn {
+  padding: 12px 30px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Roboto', sans-serif;
+}
+
+.pdf-modal-btn-download {
+  background: linear-gradient(180deg, #27ae60 0%, #219653 100%);
+  color: white;
+  border: 3px solid #1e8449;
+}
+
+.pdf-modal-btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+}
+
+.pdf-modal-btn-print {
+  background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border: 3px solid #2471a3;
+}
+
+.pdf-modal-btn-print:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.pdf-modal-btn-close {
+  background: linear-gradient(180deg, #e0e0e0 0%, #c0c0c0 100%);
+  color: #333;
+  border: 3px solid #999;
+}
+
+.pdf-modal-btn-close:hover {
+  transform: translateY(-2px);
+}
+
+/* Hierarchy Tree Styles */
+.hierarchy-tree {
+  margin-left: 20px;
+  border-left: 3px solid #74640a;
+  padding-left: 20px;
+}
+
+.hierarchy-item {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.hierarchy-item::before {
+  content: '';
+  position: absolute;
+  left: -23px;
+  top: 15px;
+  width: 20px;
+  height: 3px;
+  background: #74640a;
+}
+
+.grade-card {
+  background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%);
+  border: 3px solid #74640a;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.grade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.grade-header:hover {
+  background: #ebd09e;
+}
+
+.grade-header h3 {
+  color: #74640a;
+  font-size: 22px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grade-body {
+  display: none;
+  padding: 15px;
+  background: white;
+}
+
+.grade-card.expanded .grade-body {
+  display: block;
+}
+
+.room-card {
+  background: #f8f9fa;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.room-header:hover {
+  background: #e8e8e8;
+}
+
+.room-body {
+  display: none;
+  padding: 15px;
+}
+
+.room-card.expanded .room-body {
+  display: block;
+}
+
+</style>
+</head>
+<body>
+
+<!-- PDF Modal -->
+<div id="pdfModal" class="pdf-modal-overlay">
+  <div class="pdf-modal">
+    <div class="pdf-modal-header">
+      <h3 id="pdfModalTitle">รายงาน</h3>
+      <button class="pdf-modal-close" onclick="closePdfModal()">✕</button>
+    </div>
+    <div class="pdf-modal-body">
+      <!-- Content will be inserted dynamically -->
+    </div>
+    <div class="pdf-modal-footer">
+      <button class="pdf-modal-btn pdf-modal-btn-download" onclick="downloadCurrentPdf()">
+        ดาวน์โหลด
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>ประวัติการทำแบบทดสอบ</h1>
+    <p>ติดตามผลการทำแบบทดสอบของผู้เรียน</p>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label for="classroomFilter">ค้นหาตามระดับชั้น:</label>
+      <select id="classroomFilter">
+        <option value="">ทุกระดับชั้น</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label for="searchInput">ค้นหาชื่อ:</label>
+      <input type="text" id="searchInput" placeholder="พิมพ์ชื่อผู้ทดสอบ...">
+    </div>
+  </div>
+
+  <!-- Student Reports Content -->
+  <div id="studentsList" class="students-list"></div>
+
+  <div id="loading" class="loading">กำลังโหลดข้อมูล...</div>
+  <div id="noData" class="no-data" style="display: none;">
+    ยังไม่มีข้อมูลผู้ทดสอบ<br>
+    <small>ผู้ทดสอบจะถูกบันทึกอัตโนมัติเมื่อเข้าทำแบบทดสอบ</small>
+  </div>
+  
+  <div id="autoSaveIndicator" class="auto-save-indicator">
+    ✓ บันทึกรายงานอัตโนมัติแล้ว
+  </div>
+</div>
+
+<script type="module">
+// ดึงข้อมูลโดยตรงจาก game_results API (ไม่ดึง reportImage มาทันที)
+async function fetchGameResults() {
+  try {
+    const response = await fetch('/api/game-results?limit=500');
+    const data = await response.json();
+    if (data.success && data.results) {
+      return data.results.map(r => ({
+        id: r._id,
+        studentName: r.user_name || r.student_name || 'ไม่ระบุ',
+        classroom: r.classroom || '',
+        teacher: r.teacher || '',
+        activityType: r.activity_type || r.game_type || 'game',
+        topic: r.topic || r.unit || '',
+        score: r.score || 0,
+        totalQuestions: r.total_questions || 1,
+        correctAnswers: r.correct_answers || 0,
+        timeSpent: r.duration_ms || 0,
+        timestamp: r.timestamp || r.created_at,
+        hasReportImage: r.hasReportImage || !!r.report_image || false,
+        hasPdfBase64: !!r.pdf_base64,
+        pdfBase64: r.pdf_base64 || null,
+        reportImage: null // จะดึงทีหลังเมื่อต้องการ
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching game results:', error);
+    return [];
+  }
+}
+
+// ดึงรูปรายงานเมื่อต้องการดู
+async function fetchReportImage(resultId) {
+  try {
+    const response = await fetch(`/api/game-results/${resultId}/image`);
+    const data = await response.json();
+    if (data.success && data.reportImage) {
+      return data.reportImage;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching report image:', error);
+    return null;
+  }
+}
+
+// เปิด modal ดูรูปรายงาน
+window.openReportImage = async function(resultId, studentName, topic) {
+  // แสดง loading modal ก่อน
+  showLoadingModal('กำลังเปิดรายงาน...');
+  
+  const image = await fetchReportImage(resultId);
+  
+  // ปิด loading
+  hideLoadingModal();
+  
+  if (image) {
+    openPdfModal(image, `${studentName} - ${topic || 'รายงาน'}`, `${studentName}_report`);
+  } else {
+    alert('ไม่พบรูปรายงาน');
+  }
+};
+
+// Loading modal functions
+function showLoadingModal(message) {
+  let loadingModal = document.getElementById('loadingModal');
+  if (!loadingModal) {
+    loadingModal = document.createElement('div');
+    loadingModal.id = 'loadingModal';
+    loadingModal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); display: flex; justify-content: center;
+      align-items: center; z-index: 99999; backdrop-filter: blur(3px);
+    `;
+    loadingModal.innerHTML = `
+      <div style="background: white; border-radius: 15px; padding: 30px 50px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #74640a; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+        <div id="loadingMessage" style="color: #74640a; font-size: 18px; font-weight: 600;"></div>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+    document.body.appendChild(loadingModal);
+  }
+  document.getElementById('loadingMessage').textContent = message || 'กำลังโหลด...';
+  loadingModal.style.display = 'flex';
+}
+
+function hideLoadingModal() {
+  const loadingModal = document.getElementById('loadingModal');
+  if (loadingModal) {
+    loadingModal.style.display = 'none';
+  }
+}
+
+let allStudents = [];
+let allResults = [];
+let groupedData = {};
+let subjectGroupedData = {};
+let performanceGroupedData = {};
+let currentMainCategory = 'classroom';
+
+const activityNames = {
+  gamemath: 'คณิตศาสตร์',
+  gamethai: 'ภาษาไทย',
+  gamepicture: 'รูปภาพ',
+  gamecount: 'นับจำนวน',
+  gamewrite: 'เขียน'
+};
+
+const activityIcons = {
+  gamemath: '',
+  gamethai: '',
+  gamepicture: '',
+  gamecount: '',
+  gamewrite: ''
+};
+
+const performanceCategories = {
+  excellent: { label: 'ยอดเยี่ยม (80-100%)', icon: '', color: '#27ae60', min: 80, max: 100 },
+  good: { label: 'ดี (60-79%)', icon: '', color: '#3498db', min: 60, max: 79 },
+  average: { label: 'พอใช้ (40-59%)', icon: '', color: '#f39c12', min: 40, max: 59 },
+  needsHelp: { label: 'ต้องปรับปรุง (0-39%)', icon: '', color: '#e74c3c', min: 0, max: 39 }
+};
+
+// Switch between main category tabs
+window.switchMainCategory = function(category) {
+  currentMainCategory = category;
+  
+  // Update tabs
+  document.querySelectorAll('.main-category-tab').forEach(tab => {
+    if (tab.dataset.category === category) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  
+  // Update content
+  document.querySelectorAll('.main-category-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  const contentId = 'category' + category.charAt(0).toUpperCase() + category.slice(1);
+  const content = document.getElementById(contentId);
+  if (content) {
+    content.classList.add('active');
+  }
+  
+  // Render content based on category
+  switch(category) {
+    case 'classroom':
+      displayStudentReports();
+      break;
+    case 'subject':
+      displayBySubject();
+      break;
+    case 'performance':
+      displayByPerformance();
+      break;
+    case 'recent':
+      displayRecent();
+      break;
+  }
+};
+
+window.loadStudentReports = async function() {
+  const loading = document.getElementById('loading');
+  const studentsList = document.getElementById('studentsList');
+  const noData = document.getElementById('noData');
+  
+  loading.style.display = 'block';
+  studentsList.style.display = 'none';
+  noData.style.display = 'none';
+  
+  try {
+    // ดึงข้อมูลจาก game_results โดยตรง
+    allResults = await fetchGameResults();
+    console.log('[DEBUG] Loaded game results:', allResults.length);
+    
+    if (allResults.length === 0) {
+      loading.style.display = 'none';
+      noData.style.display = 'block';
+      return;
+    }
+    
+    // สร้างรายชื่อนักเรียนจากผลการทดสอบ (ใช้ชื่อ+ห้องเป็น key เท่านั้น)
+    const studentMap = new Map();
+    allResults.forEach(r => {
+      const key = `${r.studentName}_${r.classroom || ''}`;
+      if (!studentMap.has(key)) {
+        studentMap.set(key, {
+          name: r.studentName,
+          classroom: r.classroom || ''
+        });
+      }
+    });
+    allStudents = Array.from(studentMap.values());
+    console.log('[DEBUG] Students:', allStudents);
+    
+    // รวม classrooms สำหรับ filter
+    const classroomsSet = new Set();
+    allResults.forEach(r => {
+      if (r.classroom && r.classroom !== '' && r.classroom !== 'ไม่ระบุชั้น') {
+        classroomsSet.add(r.classroom);
+      } else {
+        // ถ้าไม่มี classroom ให้ใช้ "ไม่ระบุชั้น"
+        classroomsSet.add('ไม่ระบุชั้น');
+      }
+    });
+    const classrooms = [...classroomsSet];
+    console.log('[DEBUG] Classrooms:', classrooms);
+    
+    // จัดกลุ่มข้อมูลตามชั้นเรียนและวิชา
+    groupDataByClassroomAndSubject();
+    groupDataBySubject();
+    groupDataByPerformance();
+    
+    // อัปเดต filters
+    updateClassroomFilter(classrooms);
+    
+    // แสดงข้อมูลตาม category ปัจจุบัน
+    switchMainCategory(currentMainCategory);
+    
+    // Auto-save รายงาน
+    autoSaveReports();
+    
+    loading.style.display = 'none';
+  } catch (error) {
+    console.error('Error loading student reports:', error);
+    loading.innerHTML = '<span style="color: red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</span>';
+  }
+};
+
+// Tab counts removed - tabs no longer exist
+
+function groupDataBySubject() {
+  subjectGroupedData = {};
+  
+  allResults.forEach(result => {
+    const subject = result.activityType || 'other';
+    
+    if (!subjectGroupedData[subject]) {
+      subjectGroupedData[subject] = {
+        results: [],
+        students: new Set()
+      };
+    }
+    
+    subjectGroupedData[subject].results.push(result);
+    subjectGroupedData[subject].students.add(`${result.studentName}_${result.classroom}`);
+  });
+}
+
+function groupDataByPerformance() {
+  performanceGroupedData = {
+    excellent: [],
+    good: [],
+    average: [],
+    needsHelp: []
+  };
+  
+  allStudents.forEach(student => {
+    const studentResults = allResults.filter(r => 
+      r.studentName === student.name && r.classroom === student.classroom
+    );
+    
+    if (studentResults.length === 0) {
+      performanceGroupedData.needsHelp.push({ ...student, results: [], averagePercentage: 0 });
+      return;
+    }
+    
+    const totalScore = studentResults.reduce((sum, r) => sum + (r.score || 0), 0);
+    const totalPossible = studentResults.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+    const averagePercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+    
+    const studentData = { ...student, results: studentResults, averagePercentage };
+    
+    if (averagePercentage >= 80) {
+      performanceGroupedData.excellent.push(studentData);
+    } else if (averagePercentage >= 60) {
+      performanceGroupedData.good.push(studentData);
+    } else if (averagePercentage >= 40) {
+      performanceGroupedData.average.push(studentData);
+    } else {
+      performanceGroupedData.needsHelp.push(studentData);
+    }
+  });
+}
+
+function displayBySubject() {
+  const grid = document.getElementById('subjectCategoryGrid');
+  const list = document.getElementById('subjectStudentsList');
+  
+  // Create subject cards
+  grid.innerHTML = Object.entries(subjectGroupedData).map(([subject, data]) => {
+    const totalScore = data.results.reduce((sum, r) => sum + (r.score || 0), 0);
+    const totalPossible = data.results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+    const avgPercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+    
+    return `
+      <div class="subject-category-card" onclick="expandSubjectCategory('${subject}')">
+        <div class="category-icon">${activityIcons[subject] || ''}</div>
+        <h3>${activityNames[subject] || subject}</h3>
+        <div class="category-stats">
+          <span>${data.students.size} คน</span>
+          <span>${data.results.length} ครั้ง</span>
+          <span>${avgPercentage}%</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  list.innerHTML = '';
+}
+
+window.expandSubjectCategory = function(subject) {
+  const list = document.getElementById('subjectStudentsList');
+  const data = subjectGroupedData[subject];
+  
+  if (!data) return;
+  
+  // Group results by student
+  const studentResults = {};
+  data.results.forEach(result => {
+    const key = `${result.studentName}_${result.classroom}`;
+    if (!studentResults[key]) {
+      studentResults[key] = {
+        name: result.studentName,
+        classroom: result.classroom,
+        results: []
+      };
+    }
+    studentResults[key].results.push(result);
+  });
+  
+  const students = Object.values(studentResults);
+  const totalScore = data.results.reduce((sum, r) => sum + (r.score || 0), 0);
+  const totalPossible = data.results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+  const avgPercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+  
+  list.innerHTML = `
+    <div class="collapsible-section expanded">
+      <div class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <h3>${activityIcons[subject] || ''} ${activityNames[subject] || subject}</h3>
+        <div class="header-stats">
+          <span class="stat-badge">${students.length} คน</span>
+          <span class="stat-badge">${data.results.length} ครั้ง</span>
+          <span class="stat-badge" style="background: ${avgPercentage >= 60 ? '#27ae60' : '#e74c3c'}">${avgPercentage}%</span>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="subject-summary-stats">
+          <div class="summary-stat-item">
+            <div class="stat-icon"></div>
+            <div class="stat-label">จำนวนผู้เรียน</div>
+            <div class="stat-number">${students.length}</div>
+          </div>
+          <div class="summary-stat-item">
+            <div class="stat-icon"></div>
+            <div class="stat-label">จำนวนครั้งที่ทำ</div>
+            <div class="stat-number">${data.results.length}</div>
+          </div>
+          <div class="summary-stat-item">
+            <div class="stat-icon"></div>
+            <div class="stat-label">คะแนนเฉลี่ย</div>
+            <div class="stat-number">${avgPercentage}%</div>
+          </div>
+          <div class="summary-stat-item">
+            <div class="stat-icon"></div>
+            <div class="stat-label">คะแนนรวม</div>
+            <div class="stat-number">${totalScore}/${totalPossible}</div>
+          </div>
+        </div>
+        <div class="students-grid">
+          ${students.map(student => {
+            const sTotal = student.results.reduce((sum, r) => sum + (r.score || 0), 0);
+            const sPossible = student.results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+            const sPercentage = sPossible > 0 ? Math.round((sTotal / sPossible) * 100) : 0;
+            const scoreClass = sPercentage >= 80 ? '' : sPercentage >= 50 ? 'medium' : 'low';
+            return `
+              <div class="student-mini-card">
+                <div class="student-info">
+                  <div class="student-name-small">${student.name}</div>
+                  <div class="student-score ${scoreClass}">${sPercentage}%</div>
+                </div>
+                <div class="student-meta">
+                  <span>${student.classroom || 'ไม่ระบุ'}</span>
+                  <span>${student.results.length} ครั้ง</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+function displayByPerformance() {
+  const grid = document.getElementById('performanceCategoryGrid');
+  const list = document.getElementById('performanceStudentsList');
+  
+  grid.innerHTML = Object.entries(performanceCategories).map(([key, cat]) => {
+    const students = performanceGroupedData[key] || [];
+    return `
+      <div class="subject-category-card" onclick="expandPerformanceCategory('${key}')" style="border-color: ${cat.color}">
+        <div class="category-icon">${cat.icon}</div>
+        <h3>${cat.label}</h3>
+        <div class="category-stats">
+          <span>${students.length} คน</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  list.innerHTML = '';
+}
+
+window.expandPerformanceCategory = function(category) {
+  const list = document.getElementById('performanceStudentsList');
+  const students = performanceGroupedData[category] || [];
+  const cat = performanceCategories[category];
+  
+  list.innerHTML = `
+    <div class="collapsible-section expanded">
+      <div class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')" style="border-color: ${cat.color}">
+        <h3>${cat.icon} ${cat.label}</h3>
+        <div class="header-stats">
+          <span class="stat-badge" style="background: ${cat.color}">${students.length} คน</span>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="students-grid">
+          ${students.sort((a, b) => b.averagePercentage - a.averagePercentage).map(student => {
+            const scoreClass = student.averagePercentage >= 80 ? '' : student.averagePercentage >= 50 ? 'medium' : 'low';
+            return `
+              <div class="student-mini-card">
+                <div class="student-info">
+                  <div class="student-name-small">${student.name}</div>
+                  <div class="student-score ${scoreClass}">${student.averagePercentage}%</div>
+                </div>
+                <div class="student-meta">
+                  <span>${student.classroom || 'ไม่ระบุ'}</span>
+                  <span>${student.results.length} แบบทดสอบ</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+function displayRecent() {
+  const list = document.getElementById('recentStudentsList');
+  
+  // Group by date
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const thisWeek = new Date(today);
+  thisWeek.setDate(thisWeek.getDate() - 7);
+  
+  const todayResults = allResults.filter(r => new Date(r.timestamp) >= today);
+  const yesterdayResults = allResults.filter(r => {
+    const d = new Date(r.timestamp);
+    return d >= yesterday && d < today;
+  });
+  const thisWeekResults = allResults.filter(r => {
+    const d = new Date(r.timestamp);
+    return d >= thisWeek && d < yesterday;
+  });
+  
+  list.innerHTML = `
+    ${createRecentSection('วันนี้', todayResults)}
+    ${createRecentSection('เมื่อวาน', yesterdayResults)}
+    ${createRecentSection('7 วันที่ผ่านมา', thisWeekResults)}
+  `;
+}
+
+function createRecentSection(title, results) {
+  if (results.length === 0) {
+    return `
+      <div class="collapsible-section">
+        <div class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>${title}</h3>
+          <div class="header-stats">
+            <span class="stat-badge">0 รายการ</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="collapsible-body">
+          <p style="text-align: center; color: #999; padding: 20px;">ไม่มีข้อมูล</p>
+        </div>
+      </div>
+    `;
+  }
+  
+  return `
+    <div class="collapsible-section expanded">
+      <div class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <h3>${title}</h3>
+        <div class="header-stats">
+          <span class="stat-badge">${results.length} รายการ</span>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="students-grid">
+          ${results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(result => {
+            const percentage = result.totalQuestions > 0 ? Math.round((result.score / result.totalQuestions) * 100) : 0;
+            const scoreClass = percentage >= 80 ? '' : percentage >= 50 ? 'medium' : 'low';
+            const time = new Date(result.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            return `
+              <div class="student-mini-card">
+                <div class="student-info">
+                  <div class="student-name-small">${result.studentName}</div>
+                  <div class="student-score ${scoreClass}">${percentage}%</div>
+                </div>
+                <div class="student-meta">
+                  <span>${activityIcons[result.activityType] || ''} ${activityNames[result.activityType] || result.activityType}</span>
+                  <span>${time}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function groupDataByClassroomAndSubject() {
+  groupedData = {};
+  
+  allStudents.forEach(student => {
+    const classroom = student.classroom || 'ไม่ระบุชั้น';
+    
+    if (!groupedData[classroom]) {
+      groupedData[classroom] = {
+        students: [],
+        subjects: {}
+      };
+    }
+    
+    // จัดเก็บข้อมูลนักเรียน (normalize classroom comparison)
+    const studentResults = allResults.filter(r => 
+      r.studentName === student.name && (r.classroom || '') === (student.classroom || '')
+    );
+    
+    groupedData[classroom].students.push({
+      ...student,
+      results: studentResults
+    });
+    
+    // จัดกลุ่มตามวิชา
+    studentResults.forEach(result => {
+      const subject = result.activityType || 'other';
+      
+      if (!groupedData[classroom].subjects[subject]) {
+        groupedData[classroom].subjects[subject] = [];
+      }
+      
+      groupedData[classroom].subjects[subject].push(result);
+    });
+  });
+}
+
+function updateClassroomFilter(classrooms) {
+  const filter = document.getElementById('classroomFilter');
+  filter.innerHTML = '<option value="">ทุกชั้นเรียน</option>';
+  
+  // แยกระดับชั้นจากชั้นเรียนทั้งหมด
+  const grades = new Set();
+  classrooms.forEach(classroom => {
+    const parts = classroom.split('/');
+    if (parts[0]) {
+      grades.add(parts[0]);
+    }
+  });
+  
+  // กำหนดลำดับ
+  const gradeOrder = [
+    'อนุบาล 1', 'อนุบาล 2', 'อนุบาล 3',
+    'ป.1', 'ป.2', 'ป.3', 'ป.4', 'ป.5', 'ป.6',
+    'ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'
+  ];
+  
+  const sortedGrades = Array.from(grades).sort((a, b) => {
+    const aIndex = gradeOrder.indexOf(a);
+    const bIndex = gradeOrder.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+  
+  sortedGrades.forEach(grade => {
+    const option = document.createElement('option');
+    option.value = grade;
+    option.textContent = grade;
+    filter.appendChild(option);
+  });
+}
+
+function displayStudentReports() {
+  // ใช้ hierarchy display แทน (ชั้นปี → ห้อง → รายชื่อ)
+  displayHierarchy();
+}
+
+function createClassroomSection(classroom, searchText) {
+  const data = groupedData[classroom];
+  
+  // กรองนักเรียนตามการค้นหา
+  let filteredStudents = data.students;
+  if (searchText) {
+    filteredStudents = filteredStudents.filter(s => 
+      s.name.toLowerCase().includes(searchText)
+    );
+  }
+  
+  if (filteredStudents.length === 0) return null;
+  
+  const section = document.createElement('div');
+  section.className = 'collapsible-section expanded';
+  section.id = `classroom-${classroom}`;
+  
+  const subjects = Object.keys(data.subjects);
+  const defaultSubject = subjects[0] || 'all';
+  
+  section.innerHTML = `
+    <div class="collapsible-header" onclick="toggleClassroomSection('${classroom}')">
+      <h3>${classroom}</h3>
+      <div class="header-stats">
+        <span class="stat-badge">${filteredStudents.length} คน</span>
+        <span class="stat-badge">${subjects.length} วิชา</span>
+        <span class="expand-icon">▼</span>
+      </div>
+    </div>
+    
+    <div class="collapsible-body">
+      <div class="subject-summary-stats">
+        ${subjects.map(subject => {
+          const subjectResults = data.subjects[subject] || [];
+          const totalScore = subjectResults.reduce((sum, r) => sum + (r.score || 0), 0);
+          const totalPossible = subjectResults.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+          const avgPercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+          return `
+            <div class="summary-stat-item" onclick="filterClassroomBySubject('${classroom}', '${subject}')">
+              <div class="stat-icon">${getSubjectIcon(subject)}</div>
+              <div class="stat-label">${activityNames[subject] || subject}</div>
+              <div class="stat-number">${avgPercentage}%</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      
+      <div class="subject-tabs">
+        <div class="subject-tab active" data-subject="all" onclick="switchSubject('${classroom}', 'all')">
+          ทุกวิชา
+        </div>
+        ${subjects.map(subject => `
+          <div class="subject-tab" data-subject="${subject}" onclick="switchSubject('${classroom}', '${subject}')">
+            ${getSubjectIcon(subject)} ${activityNames[subject] || subject}
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="subject-content active" data-subject="all">
+        <div class="students-grid">
+          ${createStudentsGridItems(filteredStudents, 'all')}
+        </div>
+      </div>
+      
+      ${subjects.map(subject => `
+        <div class="subject-content" data-subject="${subject}">
+          <div class="students-grid">
+            ${createStudentsGridItems(filteredStudents, subject)}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  return section;
+}
+
+function createStudentsGridItems(students, subject) {
+  return students.map(student => {
+    const results = subject === 'all' 
+      ? student.results 
+      : student.results.filter(r => r.activityType === subject);
+    
+    if (results.length === 0 && subject !== 'all') return '';
+    
+    const totalScore = results.reduce((sum, r) => sum + (r.score || 0), 0);
+    const totalPossible = results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+    const percentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+    const scoreClass = percentage >= 80 ? '' : percentage >= 50 ? 'medium' : 'low';
+    
+    return `
+      <div class="student-mini-card" onclick="showStudentDetail('${student.name}', '${student.classroom}')">
+        <div class="student-info">
+          <div class="student-name-small">${student.name}</div>
+          <div class="student-score ${scoreClass}">${percentage}%</div>
+        </div>
+        <div class="student-meta">
+          <span>${results.length} แบบทดสอบ</span>
+          <span>${totalScore}/${totalPossible}</span>
+        </div>
+      </div>
+    `;
+  }).filter(html => html).join('');
+}
+
+window.toggleClassroomSection = function(classroom) {
+  const section = document.getElementById(`classroom-${classroom}`);
+  if (section) {
+    section.classList.toggle('expanded');
+  }
+};
+
+window.showStudentDetail = function(name, classroom) {
+  const student = allStudents.find(s => s.name === name && s.classroom === classroom);
+  if (!student) return;
+  
+  const studentResults = allResults.filter(r => r.studentName === name && r.classroom === classroom);
+  
+  // Create modal or expand card with full details
+  alert(`รายละเอียด: ${name}\nชั้น: ${classroom}\nจำนวนแบบทดสอบ: ${studentResults.length}`);
+};
+
+function getSubjectIcon(subject) {
+  const icons = {
+    gamemath: '',
+    gamethai: '',
+    gamepicture: '',
+    gamecount: '',
+    gamewrite: ''
+  };
+  return icons[subject] || '';
+}
+
+function createStudentCard(student, results) {
+  const totalTests = results.length;
+  const totalScore = results.reduce((sum, r) => sum + (r.score || 0), 0);
+  const totalPossible = results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+  const averagePercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+  
+  return `
+    <div class="student-card">
+      <div class="student-header">
+        <div class="student-name">${student.name}</div>
+        ${student.classroom ? `<div class="student-classroom">${student.classroom}</div>` : ''}
+      </div>
+      
+      <div class="results-summary">
+        <div class="result-item">
+          <div class="result-label">แบบทดสอบที่ทำ</div>
+          <div class="result-value">${totalTests}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">คะแนนรวม</div>
+          <div class="result-value">${totalScore}/${totalPossible}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">คะแนนเฉลี่ย</div>
+          <div class="result-value">${averagePercentage}%</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">ครั้งล่าสุด</div>
+          <div class="result-value" style="font-size: 14px;">
+            ${results.length > 0 ? new Date(results[results.length - 1].timestamp).toLocaleDateString('th-TH') : '-'}
+          </div>
+        </div>
+      </div>
+      
+      ${createDetailedTestHistory(results)}
+    </div>
+  `;
+}
+
+function createDetailedTestHistory(results) {
+  if (results.length === 0) {
+    return '<div style="text-align: center; color: #999; padding: 20px; margin-top: 15px;">ยังไม่มีประวัติการทดสอบ</div>';
+  }
+  
+  return `
+    <div style="margin-top: 20px;">
+      <h4 style="margin-bottom: 15px; color: #74640a; font-size: 18px;">รายละเอียดการทดสอบ</h4>
+      ${results.map((result, index) => createDetailedTestItem(result, index + 1)).join('')}
+    </div>
+  `;
+}
+
+function createDetailedTestItem(result, index) {
+  const date = new Date(result.timestamp);
+  const percentage = result.totalQuestions > 0 
+    ? Math.round((result.score / result.totalQuestions) * 100)
+    : 0;
+  
+  const gradeColor = percentage >= 80 ? '#27ae60' : percentage >= 50 ? '#f39c12' : '#e74c3c';
+  const uniqueId = `test-${result.id || Math.random().toString(36).substr(2, 9)}`;
+  
+  return `
+    <div class="test-item-detailed">
+      <div class="test-item-header">
+        <div>
+          <div style="font-weight: 700; color: #74640a; font-size: 18px; margin-bottom: 5px;">
+            ${index}. ${activityNames[result.activityType] || result.activityType}
+          </div>
+          <div style="font-size: 14px; color: #999;">
+            ${date.toLocaleDateString('th-TH', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 28px; font-weight: 700; color: ${gradeColor};">
+            ${result.score}/${result.totalQuestions}
+          </div>
+          <div style="font-size: 14px; color: #666;">(${percentage}%)</div>
+        </div>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px;">
+        <div style="font-weight: 600; color: #333; margin-bottom: 10px;">
+          โจทย์: ${result.topic || 'ไม่ระบุ'}
+        </div>
+        
+        ${result.pdfBase64 ? `
+          <div style="margin-bottom: 15px;">
+            <button onclick="downloadPDFFromBase64('${result.pdfBase64}', '${result.topic || 'รายงาน'}_${date.toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf')" 
+              style="padding: 10px 20px; background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 100%); color: #000; 
+              border: 3px solid #74640a; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; 
+              font-family: 'Roboto', sans-serif; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);">
+              ดาวน์โหลดรายงาน PDF
+            </button>
+          </div>
+        ` : ''}
+        
+        ${result.questions && result.questions.length > 0 ? `
+          <div class="question-details">
+            <div style="font-weight: 600; margin-bottom: 10px; color: #74640a;">รายละเอียดคำถาม:</div>
+            ${result.questions.map((q, i) => `
+              <div class="question-item">
+                <div class="question-text">ข้อ ${i + 1}: ${q.question || q.text || 'คำถาม'}</div>
+                <div class="question-answer">
+                  คำตอบที่เลือก: <span class="${q.isCorrect ? 'answer-correct' : 'answer-wrong'}">
+                    ${q.userAnswer || '-'} ${q.isCorrect ? '✓ ถูกต้อง' : '✗ ผิด (ถูกต้อง: ' + (q.correctAnswer || '-') + ')'}
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        
+        ${result.timeSpent ? `
+          <div style="margin-top: 10px; color: #666; font-size: 14px;">
+            เวลาที่ใช้: ${Math.floor(result.timeSpent / 60)} นาที ${result.timeSpent % 60} วินาที
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+window.switchSubject = function(classroom, subject) {
+  const section = document.getElementById(`classroom-${classroom}`);
+  if (!section) return;
+  
+  // อัปเดต tabs
+  section.querySelectorAll('.subject-tab').forEach(tab => {
+    if (tab.dataset.subject === subject) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  
+  // อัปเดต content
+  section.querySelectorAll('.subject-content').forEach(content => {
+    if (content.dataset.subject === subject) {
+      content.classList.add('active');
+    } else {
+      content.classList.remove('active');
+    }
+  });
+};
+
+// Statistics display removed - elements no longer exist
+
+function autoSaveReports() {
+  // บันทึกข้อมูลรายงานไปยัง localStorage
+  const reportData = {
+    timestamp: new Date().toISOString(),
+    classrooms: groupedData,
+    totalStudents: allStudents.length,
+    totalTests: allResults.length
+  };
+  
+  localStorage.setItem('student_reports_backup', JSON.stringify(reportData));
+  
+  // แสดง indicator
+  const indicator = document.getElementById('autoSaveIndicator');
+  indicator.style.display = 'block';
+  setTimeout(() => {
+    indicator.style.display = 'none';
+  }, 3000);
+}
+
+window.exportAllReportsToPDF = async function() {
+  const classroomFilter = document.getElementById('classroomFilter').value;
+  let classroomsToExport = classroomFilter ? [classroomFilter] : Object.keys(groupedData);
+  
+  for (const classroom of classroomsToExport) {
+    await exportClassroomToPDF(classroom);
+    // หน่วงเวลาเล็กน้อยระหว่าง export แต่ละไฟล์
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+};
+
+async function exportClassroomToPDF(classroom) {
+  const data = groupedData[classroom];
+  if (!data) return;
+  
+  const date = new Date();
+  const dateStr = date.toLocaleDateString('th-TH', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const timeStr = date.toLocaleTimeString('th-TH', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  
+  const element = document.createElement('div');
+  element.innerHTML = `
+    <div style="font-family: 'Arial', sans-serif; color: #333; padding: 20px;">
+      <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:180px; color:rgba(0,0,0,0.04); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="font-size: 32px; color: #74640a; margin-bottom: 10px;">รายงานผู้ทดสอบ</h1>
+        <p style="font-size: 16px; color: #666;">ชั้น: ${classroom}</p>
+        <p style="font-size: 14px; color: #999;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #74640a; margin-bottom: 10px;">สรุปภาพรวม</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: 600;">จำนวนนักเรียน:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${data.students.length} คน</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: 600;">จำนวนวิชา:</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${Object.keys(data.subjects).length} วิชา</td>
+          </tr>
+        </table>
+      </div>
+      
+      <h3 style="color: #74640a; margin-bottom: 10px;">รายชื่อนักเรียนและผลการทดสอบ</h3>
+      ${data.students.map((student, index) => `
+        <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #74640a; border-radius: 10px; page-break-inside: avoid;">
+          <h4 style="color: #74640a; margin-bottom: 10px;">${index + 1}. ${student.name}</h4>
+          ${student.results.length > 0 ? `
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="background: #f5f0e5;">
+                  <th style="padding: 6px; border: 1px solid #ddd; text-align: left;">วิชา</th>
+                  <th style="padding: 6px; border: 1px solid #ddd; text-align: left;">โจทย์</th>
+                  <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">คะแนน</th>
+                  <th style="padding: 6px; border: 1px solid #ddd; text-align: center;">วันที่</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${student.results.map(r => {
+                  const testDate = new Date(r.timestamp);
+                  const percentage = r.totalQuestions > 0 ? Math.round((r.score / r.totalQuestions) * 100) : 0;
+                  return `
+                    <tr>
+                      <td style="padding: 6px; border: 1px solid #ddd;">${activityNames[r.activityType] || r.activityType}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd;">${r.topic || '-'}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${r.score}/${r.totalQuestions} (${percentage}%)</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-size: 11px;">${testDate.toLocaleDateString('th-TH')}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : '<p style="color: #999; text-align: center; padding: 10px;">ยังไม่มีผลการทดสอบ</p>'}
+        </div>
+      `).join('')}
+      
+      <div style="margin-top: 30px; text-align: right; font-size: 12px; color: #666;">
+        <p>บริษัท กว้างไม่ จำกัด</p>
+        <p>263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000</p>
+        <p>โทร: 083-654-9743 | www.kwamgunlimit.com</p>
+      </div>
+    </div>
+  `;
+  
+  const opt = {
+    margin: 10,
+    filename: `รายงานผู้ทดสอบ_${classroom}_${date.toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  
+  await html2pdf().set(opt).from(element).save();
+}
+
+// ฟังก์ชันดาวน์โหลด PDF จาก base64
+window.downloadPDFFromBase64 = function(base64String, filename) {
+  try {
+    // ลบ prefix 'data:application/pdf;base64,' ถ้ามี
+    const base64Data = base64String.replace(/^data:application\/pdf;base64,/, '');
+    
+    // แปลง base64 เป็น binary
+    const binary = atob(base64Data);
+    const array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      array[i] = binary.charCodeAt(i);
+    }
+    
+    // สร้าง Blob และดาวน์โหลด
+    const blob = new Blob([array], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    console.log('PDF downloaded successfully:', filename);
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    alert('เกิดข้อผิดพลาดในการดาวน์โหลด PDF');
+  }
+};
+
+// Event listeners สำหรับ filters
+document.getElementById('classroomFilter').addEventListener('change', () => {
+  if (currentMainCategory === 'classroom') {
+    displayStudentReports();
+  }
+});
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  if (currentMainCategory === 'classroom') {
+    displayStudentReports();
+  }
+});
+
+// Auto-save ทุก 5 นาที
+setInterval(autoSaveReports, 5 * 60 * 1000);
+
+// ===== PDF Modal Functions =====
+let currentPdfBase64 = null;
+let currentPdfFilename = null;
+
+window.openPdfModal = function(base64String, title, filename) {
+  currentPdfBase64 = base64String;
+  currentPdfFilename = filename || 'report.png';
+  
+  const modal = document.getElementById('pdfModal');
+  const modalBody = document.querySelector('.pdf-modal-body');
+  const titleEl = document.getElementById('pdfModalTitle');
+  
+  titleEl.textContent = (title || 'รายงาน');
+  
+  try {
+    // ตรวจสอบว่าเป็นรูปภาพหรือ PDF
+    if (base64String.startsWith('data:image/')) {
+      // แสดงรูปภาพ
+      modalBody.innerHTML = `<img src="${base64String}" style="max-width: 100%; height: auto; border-radius: 10px; display: block; margin: 0 auto;" alt="รายงาน">`;
+      currentPdfFilename = filename || 'report.png';
+    } else {
+      // แสดง PDF ใน iframe
+      const base64Data = base64String.replace(/^data:application\/pdf;base64,/, '');
+      const binary = atob(base64Data);
+      const array = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        array[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([array], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      modalBody.innerHTML = `<iframe id="pdfModalIframe" src="${url}" style="width: 100%; height: 600px; border: none; border-radius: 10px; background: white;"></iframe>`;
+      currentPdfFilename = filename || 'report.pdf';
+    }
+    modal.classList.add('active');
+  } catch (error) {
+    console.error('Error opening report:', error);
+    alert('ไม่สามารถเปิดรายงานได้');
+  }
+};
+
+window.closePdfModal = function() {
+  const modal = document.getElementById('pdfModal');
+  const modalBody = document.querySelector('.pdf-modal-body');
+  const iframe = document.getElementById('pdfModalIframe');
+  
+  modal.classList.remove('active');
+  
+  // Revoke URL เพื่อ free memory
+  if (iframe && iframe.src) {
+    URL.revokeObjectURL(iframe.src);
+  }
+  
+  // Clear modal body
+  modalBody.innerHTML = '';
+  
+  currentPdfBase64 = null;
+  currentPdfFilename = null;
+};
+
+window.downloadCurrentPdf = function() {
+  if (!currentPdfBase64) return;
+  
+  // ตรวจสอบว่าเป็นรูปภาพหรือ PDF
+  if (currentPdfBase64.startsWith('data:image/')) {
+    // ดาวน์โหลดรูปภาพ
+    const link = document.createElement('a');
+    link.href = currentPdfBase64;
+    link.download = currentPdfFilename + '.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    downloadPDFFromBase64(currentPdfBase64, currentPdfFilename);
+  }
+};
+
+window.printCurrentPdf = function() {
+  const iframe = document.getElementById('pdfModalIframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.print();
+  }
+};
+
+// ปิด modal เมื่อกด ESC หรือคลิกนอก modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closePdfModal();
+  }
+});
+
+document.getElementById('pdfModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'pdfModal') {
+    closePdfModal();
+  }
+});
+
+// ===== Hierarchy Display Functions (ชั้นปี → ห้อง → รายชื่อ) =====
+let hierarchyData = {};
+
+function parseClassroomToHierarchy() {
+  hierarchyData = {};
+  
+  allStudents.forEach(student => {
+    // ใช้ classroom ถ้ามี ไม่งั้นจัดกลุ่มตามครู
+    let groupKey;
+    if (student.classroom && student.classroom !== 'ไม่ระบุชั้น') {
+      groupKey = student.classroom;
+    } else if (student.teacher) {
+      groupKey = `ครู ${student.teacher}`;
+    } else {
+      groupKey = 'ไม่ระบุ';
+    }
+    
+    // ตรวจสอบว่ามี "/" หรือไม่ (สำหรับ ชั้น/ห้อง)
+    let grade, room;
+    if (groupKey.includes('/')) {
+      const parts = groupKey.split('/');
+      grade = parts[0] || 'ไม่ระบุ';
+      room = parts[1] || 'ไม่ระบุห้อง';
+    } else {
+      // ถ้าไม่มี "/" ใช้เป็น grade เลย
+      grade = groupKey;
+      room = 'ไม่ระบุห้อง';
+    }
+    
+    if (!hierarchyData[grade]) {
+      hierarchyData[grade] = {};
+    }
+    
+    if (!hierarchyData[grade][room]) {
+      hierarchyData[grade][room] = [];
+    }
+    
+    // หาผลการทดสอบของนักเรียน
+    const studentResults = allResults.filter(r => 
+      r.studentName === student.name && 
+      (r.classroom === student.classroom || r.teacher === student.teacher)
+    );
+    
+    hierarchyData[grade][room].push({
+      ...student,
+      results: studentResults
+    });
+  });
+}
+
+function displayHierarchy() {
+  parseClassroomToHierarchy();
+  
+  const studentsList = document.getElementById('studentsList');
+  const noData = document.getElementById('noData');
+  const searchText = document.getElementById('searchInput').value.toLowerCase();
+  const gradeFilter = document.getElementById('classroomFilter').value;
+  
+  if (Object.keys(hierarchyData).length === 0) {
+    studentsList.style.display = 'none';
+    noData.style.display = 'block';
+    return;
+  }
+  
+  studentsList.innerHTML = '';
+  studentsList.style.display = 'block';
+  noData.style.display = 'none';
+  
+  // กำหนดลำดับชั้นปี
+  const gradeOrder = [
+    'อนุบาล 1', 'อนุบาล 2', 'อนุบาล 3',
+    'ป.1', 'ป.2', 'ป.3', 'ป.4', 'ป.5', 'ป.6',
+    'ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'
+  ];
+  
+  const sortedGrades = Object.keys(hierarchyData).sort((a, b) => {
+    const aIndex = gradeOrder.indexOf(a);
+    const bIndex = gradeOrder.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+  
+  sortedGrades.forEach(grade => {
+    // กรองตาม filter
+    if (gradeFilter && !grade.includes(gradeFilter.split('/')[0])) return;
+    
+    const rooms = hierarchyData[grade];
+    const totalStudentsInGrade = Object.values(rooms).reduce((sum, students) => sum + students.length, 0);
+    
+    const gradeCard = document.createElement('div');
+    gradeCard.className = 'grade-card';
+    gradeCard.id = `grade-${grade.replace(/\s/g, '_')}`;
+    
+    gradeCard.innerHTML = `
+      <div class="grade-header" onclick="toggleGradeCard('${grade.replace(/\s/g, '_')}')">
+        <h3>${grade}</h3>
+        <div class="header-stats">
+          <span class="stat-badge">${Object.keys(rooms).length} ห้อง</span>
+          <span class="stat-badge">${totalStudentsInGrade} คน</span>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="grade-body">
+        ${Object.entries(rooms).sort((a, b) => {
+          const aNum = parseInt(a[0]) || 0;
+          const bNum = parseInt(b[0]) || 0;
+          return aNum - bNum;
+        }).map(([room, students]) => {
+          // กรองนักเรียนตาม search
+          const filteredStudents = searchText 
+            ? students.filter(s => s.name.toLowerCase().includes(searchText))
+            : students;
+          
+          if (filteredStudents.length === 0) return '';
+          
+          return createRoomCard(grade, room, filteredStudents);
+        }).join('')}
+      </div>
+    `;
+    
+    studentsList.appendChild(gradeCard);
+  });
+}
+
+function createRoomCard(grade, room, students) {
+  const roomId = `${grade.replace(/\s/g, '_')}_${room.replace(/\s/g, '_')}`;
+  
+  return `
+    <div class="room-card" id="room-${roomId}">
+      <div class="room-header" onclick="toggleRoomCard('${roomId}')">
+        <h4 style="margin: 0; color: #74640a;">ห้อง ${room}</h4>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="stat-badge" style="font-size: 12px;">${students.length} คน</span>
+          <span class="expand-icon" style="font-size: 18px;">▼</span>
+        </div>
+      </div>
+      <div class="room-body">
+        <div class="students-grid">
+          ${students.map(student => createStudentCardWithPdf(student)).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function createStudentCardWithPdf(student) {
+  const results = student.results || [];
+  const totalScore = results.reduce((sum, r) => sum + (r.score || 0), 0);
+  const totalPossible = results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+  const percentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+  const scoreClass = percentage >= 80 ? '' : percentage >= 50 ? 'medium' : 'low';
+  
+  // นับจำนวนกิจกรรมที่มีรายงาน
+  const reportsCount = results.filter(r => r.hasReportImage).length;
+  
+  return `
+    <div class="student-mini-card" onclick="showStudentDetailModal('${student.name}', '${student.classroom}')">
+      <div class="student-info">
+        <div class="student-name-small">${student.name}</div>
+      </div>
+      <div class="student-meta">
+        <span>${results.length} กิจกรรม</span>
+        <span>${totalScore}/${totalPossible}</span>
+      </div>
+      ${reportsCount > 0 ? `
+        <div style="margin-top: 8px; padding: 6px 10px; background: #e8f5e9; border-radius: 6px; text-align: center;">
+          <span style="color: #27ae60; font-size: 12px; font-weight: 500;">${reportsCount} รายงาน (คลิกดูรายละเอียด)</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+window.toggleGradeCard = function(gradeId) {
+  const card = document.getElementById(`grade-${gradeId}`);
+  if (card) {
+    card.classList.toggle('expanded');
+  }
+};
+
+window.toggleRoomCard = function(roomId) {
+  const card = document.getElementById(`room-${roomId}`);
+  if (card) {
+    card.classList.toggle('expanded');
+  }
+};
+
+window.showStudentDetailModal = function(name, classroom) {
+  const normalizedClassroom = classroom || '';
+  const student = allStudents.find(s => s.name === name && (s.classroom || '') === normalizedClassroom);
+  if (!student) return;
+  
+  const studentResults = allResults.filter(r => r.studentName === name && (r.classroom || '') === normalizedClassroom);
+  
+  // สร้าง modal แสดงรายละเอียด
+  let existingModal = document.getElementById('studentDetailModal');
+  if (existingModal) existingModal.remove();
+  
+  const totalScore = studentResults.reduce((sum, r) => sum + (r.score || 0), 0);
+  const totalPossible = studentResults.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+  const avgPercentage = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+  
+  // จัดกลุ่มตามโหมดกิจกรรม
+  const activityModes = {
+    smartcheck: { 
+      name: 'สมาร์ทเช็ค', 
+      games: ['gamepicture'],
+      color: '#9b59b6'
+    },
+    number: { 
+      name: 'ตัวเลข', 
+      games: ['gamemath', 'gamecount'],
+      color: '#3498db'
+    },
+    language: { 
+      name: 'ภาษา', 
+      games: ['gamethai', 'gamewrite', 'gamedialog'],
+      color: '#27ae60'
+    }
+  };
+  
+  // จัดกลุ่มผลลัพธ์ตามโหมด
+  const groupedByMode = {};
+  Object.keys(activityModes).forEach(mode => {
+    groupedByMode[mode] = studentResults.filter(r => 
+      activityModes[mode].games.includes(r.activityType)
+    ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  });
+  
+  // สร้าง HTML สำหรับแต่ละโหมด
+  function createModeSection(modeKey) {
+    const mode = activityModes[modeKey];
+    const results = groupedByMode[modeKey];
+    
+    if (results.length === 0) {
+      return `
+        <div style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: ${mode.color}15; border-radius: 8px; border-left: 4px solid ${mode.color};">
+            <span style="font-weight: 700; color: ${mode.color};">${mode.name}</span>
+            <span style="color: #999; font-size: 13px;">(ยังไม่มีข้อมูล)</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    const modeTotal = results.reduce((sum, r) => sum + (r.score || 0), 0);
+    const modePossible = results.reduce((sum, r) => sum + (r.totalQuestions || 0), 0);
+    const modeAvg = modePossible > 0 ? Math.round((modeTotal / modePossible) * 100) : 0;
+    const modeId = 'mode-' + modeKey + '-' + Date.now();
+    
+    return `
+      <div style="margin-bottom: 15px; border: 1px solid ${mode.color}30; border-radius: 10px; overflow: hidden;">
+        <div onclick="toggleModeDropdown('${modeId}')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${mode.color}15; cursor: pointer; user-select: none;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="${modeId}-arrow" style="transition: transform 0.3s; display: inline-block;">&#9654;</span>
+            <span style="font-weight: 700; color: ${mode.color};">${mode.name}</span>
+            <span style="color: #666; font-size: 13px;">${results.length} กิจกรรม</span>
+          </div>
+        </div>
+        <div id="${modeId}" style="display: none; padding: 10px; background: #fff;">
+          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;">
+            ${results.map(result => {
+              const date = new Date(result.timestamp);
+              const pct = result.totalQuestions > 0 ? Math.round((result.score / result.totalQuestions) * 100) : 0;
+              const pctColor = pct >= 80 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c';
+              let reportBtn = '';
+              if (result.hasReportImage) {
+                reportBtn = '<button onclick="event.stopPropagation(); openReportImage(\'' + result.id + '\', \'' + name + '\', \'' + (result.topic || 'รายงาน').replace(/'/g, "\\'") + '\')" style="padding: 6px 12px; background: ' + mode.color + '; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500;">ดูรายงาน</button>';
+              } else if (result.hasPdfBase64 && result.pdfBase64) {
+                reportBtn = '<button onclick="event.stopPropagation(); downloadPDFFromBase64(\'' + result.pdfBase64.replace(/'/g, "\\'") + '\', \'' + (result.topic || 'รายงาน').replace(/'/g, "\\'") + '_' + date.toLocaleDateString('th-TH').replace(/\\//g, '-') + '.pdf\')" style="padding: 6px 12px; background: ' + mode.color + '; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500;">ดาวน์โหลด PDF</button>';
+              }
+              return '<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid ' + mode.color + ';">' +
+                '<div>' +
+                  '<div style="font-weight: 600; color: #333; font-size: 14px;">' + (activityNames[result.activityType] || result.activityType) + '</div>' +
+                  '<div style="font-size: 12px; color: #888; margin-top: 3px;">' + (result.topic || '-') + ' | ' + date.toLocaleDateString('th-TH') + '</div>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 12px;">' +
+                  '<div style="font-weight: 700; color: ' + pctColor + '; font-size: 15px;">' + result.score + '/' + result.totalQuestions + '</div>' +
+                  reportBtn +
+                '</div>' +
+              '</div>';
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'studentDetailModal';
+  modal.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); display: flex; justify-content: center;
+    align-items: center; z-index: 9999; backdrop-filter: blur(5px);
+  `;
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 20px; max-width: 800px; width: 95%; max-height: 90vh; overflow: auto; padding: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #74640a; padding-bottom: 15px;">
+        <h2 style="color: #74640a; margin: 0;">${name}</h2>
+        <button onclick="document.getElementById('studentDetailModal').remove()" 
+          style="background: #e74c3c; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer;">X</button>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+        <div style="text-align: center; padding: 15px; background: #f5f0e5; border-radius: 10px;">
+          <div style="font-size: 14px; color: #666;">ชั้นเรียน</div>
+          <div style="font-size: 20px; font-weight: 700; color: #74640a;">${classroom || 'ไม่ระบุ'}</div>
+        </div>
+        <div style="text-align: center; padding: 15px; background: #f5f0e5; border-radius: 10px;">
+          <div style="font-size: 14px; color: #666;">กิจกรรมทั้งหมด</div>
+          <div style="font-size: 20px; font-weight: 700; color: #74640a;">${studentResults.length}</div>
+        </div>
+      </div>
+      
+      <h3 style="color: #74640a; margin-bottom: 15px;">ประวัติกิจกรรมแยกตามโหมด</h3>
+      
+      ${createModeSection('smartcheck')}
+      ${createModeSection('number')}
+      ${createModeSection('language')}
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+};
+
+// Toggle mode dropdown
+window.toggleModeDropdown = function(modeId) {
+  const content = document.getElementById(modeId);
+  const arrow = document.getElementById(modeId + '-arrow');
+  if (content) {
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      if (arrow) arrow.style.transform = 'rotate(90deg)';
+    } else {
+      content.style.display = 'none';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+    }
+  }
+};
+
+// โหลดข้อมูลเมื่อเปิดหน้า
+window.loadStudentReports();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+{
+  // ===== ปิดการ search และ watch ไฟล์ที่ไม่จำเป็น =====
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/uploads": true,
+    "**/video": true,
+    "**/Sound": true,
+    "**/picture": true,
+    "**/*.mp4": true,
+    "**/*.zip": true,
+    "**/*.mp3": true,
+    "**/*.wav": true,
+    "**/data/**/*.ndjson": true
+  },
+  
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.git/**": true,
+    "**/uploads/**": true,
+    "**/video/**": true,
+    "**/Sound/**": true,
+    "**/picture/**": true,
+    "**/data/**": true,
+    "**/*.mp4": true,
+    "**/*.zip": true
+  },
+  
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/dist": true
+  },
+  
+  // ===== ปิด features ที่กิน resources =====
+  "files.autoSave": "off",
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.lineHeight": 0,
+  "editor.folding": true,
+  "editor.glyphMargin": false,
+  "editor.renderLineHighlight": "none",
+  "editor.occurrencesHighlight": "off",
+  "editor.selectionHighlight": false,
+  "editor.semanticHighlighting.enabled": false,
+  "editor.codeLens": false,
+  
+  // ===== จำกัด TypeScript/JavaScript =====
+  "typescript.tsserver.maxTsServerMemory": 2048,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.surveys.enabled": false,
+  "typescript.updateImportsOnFileMove.enabled": "never",
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  "typescript.preferences.importModuleSpecifier": "shortest",
+  "javascript.suggest.enabled": true,
+  "typescript.suggest.enabled": true,
+  
+  // ===== ปิด Git features ที่ไม่จำเป็น =====
+  "git.enabled": true,
+  "git.autorefresh": false,
+  "git.autofetch": false,
+  "git.decorations.enabled": false,
+  
+  // ===== จำกัด ESLint/Prettier =====
+  "eslint.enable": true,
+  "eslint.run": "onSave",
+  "editor.formatOnSave": false,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  
+  // ===== ปิด features อื่นๆ =====
+  "breadcrumbs.enabled": false,
+  "explorer.autoReveal": false,
+  "explorer.incrementalNaming": "disabled",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  
+  // ===== Python settings =====
+  "python.analysis.autoImportCompletions": false,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.memory.keepLibraryAst": false,
+  
+  // ===== ปิด Telemetry =====
+  "telemetry.telemetryLevel": "off"
+}

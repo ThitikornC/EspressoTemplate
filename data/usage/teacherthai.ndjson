@@ -1,0 +1,3 @@
+{"type":"start_buffered","usageId":"local-1769820736269-aonwfpdqwgg","client_id":"c-qbjelvi6ali-ml1lkjyc","page":"/teacherthai","start_at":"2026-01-31T00:52:16.262Z","created_at":"2026-01-31T00:52:16.270Z"}
+{"type":"start_buffered","usageId":"local-1769820736288-0mqhlzqrja8s","client_id":"c-qbjelvi6ali-ml1lkjyc","page":"/teacherthai","start_at":"2026-01-31T00:52:16.281Z","created_at":"2026-01-31T00:52:16.288Z"}
+{"type":"flush","usageId":"697d5307d269ed75738b2089","client_id":"c-qbjelvi6ali-ml1lkjyc","page":"/teacherthai","section":"page","start_at":"2026-01-31T00:52:16.262Z","end_at":"2026-01-31T00:55:35.310Z","durationMs":199048,"events":[],"created_at":"2026-01-31T00:55:35.329Z","flush_reason":"end","_id":"697d5307d269ed75738b2089"}

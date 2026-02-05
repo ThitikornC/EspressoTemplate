@@ -26,14 +26,117 @@
     font-size: 14px;
   }
 
-  .form-group input, .form-group textarea {
+  .form-group input, .form-group textarea, .form-group select {
     font-size: 16px;
     padding: 10px;
   }
 }
+
+.image-preview {
+  max-width: 200px;
+  max-height: 200px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  margin: 5px;
+}
+
+.remove-image-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+/* Speech Bubble Hover Effect */
+#bubbleLeft:hover, #bubbleRight:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+#bubbleLeft {
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+#bubbleRight {
+  box-shadow: 0 5px 15px rgba(255, 107, 157, 0.3);
+}
+</style>
+<style>
+/* Custom Alert Modal */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+.custom-alert-overlay.show {
+  display: flex;
+}
+.custom-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: alertSlideIn 0.3s ease;
+}
+@keyframes alertSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.custom-alert-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-alert-btn {
+  background: linear-gradient(135deg, #a67c52 0%, #8b6914 100%);
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.custom-alert-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(139, 105, 20, 0.4);
+}
 </style>
 </head>
 <body>
+
+<!-- Custom Alert Modal -->
+<div id="customAlertOverlay" class="custom-alert-overlay" onclick="closeCustomAlert(event)">
+  <div class="custom-alert-box" onclick="event.stopPropagation()">
+    <div id="customAlertMessage" class="custom-alert-message"></div>
+    <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+  </div>
+</div>
+
+<script>
+function showCustomAlert(message) {
+  document.getElementById('customAlertMessage').innerHTML = message;
+  document.getElementById('customAlertOverlay').classList.add('show');
+}
+function closeCustomAlert(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('customAlertOverlay').classList.remove('show');
+}
+</script>
 
 <div class="container">
   <h1>กิจกรรมภาษา</h1>
@@ -55,23 +158,62 @@
         <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
       </div>
       <div class="form-group">
-        <label for="teacherInput">ครูผู้สอบสอน</label>
+        <label for="teacherInput">ครูผู้สอน</label>
         <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
       </div>
-          <div class="form-group">
+      <div class="form-group">
+        <label for="gradeSelect">ระดับชั้น</label>
+        <select id="gradeSelect">
+          <option value="">-- เลือกระดับชั้น --</option>
+          <option value="อนุบาล 1">อนุบาล 1</option>
+          <option value="อนุบาล 2">อนุบาล 2</option>
+          <option value="อนุบาล 3">อนุบาล 3</option>
+          <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+          <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+          <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+          <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+          <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+          <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+          <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+          <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+          <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+          <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+          <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+          <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="roomInput">ห้อง</label>
+        <input type="text" id="roomInput" placeholder="เช่น 1, 2, 3...">
+      </div>
+      <input type="hidden" id="classroomInput">
+      <div class="form-group">
         <label for="userNameInput">ชื่อผู้ทดสอบ</label>
         <input type="text" id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
       </div>
     </div>
+    
+    <!-- Mode Selection -->
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 25px; flex-wrap: wrap;">
+      <button id="modeQuestion" class="neon-btn" onclick="switchMode('question')" style="font-size: 18px; padding: 15px 30px; background: linear-gradient(180deg, #57e167 0%, #57e167 100%);">โจทย์ปัญหา</button>
+      <button id="modeWrite" class="neon-btn" onclick="switchMode('write')" style="font-size: 18px; padding: 15px 30px;">ฝึกการเขียน</button>
+      <button id="modeDialog" class="neon-btn" onclick="switchMode('dialog')" style="font-size: 18px; padding: 15px 30px;">ฝึกการฟัง</button>
+    </div>
   </div>
 
   <!-- ส่วนคำถาม -->
-  <div class="section">
-    <h2 class="section-title">คำถาม</h2>
+  <div id="questionMode" class="section">
+    <h2 class="section-title">โหมดตั้งโจทย์</h2>
     
     <div class="form-group" style="margin-bottom: 20px;">
       <label for="questionInput">ข้อมูลคำถาม/หมวดหมู่</label>
       <textarea id="questionInput" rows="2" placeholder="พิมพ์คำถาม..."></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label for="questionImageInput">รูปภาพประกอบคำถาม (ถ้ามี)</label>
+      <input type="file" id="questionImageInput" accept="image/*" onchange="handleQuestionImage(event)" style="padding: 8px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+      <div id="questionImagePreview" style="margin-top: 10px; text-align: center;"></div>
     </div>
 
     <div class="form-grid">
@@ -96,8 +238,132 @@
     <button class="neon-btn" onclick="addQuestion()" style="margin-top: 15px;">+ เพิ่มคำถาม</button>
   </div>
 
+  <!-- โหมดเขียน -->
+  <div id="writeMode" class="section" style="display:none;">
+    <h2 class="section-title">เพิ่ม(คำศัพท์ไทย-อังกฤษ)</h2>
+    
+    <div class="form-grid" style="display: flex; gap: 20px; align-items: flex-end;">
+      <div class="form-group" style="flex: 1;">
+        <label for="englishWord">คำภาษาอังกฤษ</label>
+        <input type="text" id="englishWord" placeholder="เช่น: Bug" oninput="translateToThai()">
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <label for="thaiMeaning">คำแปลภาษาไทย</label>
+        <input type="text" id="thaiMeaning" placeholder="แมลงปีกแข็ง" style="background: #f0f0f0;">
+      </div>
+    </div>
+    
+    <div class="form-group" style="margin: 20px 0;">
+      <label for="vocabularyImageInput">รูปภาพประกอบ (ถ้ามี)</label>
+      <input type="file" id="vocabularyImageInput" accept="image/*" onchange="handleVocabularyImage(event)" style="padding: 8px; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;">
+      <div id="vocabularyImagePreview" style="margin-top: 10px; text-align: center;"></div>
+    </div>
+    
+    <button class="neon-btn" onclick="addVocabulary()" style="margin-top: 15px;">+ เพิ่มคำศัพท์</button>
+    
+    <div style="margin-top: 30px;">
+      <h3>รายการคำศัพท์ (<span id="vocabCount">0</span> คำ)</h3>
+      <div id="vocabularyList" style="max-height: 400px; overflow-y: auto;">
+        <div class="empty-state">ยังไม่มีคำศัพท์ กรุณาเพิ่มคำศัพท์</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- โหมดสนทนา -->
+  <div id="dialogMode" class="section" style="display:none;">
+    <h2 class="section-title">เพิ่มบทสนทนา</h2>
+    
+    <!-- Dialog Creator Area with Background -->
+    <div id="dialogCreatorArea" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px; border-radius: 20px; margin-bottom: 20px; min-height: 400px; background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; transition: all 0.3s ease;">
+      
+      <!-- Overlay สำหรับทำให้อ่านง่าย -->
+      <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(245, 247, 250, 0.85); border-radius: 20px; z-index: 0;"></div>
+      
+      <!-- เนื้อหาทั้งหมด -->
+      <div style="position: relative; z-index: 1;">
+        
+        <!-- ส่วนหัวข้อและรูปพื้นหลัง -->
+        <div style="margin-bottom: 20px;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>หัวข้อบทสนทนา:</label>
+              <input type="text" id="dialogContextTitle" placeholder="เช่น ซื้อของที่ตลาด, แนะนำตัวเอง, สั่งอาหาร" style="padding: 12px; font-size: 16px; border-radius: 8px; border: 2px solid #ddd; width: 100%;">
+            </div>
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label>เพิ่ม/เปลี่ยนรูปพื้นหลัง:</label>
+              <input type="file" id="dialogBackgroundInput" accept="image/*" onchange="handleBackgroundUpload(this)" style="padding: 12px; font-size: 16px; border-radius: 8px; border: 2px solid #ddd; width: 100%;">
+              <button onclick="removeBackground()" id="removeBackgroundBtn" class="remove-image-btn" style="display: none; margin-top: 10px;">✖ ลบรูปพื้นหลัง</button>
+            </div>
+          </div>
+        </div>
+      
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+          <!-- ตัวละครซ้าย -->
+          <div style="flex-shrink: 0; text-align: center;">
+            <img src="picture/RM.png" alt="ตัวละครซ้าย" id="dialogPreviewRM" style="width: 180px; height: auto; filter: grayscale(70%) opacity(0.5); transition: all 0.3s;">
+            <div style="margin-top: 10px;">
+              <input type="text" id="characterLeftNameInput" 
+                     value="ตัวละครซ้าย" 
+                     onchange="updateCharacterLeftName(this.value)"
+                     style="text-align: center; font-weight: bold; color: #4CAF50; border: 2px solid #4CAF50; border-radius: 8px; padding: 6px 12px; font-size: 16px; width: 150px;"
+                     placeholder="ชื่อตัวละคร">
+            </div>
+          </div>
+          
+          <!-- Speech Bubble Area -->
+          <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 300px;">
+            <!-- Speech Bubble ซ้าย -->
+            <div id="bubbleLeft" onclick="selectBubble('left')" style="display: block; position: relative; background: white; padding: 20px; border-radius: 20px; border: 3px dashed #4CAF50; max-width: 400px; cursor: pointer; transition: all 0.3s;">
+              <div style="position: absolute; left: -25px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-style: solid; border-width: 15px 25px 15px 0; border-color: transparent #4CAF50 transparent transparent;"></div>
+              <textarea id="textLeft" placeholder="พิมพ์ประโยค" 
+                        style="width: 100%; min-height: 150px; border: none; font-size: 18px; font-family: 'Sarabun', sans-serif; resize: vertical; background: transparent; outline: none;"
+                        onfocus="selectBubble('left')"></textarea>
+            </div>
+            
+            <!-- Speech Bubble ขวา -->
+            <div id="bubbleRight" onclick="selectBubble('right')" style="display: none; position: relative; background: white; padding: 20px; border-radius: 20px; border: 3px dashed #FF6B9D; max-width: 400px; cursor: pointer; transition: all 0.3s;">
+              <div style="position: absolute; right: -25px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-style: solid; border-width: 15px 0 15px 25px; border-color: transparent transparent transparent #FF6B9D;"></div>
+              <textarea id="textRight" placeholder="พิมพ์ประโยค" 
+                        style="width: 100%; min-height: 150px; border: none; font-size: 18px; font-family: 'Sarabun', sans-serif; resize: vertical; background: transparent; outline: none;"
+                        onfocus="selectBubble('right')"></textarea>
+            </div>
+          </div>
+          
+          <!-- ตัวละครขวา -->
+          <div style="flex-shrink: 0; text-align: center;">
+            <img src="picture/WL.png" alt="ตัวละครขวา" id="dialogPreviewWL" style="width: 180px; height: auto; filter: grayscale(70%) opacity(0.5); transition: all 0.3s;">
+            <div style="margin-top: 10px;">
+              <input type="text" id="characterRightNameInput" 
+                     value="ตัวละครขวา" 
+                     onchange="updateCharacterRightName(this.value)"
+                     style="text-align: center; font-weight: bold; color: #FF6B9D; border: 2px solid #FF6B9D; border-radius: 8px; padding: 6px 12px; font-size: 16px; width: 150px;"
+                     placeholder="ชื่อตัวละคร">
+            </div>
+          </div>
+        </div>
+        
+        <!-- ปุ่มสลับและเพิ่ม -->
+        <div style="text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+          <button onclick="toggleBubblePosition()" class="neon-btn" style="background: linear-gradient(135deg, #e3e5e6 0%, #fcfeff 100%); padding: 12px 30px;">
+            ⇄ สลับตัวละคร
+          </button>
+          <button onclick="addDialogLine()" class="neon-btn" style="padding: 12px 30px;">
+            + เพิ่มบทสนทนา
+          </button>
+        </div>
+      
+      </div>
+    </div>
+    
+    <div style="margin-top: 30px;">
+      <h3>รายการบทสนทนา (<span id="dialogCount">0</span>)</h3>
+      <div id="dialogList" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
   <!-- รายการคำถาม -->
-  <div class="section">
+  <div id="questionListSection" class="section">
     <h2 class="section-title">รายการคำถามทั้งหมด</h2>
     <div id="questionsList">
       <div class="empty-state">ยังไม่มีคำถาม กรุณาเพิ่มคำถาม</div>
@@ -109,6 +375,7 @@
     <button class="neon-btn" onclick="startActivity()"> เริ่มกิจกรรม</button>
     <button class="neon-btn" onclick="saveActivity()">บันทึกกิจกรรม</button>
     <button class="neon-btn" onclick="loadActivity()">เลือกกิจกรรม</button>
+    <button class="neon-btn" onclick="window.location.href='student-reports.html'">ประวัติผู้ทดสอบ</button>
   </div>
 </div>
 
@@ -125,8 +392,488 @@
 </div>
 
 <script>
+console.log('🚀 Script เริ่มทำงาน');
 let allQuestions = [];
+let currentQuestionImage = null; // เก็บรูปภาพของคำถามปัจจุบัน
+let currentVocabularyImage = null; // เก็บรูปภาพสำหรับคำศัพท์
+let vocabularyList = []; // เก็บรายการคำศัพท์
+let dialogList = []; // เก็บรายการบทสนทนา
+let characterLeftName = 'ตัวละครซ้าย'; // ชื่อตัวละครซ้าย
+let characterRightName = 'ตัวละครขวา'; // ชื่อตัวละครขวา
+let currentMode = 'question'; // โหมดปัจจุบัน: 'question', 'write', หรือ 'dialog'
+let dialogBackgroundImage = null; // เก็บรูปพื้นหลังสำหรับบทสนทนา
+console.log('✅ ตัวแปรเริ่มต้นถูกสร้างแล้ว');
 
+// Dictionary สำหรับแปลคำอัตโนมัติ (ขยายเพิ่มเติม)
+const thaiTranslations = {
+  'apple': { reading: 'แอปเปิ้ล', meaning: 'แอปเปิ้ล' },
+  'banana': { reading: 'บานานา', meaning: 'กล้วย' },
+  'bag': { reading: 'แบก', meaning: 'กระเป๋า' },
+  'ball': { reading: 'บอล', meaning: 'ลูกบอล' },
+  'book': { reading: 'บุ๊ค', meaning: 'หนังสือ' },
+  'box': { reading: 'บ็อกซ์', meaning: 'กล่อง' },
+  'boy': { reading: 'บอย', meaning: 'เด็กผู้ชาย' },
+  'bug': { reading: 'บัค', meaning: 'แมลง' },
+  'bus': { reading: 'บัส', meaning: 'รถบัส' },
+  'buy': { reading: 'บาย', meaning: 'ซื้อ' },
+  'cabbage': { reading: 'แคบเบจ', meaning: 'กะหล่ำปลี' },
+  'cake': { reading: 'เค้ก', meaning: 'เค้ก' },
+  'car': { reading: 'คาร์', meaning: 'รถยนต์' },
+  'carrot': { reading: 'แครอท', meaning: 'แครอท' },
+  'castle': { reading: 'คัสเซิล', meaning: 'ปราสาท' },
+  'cat': { reading: 'แคท', meaning: 'แมว' },
+  'chair': { reading: 'แชร์', meaning: 'เก้าอี้' },
+  'chalk': { reading: 'ชอล์ก', meaning: 'ชอล์ก' },
+  'chance': { reading: 'ชานซ์', meaning: 'โอกาส' },
+  'change': { reading: 'เชนจ์', meaning: 'เปลี่ยน' },
+  'class': { reading: 'คลาส', meaning: 'ชั้นเรียน' },
+  'classroom': { reading: 'คลาสรูม', meaning: 'ห้องเรียน' },
+  'clock': { reading: 'คล็อก', meaning: 'นาฬิกา' },
+  'close': { reading: 'โคลส', meaning: 'ปิด' },
+  'coffee': { reading: 'คอฟฟี่', meaning: 'กาแฟ' },
+  'come': { reading: 'คัม', meaning: 'มา' },
+  'computer': { reading: 'คอมพิวเตอร์', meaning: 'คอมพิวเตอร์' },
+  'desk': { reading: 'เดสก์', meaning: 'โต๊ะทำงาน' },
+  'do': { reading: 'ดู', meaning: 'ทำ' },
+  'dog': { reading: 'ด็อก', meaning: 'สุนัข' },
+  'door': { reading: 'ดอร์', meaning: 'ประตู' },
+  'eat': { reading: 'อีท', meaning: 'กิน' },
+  'egg': { reading: 'เอ้ก', meaning: 'ไข่' },
+  'elephant': { reading: 'เอเลเฟ้นท์', meaning: 'ช้าง' },
+  'fan': { reading: 'แฟน', meaning: 'พัดลม' },
+  'fish': { reading: 'ฟิช', meaning: 'ปลา' },
+  'flower': { reading: 'ฟลาวเวอร์', meaning: 'ดอกไม้' },
+  'fly': { reading: 'ฟลาย', meaning: 'บิน' },
+  'girl': { reading: 'เกิร์ล', meaning: 'เด็กผู้หญิง' },
+  'go': { reading: 'โก', meaning: 'ไป' },
+  'good': { reading: 'กู้ด', meaning: 'ดี' },
+  'hand': { reading: 'แฮนด์', meaning: 'มือ' },
+  'happy': { reading: 'แฮปปี้', meaning: 'มีความสุข' },
+  'hello': { reading: 'เฮลโล', meaning: 'สวัสดี' },
+  'house': { reading: 'เฮาส์', meaning: 'บ้าน' },
+  'jump': { reading: 'จั๊มพ์', meaning: 'กระโดด' },
+  'milk': { reading: 'มิลค์', meaning: 'นม' },
+  'nice': { reading: 'ไนซ์', meaning: 'ดี, น่ารัก' },
+  'open': { reading: 'โอเพิน', meaning: 'เปิด' },
+  'pen': { reading: 'เพน', meaning: 'ปากกา' },
+  'pencil': { reading: 'เพนซิล', meaning: 'ดินสอ' },
+  'phone': { reading: 'โฟน', meaning: 'โทรศัพท์' },
+  'read': { reading: 'รีด', meaning: 'อ่าน' },
+  'run': { reading: 'รัน', meaning: 'วิ่ง' },
+  'school': { reading: 'สคูล', meaning: 'โรงเรียน' },
+  'sit': { reading: 'ซิท', meaning: 'นั่ง' },
+  'stand': { reading: 'สแตนด์', meaning: 'ยืน' },
+  'table': { reading: 'เทเบิล', meaning: 'โต๊ะ' },
+  'teacher': { reading: 'ทีชเชอร์', meaning: 'ครู' },
+  'thank': { reading: 'แธงค์', meaning: 'ขอบคุณ' },
+  'walk': { reading: 'วอล์ค', meaning: 'เดิน' },
+  'water': { reading: 'วอเตอร์', meaning: 'น้ำ' },
+  'window': { reading: 'วินโดว์', meaning: 'หน้าต่าง' },
+  'write': { reading: 'ไรท์', meaning: 'เขียน' },
+  'yes': { reading: 'เยส', meaning: 'ใช่' },
+  'no': { reading: 'โน', meaning: 'ไม่' }
+};
+
+// โหลด custom dictionary จาก Database
+let customTranslations = {};
+
+async function loadCustomDictionary() {
+  try {
+    const res = await fetch('/api/vocabulary/custom');
+    if (res.ok) {
+      const result = await res.json();
+      customTranslations = result.data || {};
+      console.log('✅ โหลด custom dictionary จาก DB:', Object.keys(customTranslations).length, 'คำ');
+    }
+  } catch (e) {
+    console.error('❌ โหลด custom dictionary ล้มเหลว:', e);
+  }
+}
+
+// โหลดทันทีเมื่อหน้าโหลด
+loadCustomDictionary();
+
+// ฟังก์ชันสลับโหมด
+function switchMode(mode) {
+  console.log('🔄 switchMode เรียกใช้งาน โหมด:', mode);
+  currentMode = mode;
+  
+  const questionMode = document.getElementById('questionMode');
+  const writeMode = document.getElementById('writeMode');
+  const dialogMode = document.getElementById('dialogMode');
+  const questionListSection = document.getElementById('questionListSection');
+  const btnQuestion = document.getElementById('modeQuestion');
+  const btnWrite = document.getElementById('modeWrite');
+  const btnDialog = document.getElementById('modeDialog');
+  
+  console.log('Elements found:', {
+    questionMode: !!questionMode,
+    writeMode: !!writeMode,
+    dialogMode: !!dialogMode,
+    questionListSection: !!questionListSection,
+    btnQuestion: !!btnQuestion,
+    btnWrite: !!btnWrite,
+    btnDialog: !!btnDialog
+  });
+  
+  // ซ่อนทุกโหมด
+  if (questionMode) questionMode.style.display = 'none';
+  if (writeMode) writeMode.style.display = 'none';
+  if (dialogMode) dialogMode.style.display = 'none';
+  if (questionListSection) questionListSection.style.display = 'none';
+  if (btnQuestion) btnQuestion.style.background = '';
+  if (btnWrite) btnWrite.style.background = '';
+  if (btnDialog) btnDialog.style.background = '';
+  
+  // แสดงโหมดที่เลือก
+  if (mode === 'question') {
+    if (questionMode) questionMode.style.display = 'block';
+    if (questionListSection) questionListSection.style.display = 'block';
+    if (btnQuestion) btnQuestion.style.background = 'linear-gradient(180deg, #57e167 0%, #57e167 100%)';
+    console.log('✅ แสดงโหมดตั้งโจทย์');
+  } else if (mode === 'write') {
+    if (writeMode) writeMode.style.display = 'block';
+    if (btnWrite) btnWrite.style.background = 'linear-gradient(180deg, #57e167 0%, #57e167 100%)';
+    console.log('✅ แสดงโหมดเขียน');
+  } else if (mode === 'dialog') {
+    if (dialogMode) dialogMode.style.display = 'block';
+    if (btnDialog) btnDialog.style.background = 'linear-gradient(180deg, #57e167 0%, #57e167 100%)';
+    console.log('✅ แสดงโหมดสนทนา');
+    
+    // เริ่มต้นด้วย bubble ซ้าย
+    setTimeout(() => {
+      try {
+        selectBubble('left');
+      } catch(e) {
+        console.error('Error selecting bubble:', e);
+      }
+    }, 100);
+  }
+}
+
+// ฟังก์ชันแปลภาษาอัตโนมัติ (ปรับปรุงใหม่ - ใช้ API แปล)
+async function translateToThai() {
+  console.log('🔄 translateToThai() เริ่มทำงาน');
+  const englishWord = document.getElementById('englishWord').value.trim().toLowerCase();
+  const thaiMeaningInput = document.getElementById('thaiMeaning');
+  
+  console.log('📝 คำที่พิมพ์:', englishWord);
+  
+  if (!englishWord) {
+    thaiMeaningInput.value = '';
+    thaiMeaningInput.style.background = '#f0f0f0';
+    return;
+  }
+  
+  // แสดง loading
+  thaiMeaningInput.value = 'กำลังแปล...';
+  thaiMeaningInput.style.background = '#fff9e6';
+  
+  // 1. ลอง custom dictionary ก่อน
+  console.log('🔍 ตรวจสอบ custom dictionary...');
+  if (customTranslations[englishWord]) {
+    console.log('✅ เจอใน custom dictionary!');
+    thaiMeaningInput.value = customTranslations[englishWord].meaning;
+    thaiMeaningInput.style.background = '#e8f5e9'; // สีเขียวอ่อน = จาก custom
+    return;
+  }
+  
+  // 2. ลอง built-in dictionary
+  console.log('🔍 ตรวจสอบ built-in dictionary...');
+  if (thaiTranslations[englishWord]) {
+    console.log('✅ เจอใน built-in dictionary!');
+    thaiMeaningInput.value = thaiTranslations[englishWord].meaning;
+    thaiMeaningInput.style.background = '#fff3e0'; // สีส้มอ่อน = จาก built-in
+    return;
+  }
+  
+  // 3. ใช้ Translation API (MyMemory - ฟรี)
+  console.log('🌐 เรียก API แปล...');
+  try {
+    // แปลเป็นภาษาไทย
+    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(englishWord)}&langpair=en|th`);
+    const data = await response.json();
+    
+    if (data.responseStatus === 200 && data.responseData.translatedText) {
+      const meaning = data.responseData.translatedText;
+      
+      thaiMeaningInput.value = meaning;
+      thaiMeaningInput.style.background = '#e3f2fd'; // สีฟ้าอ่อน = จาก API
+      
+      // บันทึกอัตโนมัติลง custom dictionary
+      await saveToCustomDictionary(englishWord, englishWord, meaning);
+      
+      console.log('✅ แปลจาก API สำเร็จ:', englishWord, '→', meaning);
+    } else {
+      throw new Error('API ไม่สามารถแปลได้');
+    }
+  } catch (error) {
+    console.error('❌ แปลผ่าน API ล้มเหลว:', error);
+    // ถ้า API ล้มเหลว ให้แสดงให้กรอกเอง
+    thaiMeaningInput.value = '';
+    thaiMeaningInput.style.background = '#ffebee'; // สีแดงอ่อน = ต้องกรอกเอง
+    showCustomAlert('ไม่สามารถแปลอัตโนมัติได้<br>กรุณากรอกคำแปลเอง<br>(ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต)');
+  }
+}
+
+// ฟังก์ชันสร้างการอ่านภาษาไทยจากคำอังกฤษ (แบบออกเสียง)
+async function generateThaiReading(englishWord) {
+  const word = englishWord.toLowerCase();
+  
+  // แผนที่เสียงพยัญชนะและสระ (เรียงจากยาว → สั้น)
+  let reading = word
+    // ตัวสะกดพิเศษ (ต้องมาก่อน)
+    .replace(/tion/g, 'ชั่น')
+    .replace(/sion/g, 'ชั่น')
+    .replace(/ture/g, 'เชอร์')
+    .replace(/sure/g, 'ชัวร์')
+    .replace(/ing/g, 'อิง')
+    
+    // พยัญชนะคู่
+    .replace(/ch/g, 'ช')
+    .replace(/sh/g, 'ช')
+    .replace(/th/g, 'ท')
+    .replace(/ph/g, 'ฟ')
+    .replace(/wh/g, 'ว')
+    .replace(/gh/g, 'ก')
+    .replace(/ng/g, 'ง')
+    .replace(/ck/g, 'ค')
+    
+    // สระคู่
+    .replace(/oo/g, 'อู')
+    .replace(/ee/g, 'อี')
+    .replace(/ea/g, 'อี')
+    .replace(/ai/g, 'เอ')
+    .replace(/ay/g, 'เอ')
+    .replace(/oi/g, 'อ้อย')
+    .replace(/oy/g, 'อ้อย')
+    .replace(/ou/g, 'เอา')
+    .replace(/ow/g, 'โอ')
+    .replace(/er/g, 'เออร์')
+    .replace(/ar/g, 'าร์')
+    .replace(/or/g, 'อร์')
+    .replace(/ir/g, 'เออร์')
+    .replace(/ur/g, 'เออร์')
+    
+    // พยัญชนะเดี่ยว
+    .replace(/b/g, 'บ')
+    .replace(/c/g, 'ค')
+    .replace(/d/g, 'ด')
+    .replace(/f/g, 'ฟ')
+    .replace(/g/g, 'ก')
+    .replace(/h/g, '')
+    .replace(/j/g, 'จ')
+    .replace(/k/g, 'ค')
+    .replace(/l/g, 'ล')
+    .replace(/m/g, 'ม')
+    .replace(/n/g, 'น')
+    .replace(/p/g, 'พ')
+    .replace(/q/g, 'ค')
+    .replace(/r/g, 'ร')
+    .replace(/s/g, 'ส')
+    .replace(/t/g, 'ท')
+    .replace(/v/g, 'ฟ')
+    .replace(/w/g, 'ว')
+    .replace(/x/g, 'กซ')
+    .replace(/y/g, 'ย')
+    .replace(/z/g, 'ซ')
+    
+    // สระเดี่ยว (ต้องมาทีหลัง)
+    .replace(/a/g, 'แอ')
+    .replace(/e/g, 'เอ')
+    .replace(/i/g, 'อิ')
+    .replace(/o/g, 'โอ')
+    .replace(/u/g, 'อะ');
+  
+  return reading || englishWord;
+}
+
+// ฟังก์ชันบันทึกคำใหม่ลง Database
+async function saveToCustomDictionary(english, reading, meaning) {
+  const word = english.toLowerCase().trim();
+  if (!word || !reading || !meaning) return;
+  
+  try {
+    const res = await fetch('/api/vocabulary/custom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word, reading, meaning })
+    });
+    
+    if (res.ok) {
+      // อัพเดท cache ในหน้า
+      customTranslations[word] = { reading, meaning };
+      console.log('✅ บันทึกคำใหม่ลง DB:', word);
+    } else {
+      console.error('❌ บันทึกคำล้มเหลว');
+    }
+  } catch (e) {
+    console.error('❌ บันทึก custom dictionary ล้มเหลว:', e);
+  }
+}
+
+// ฟังก์ชันจัดการรูปภาพคำศัพท์
+function handleVocabularyImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    currentVocabularyImage = e.target.result;
+    const preview = document.getElementById('vocabularyImagePreview');
+    preview.innerHTML = `
+      <img src="${e.target.result}" class="image-preview" />
+      <br>
+      <button class="remove-image-btn" onclick="removeVocabularyImage()">ลบรูป</button>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeVocabularyImage() {
+  currentVocabularyImage = null;
+  document.getElementById('vocabularyImageInput').value = '';
+  document.getElementById('vocabularyImagePreview').innerHTML = '';
+}
+
+// ฟังก์ชันเพิ่มคำศัพท์
+function addVocabulary() {
+  const englishWord = document.getElementById('englishWord').value.trim();
+  const thaiMeaning = document.getElementById('thaiMeaning').value.trim();
+  
+  if (!englishWord || !thaiMeaning) {
+    showCustomAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+    return;
+  }
+  
+  // บันทึกคำใหม่ลง custom dictionary (ถ้ายังไม่มี)
+  const wordLower = englishWord.toLowerCase();
+  if (!thaiTranslations[wordLower] && !customTranslations[wordLower]) {
+    saveToCustomDictionary(englishWord, englishWord, thaiMeaning);
+  }
+  
+  const vocabData = {
+    id: Date.now(),
+    english: englishWord,
+    thaiReading: englishWord,
+    thaiMeaning: thaiMeaning,
+    image: currentVocabularyImage || null
+  };
+  
+  vocabularyList.push(vocabData);
+  renderVocabularyList();
+  
+  // Clear inputs
+  document.getElementById('englishWord').value = '';
+  document.getElementById('thaiMeaning').value = '';
+  document.getElementById('thaiMeaning').style.background = '#f0f0f0'; // รีเซ็ตสี
+  removeVocabularyImage();
+}
+
+// ฟังก์ชันแสดงรายการคำศัพท์
+function renderVocabularyList() {
+  const container = document.getElementById('vocabularyList');
+  const countElement = document.getElementById('vocabCount');
+  
+  countElement.textContent = vocabularyList.length;
+  
+  if (vocabularyList.length === 0) {
+    container.innerHTML = '<div class="empty-state">ยังไม่มีคำศัพท์ กรุณาเพิ่มคำศัพท์</div>';
+    return;
+  }
+  
+  container.innerHTML = vocabularyList.map((vocab, index) => `
+    <div class="question-item">
+      <div class="question-header">
+        <span class="question-number">คำที่ ${index + 1}</span>
+        <button class="delete-btn" onclick="deleteVocabulary(${vocab.id})">🗑️ ลบ</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+        <div><strong>🔤 English:</strong> ${vocab.english}</div>
+        <div><strong>💡 ความหมาย:</strong> ${vocab.thaiMeaning}</div>
+      </div>
+      ${vocab.image ? `<div style="margin-top: 10px;"><img src="${vocab.image}" class="image-preview" /></div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ฟังก์ชันลบคำศัพท์
+function deleteVocabulary(id) {
+  if (!confirm('ต้องการลบคำศัพท์นี้หรือไม่?')) return;
+  vocabularyList = vocabularyList.filter(v => v.id !== id);
+  renderVocabularyList();
+}
+
+// ฟังก์ชันบันทึกกิจกรรมเขียน (คำศัพท์)
+function startWriteActivity() {
+  // อัปเดต classroom ก่อนอ่านค่า
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+  const classroom = document.getElementById('classroomInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
+
+  if (vocabularyList.length === 0) {
+    showCustomAlert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนเริ่มกิจกรรม');
+    return;
+  }
+
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'คำศัพท์';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
+
+  const config = {
+    gameType: 'writing',
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    classroom: classroom || '',
+    userName: cfgUserName,
+    vocabularyList: vocabularyList
+  };
+
+  console.log('🎯 กำลังบันทึก config สำหรับเกมเขียน:', config);
+  localStorage.setItem('thaiWriteConfig', JSON.stringify(config));
+  console.log('🎯 ไปหน้า gamewrite.html');
+  window.location.href = 'gamewrite.html';
+}
+
+function handleQuestionImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    currentQuestionImage = e.target.result;
+    const preview = document.getElementById('questionImagePreview');
+    preview.innerHTML = `
+      <img src="${e.target.result}" class="image-preview" />
+      <br>
+      <button class="remove-image-btn" onclick="removeQuestionImage()">ลบรูป</button>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeQuestionImage() {
+  currentQuestionImage = null;
+  document.getElementById('questionImageInput').value = '';
+  document.getElementById('questionImagePreview').innerHTML = '';
+}
 
 function addQuestion() {
   const question = document.getElementById('questionInput').value.trim();
@@ -136,18 +883,23 @@ function addQuestion() {
   const choice4 = document.getElementById('choice4').value.trim();
 
   if (!question || !choice1 || !choice2 || !choice3 || !choice4) {
-    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+    showCustomAlert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
     return;
   }
 
   const questionData = {
     id: Date.now(),
     question: question,
+    image: currentQuestionImage || null, // เพิ่มรูปภาพ
     choices: [choice1, choice2, choice3, choice4],
     correctIndex: 0 // คำตอบแรกถูกเสมอ
   };
 
   allQuestions.push(questionData);
+  
+  // บันทึกโจทย์ลง MongoDB
+  saveQuestionToDB(questionData, 'thai');
+  
   renderQuestionsList();
   
   // Clear inputs
@@ -156,6 +908,7 @@ function addQuestion() {
   document.getElementById('choice2').value = '';
   document.getElementById('choice3').value = '';
   document.getElementById('choice4').value = '';
+  removeQuestionImage(); // ล้างรูปภาพ
 }
 
 function renderQuestionsList() {
@@ -173,6 +926,7 @@ function renderQuestionsList() {
         <button class="delete-btn" onclick="deleteQuestion(${q.id})">🗑️ ลบ</button>
       </div>
       <div style="margin-bottom: 10px;"><strong>คำถาม:</strong> ${q.question}</div>
+      ${q.image ? `<div style="margin-bottom: 10px;"><img src="${q.image}" class="image-preview" /></div>` : ''}
       <div class="choices-grid">
         ${q.choices.map((choice, i) => `
           <div style="display: flex; align-items: center; gap: 5px;">
@@ -187,25 +941,487 @@ function renderQuestionsList() {
   `).join('');
 }
 
-function deleteQuestion(id) {
-  if (!confirm('ต้องการลบคำถามนี้หรือไม่?')) return;
-  allQuestions = allQuestions.filter(q => q.id !== id);
-  renderQuestionsList();
+// ฟังก์ชันบันทึกโจทย์ลง MongoDB
+async function saveQuestionToDB(questionData, type) {
+  const teacher = document.getElementById('teacherInput')?.value.trim() || 'ไม่ระบุ';
+  const classroom = document.getElementById('classroomInput')?.value.trim() || 'ไม่ระบุ';
+  const topic = document.getElementById('topicInput')?.value.trim() || 'ไม่ระบุ';
+  
+  try {
+    const response = await fetch('/api/questions/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        teacher: teacher,
+        classroom: classroom,
+        topic: topic,
+        type: type,
+        questionData: questionData,
+        createdAt: new Date().toISOString()
+      })
+    });
+    
+    if (response.ok) {
+      console.log('✅ บันทึกโจทย์ลง MongoDB สำเร็จ');
+    } else {
+      console.error('❌ บันทึกโจทย์ล้มเหลว');
+    }
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาด:', error);
+  }
 }
 
-function startActivity() {
+// ตัวแปรเก็บตำแหน่ง bubble ปัจจุบัน
+let currentBubblePosition = 'left';
+
+// ฟังก์ชันเลือก bubble
+function selectBubble(position) {
+  currentBubblePosition = position;
+  
+  const bubbleLeft = document.getElementById('bubbleLeft');
+  const bubbleRight = document.getElementById('bubbleRight');
+  const imgRM = document.getElementById('dialogPreviewRM');
+  const imgWL = document.getElementById('dialogPreviewWL');
+  
+  if (position === 'left') {
+    // แสดง bubble ซ้าย
+    bubbleLeft.style.display = 'block';
+    bubbleRight.style.display = 'none';
+    
+    // Highlight ตัวละครซ้าย
+    imgRM.style.filter = 'grayscale(0%) opacity(1)';
+    imgRM.style.transform = 'scale(1.05)';
+    imgWL.style.filter = 'grayscale(70%) opacity(0.5)';
+    imgWL.style.transform = 'scale(1)';
+    
+    // Focus textarea
+    document.getElementById('textLeft').focus();
+  } else {
+    // แสดง bubble ขวา
+    bubbleLeft.style.display = 'none';
+    bubbleRight.style.display = 'block';
+    
+    // Highlight ตัวละครขวา
+    imgWL.style.filter = 'grayscale(0%) opacity(1)';
+    imgWL.style.transform = 'scale(1.05)';
+    imgRM.style.filter = 'grayscale(70%) opacity(0.5)';
+    imgRM.style.transform = 'scale(1)';
+    
+    // Focus textarea
+    document.getElementById('textRight').focus();
+  }
+}
+
+// ฟังก์ชันสลับตำแหน่ง bubble
+function toggleBubblePosition() {
+  if (currentBubblePosition === 'left') {
+    selectBubble('right');
+  } else {
+    selectBubble('left');
+  }
+}
+
+// ฟังก์ชันเพิ่มบทสนทนา
+function addDialogLine() {
+  const textLeft = document.getElementById('textLeft').value.trim();
+  const textRight = document.getElementById('textRight').value.trim();
+  
+  // เอาข้อความจาก bubble ที่เลือก
+  const text = currentBubblePosition === 'left' ? textLeft : textRight;
+  
+  if (!text) {
+    showCustomAlert('กรุณากรอกข้อความ');
+    return;
+  }
+  
+  const dialogData = {
+    id: Date.now(),
+    position: currentBubblePosition,
+    text: text,
+    order: dialogList.length + 1
+  };
+  
+  dialogList.push(dialogData);
+  renderDialogList();
+  
+  // Clear inputs
+  document.getElementById('textLeft').value = '';
+  document.getElementById('textRight').value = '';
+  
+  // สลับไปอีกฝั่งอัตโนมัติ
+  toggleBubblePosition();
+}
+
+// ฟังก์ชันแสดงรายการบทสนทนา
+function renderDialogList() {
+  const container = document.getElementById('dialogList');
+  const countElement = document.getElementById('dialogCount');
+  
+  countElement.textContent = dialogList.length;
+  
+  if (dialogList.length === 0) {
+    container.innerHTML = '<p style="color: #999; text-align: center;">ยังไม่มีบทสนทนา</p>';
+    return;
+  }
+  
+  container.innerHTML = dialogList.map((dialog, index) => {
+    const isLeft = dialog.position === 'left';
+    const borderColor = isLeft ? '#4CAF50' : '#FF6B9D';
+    const bgColor = isLeft ? '#e8f5e9' : '#fce4ec';
+    const positionIcon = isLeft ? '←' : '→';
+    const characterName = isLeft ? characterLeftName : characterRightName;
+    const voiceType = dialog.voiceType || (isLeft ? 'male' : 'female');
+    const voiceIcon = voiceType === 'male' ? '[ชาย]' : '[หญิง]';
+    
+    return `
+      <div style="display: flex; justify-content: ${isLeft ? 'flex-start' : 'flex-end'}; margin: 15px 0; gap: 10px;">
+        <div style="max-width: 80%; position: relative;">
+          <div style="background: ${bgColor}; padding: 20px; border-radius: 15px; border: 3px solid ${borderColor}; position: relative;">
+            ${isLeft ? `<div style="position: absolute; left: -15px; top: 20px; width: 0; height: 0; border-style: solid; border-width: 10px 15px 10px 0; border-color: transparent ${borderColor} transparent transparent;"></div>` : ''}
+            ${!isLeft ? `<div style="position: absolute; right: -15px; top: 20px; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 15px; border-color: transparent transparent transparent ${borderColor};"></div>` : ''}
+            
+            <!-- ข้อมูลตัวละคร -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${borderColor};">
+              <div style="flex: 1;">
+                <strong style="color: ${borderColor}; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                  ${dialog.order}. ${characterName}
+                </strong>
+              </div>
+              <div>
+                <select onchange="updateVoiceType(${dialog.id}, this.value)" 
+                        style="padding: 5px 8px; border-radius: 5px; border: 2px solid ${borderColor}; font-size: 12px; cursor: pointer;">
+                  <option value="male" ${voiceType === 'male' ? 'selected' : ''}>👨 เสียงชาย</option>
+                  <option value="female" ${voiceType === 'female' ? 'selected' : ''}>👩 เสียงหญิงปกติ</option>
+                  <option value="female-soft" ${voiceType === 'female-soft' ? 'selected' : ''}>👩 เสียงหญิงนุ่มนวล</option>
+                  <option value="female-high" ${voiceType === 'female-high' ? 'selected' : ''}>👩 เสียงหญิงสูง</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- บทพูด (แก้ไขได้) -->
+            <textarea id="dialogText_${dialog.id}" 
+                      onchange="updateDialogText(${dialog.id}, this.value)"
+                      style="width: 100%; min-height: 80px; border: 2px dashed ${borderColor}; border-radius: 8px; padding: 10px; font-size: 16px; font-family: 'Sarabun', sans-serif; resize: vertical; background: white;"
+                      placeholder="พิมพ์ประโยค">${dialog.text}</textarea>
+          </div>
+          
+          <!-- ปุ่มควบคุม -->
+          <div style="display: flex; gap: 5px; margin-top: 8px; justify-content: ${isLeft ? 'flex-start' : 'flex-end'};">
+            <button onclick="moveDialogUp(${dialog.id})" style="background: #2196F3; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">↑ ขึ้น</button>
+            <button onclick="moveDialogDown(${dialog.id})" style="background: #2196F3; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">↓ ลง</button>
+            <button onclick="deleteDialog(${dialog.id})" style="background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">X ลบ</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ฟังก์ชันเลื่อนลำดับบทสนทนา
+function moveDialogUp(id) {
+  const index = dialogList.findIndex(d => d.id === id);
+  if (index <= 0) return;
+  
+  [dialogList[index], dialogList[index - 1]] = [dialogList[index - 1], dialogList[index]];
+  updateDialogOrder();
+  renderDialogList();
+}
+
+function moveDialogDown(id) {
+  const index = dialogList.findIndex(d => d.id === id);
+  if (index < 0 || index >= dialogList.length - 1) return;
+  
+  [dialogList[index], dialogList[index + 1]] = [dialogList[index + 1], dialogList[index]];
+  updateDialogOrder();
+  renderDialogList();
+}
+
+function updateDialogOrder() {
+  dialogList.forEach((dialog, index) => {
+    dialog.order = index + 1;
+  });
+}
+
+// ฟังก์ชันอัปเดตชื่อตัวละครซ้าย
+function updateCharacterLeftName(newName) {
+  characterLeftName = newName.trim() || 'ตัวละครซ้าย';
+  console.log('✏️ เปลี่ยนชื่อตัวละครซ้าย:', characterLeftName);
+  renderDialogList(); // รีเฟรชรายการเพื่ออัปเดตชื่อ
+}
+
+// ฟังก์ชันอัปเดตชื่อตัวละครขวา
+function updateCharacterRightName(newName) {
+  characterRightName = newName.trim() || 'ตัวละครขวา';
+  console.log('✏️ เปลี่ยนชื่อตัวละครขวา:', characterRightName);
+  renderDialogList(); // รีเฟรชรายการเพื่ออัปเดตชื่อ
+}
+
+// ฟังก์ชันจัดการอัปโหลดรูปพื้นหลัง
+function handleBackgroundUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    dialogBackgroundImage = e.target.result;
+    
+    // แสดงรูปเป็นพื้นหลังของกรอบสีฟ้า
+    const dialogArea = document.getElementById('dialogCreatorArea');
+    dialogArea.style.backgroundImage = `url(${dialogBackgroundImage})`;
+    
+    // แสดงปุ่มลบ
+    document.getElementById('removeBackgroundBtn').style.display = 'inline-block';
+    
+    console.log('✅ โหลดรูปพื้นหลังสำเร็จและแสดงในกรอบ');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ฟังก์ชันลบรูปพื้นหลัง
+function removeBackground() {
+  dialogBackgroundImage = null;
+  document.getElementById('dialogBackgroundInput').value = '';
+  
+  // ลบพื้นหลังออกจากกรอบ
+  const dialogArea = document.getElementById('dialogCreatorArea');
+  dialogArea.style.backgroundImage = '';
+  
+  // ซ่อนปุ่มลบ
+  document.getElementById('removeBackgroundBtn').style.display = 'none';
+  
+  console.log('🗑️ ลบรูปพื้นหลังแล้ว');
+}
+
+// ฟังก์ชันอัปเดตข้อความบทสนทนา
+function updateDialogText(id, newText) {
+  const dialog = dialogList.find(d => d.id === id);
+  if (!dialog) return;
+  dialog.text = newText.trim();
+}
+
+// ฟังก์ชันอัปเดตประเภทเสียง
+function updateVoiceType(id, newVoiceType) {
+  const dialog = dialogList.find(d => d.id === id);
+  if (!dialog) return;
+  dialog.voiceType = newVoiceType;
+}
+
+// ฟังก์ชันทดสอบเสียง
+function testVoice(id) {
+  const dialog = dialogList.find(d => d.id === id);
+  if (!dialog) return;
+  
+  const textArea = document.getElementById(`dialogText_${id}`);
+  const text = textArea ? textArea.value.trim() : dialog.text;
+  
+  if (!text) {
+    showCustomAlert('ไม่มีข้อความให้อ่าน');
+    return;
+  }
+  
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    
+    // รอให้ voices โหลด
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      console.log('🎤 เสียงที่มีทั้งหมด:', voices.length);
+      voices.forEach(v => console.log(`  - ${v.name} (${v.lang})`));
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'th-TH';
+      utterance.rate = 0.7; // ช้าลงเพื่อให้รื่นไหลและฟังชัดเจน
+      
+      // กำหนด pitch และเลือกเสียงตามเพศ (ปรับให้เป็นธรรมชาติ)
+      const voiceType = dialog.voiceType || (dialog.position === 'left' ? 'male' : 'female');
+      let pitch = 1.0;
+      if (voiceType === 'male') {
+        pitch = 0.9; // เสียงเบสลงนิดหน่อย
+      } else if (voiceType === 'female') {
+        pitch = 1.05; // สูงขึ้นนิดหน่อย
+      } else if (voiceType === 'female-soft') {
+        pitch = 1.0;
+      } else if (voiceType === 'female-high') {
+        pitch = 1.15;
+      }
+      utterance.pitch = pitch;
+      
+      // หาเสียงภาษาไทยทั้งหมดก่อน
+      const thaiVoices = voices.filter(v => v.lang.includes('th') || v.lang.includes('TH'));
+      console.log('🇹🇭 เสียงไทยที่มี:', thaiVoices.map(v => v.name).join(', '));
+      
+      let selectedVoice = null;
+      
+      // ถ้ามีเสียงไทย ให้เลือกตามเพศ (แต่ไม่เข้มงวด)
+      if (thaiVoices.length > 0) {
+        if (voiceType.startsWith('female')) {
+          // พยายามหาเสียงผู้หญิงก่อน
+          selectedVoice = thaiVoices.find(v => 
+            v.name.toLowerCase().includes('female') || 
+            v.name.toLowerCase().includes('woman') ||
+            v.name.includes('Kanya') ||
+            v.name.includes('Premwadee')
+          );
+        } else if (voiceType === 'male') {
+          // พยายามหาเสียงผู้ชายก่อน
+          selectedVoice = thaiVoices.find(v => 
+            v.name.toLowerCase().includes('male') || 
+            v.name.toLowerCase().includes('man') ||
+            v.name.includes('Pattara')
+          );
+        }
+        
+        // ถ้ายังไม่เจอ ใช้เสียงไทยตัวแรกที่มี
+        if (!selectedVoice) {
+          selectedVoice = thaiVoices[0];
+          console.log('⚠️ ไม่พบเสียงตามเพศ ใช้เสียงไทยตัวแรก:', selectedVoice.name);
+        }
+      }
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log(`✅ ใช้เสียง: ${selectedVoice.name} (${voiceType})`);
+      } else {
+        console.log(`⚠️ ไม่พบเสียงภาษาไทย ใช้เสียงเริ่มต้น (${voiceType})`);
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    };
+    
+    // ถ้า voices ยังไม่โหลด ให้รอ
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices, { once: true });
+    } else {
+      loadVoices();
+    }
+  } else {
+    showCustomAlert('เบราว์เซอร์ของคุณไม่รองรับการอ่านออกเสียง');
+  }
+}
+
+// ฟังก์ชันแก้ไขบทสนทนา (เก็บไว้เผื่อใช้งานภายหลัง - ไม่ใช้แล้ว)
+function editDialog(id) {
+  const dialog = dialogList.find(d => d.id === id);
+  if (!dialog) return;
+  
+  // โหลดข้อความกลับมาในกล่องข้อความ
+  selectBubble(dialog.position);
+  
+  if (dialog.position === 'left') {
+    document.getElementById('textLeft').value = dialog.text;
+  } else {
+    document.getElementById('textRight').value = dialog.text;
+  }
+  
+  // ลบบทสนทนาเดิม
+  dialogList = dialogList.filter(d => d.id !== id);
+  updateDialogOrder();
+  renderDialogList();
+  
+  // Scroll ไปที่กล่องข้อควาวม
+  document.getElementById(dialog.position === 'left' ? 'textLeft' : 'textRight').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ฟังก์ชันลบบทสนทนา
+function deleteDialog(id) {
+  if (!confirm('ต้องการลบบทสนทนานี้หรือไม่?')) return;
+  dialogList = dialogList.filter(d => d.id !== id);
+  updateDialogOrder();
+  renderDialogList();
+}
+
+// ฟังก์ชันบันทึกกิจกรรมสนทนา
+function startDialogActivity() {
+  // อัปเดต classroom ก่อนอ่านค่า
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
   const week = document.getElementById('weekInput').value.trim();
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
-  const userName = document.getElementById('userNameInput').value.trim(); // เพิ่มการดึงชื่อผู้ทดสอบ
+  const classroom = document.getElementById('classroomInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+  
+  // เพิ่มข้อมูลบริบท
+  const contextTitle = document.getElementById('dialogContextTitle').value.trim();
 
-  // Allow starting even if some fields are empty — use defaults
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
+
+  if (dialogList.length === 0) {
+    showCustomAlert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บท');
+    return;
+  }
+
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'บทสนทนา';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
+
+  const config = {
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    classroom: classroom,
+    userName: cfgUserName,
+    gameType: 'dialog',
+    dialogs: dialogList,
+    contextTitle: contextTitle || '',
+    contextDescription: '',
+    characterLeftName: characterLeftName,
+    characterRightName: characterRightName,
+    backgroundImage: dialogBackgroundImage || null
+  };
+
+  console.log('🎯 กำลังบันทึก config สำหรับเกมสนทนา:', config);
+  localStorage.setItem('thaiDialogConfig', JSON.stringify(config));
+  console.log('🎯 ไปหน้า gamedialog.html');
+  window.location.href = 'gamedialog.html';
+}
+
+function startActivity() {
+  // ตรวจสอบโหมดปัจจุบัน
+  if (currentMode === 'write') {
+    startWriteActivity();
+    return;
+  }
+  
+  if (currentMode === 'dialog') {
+    startDialogActivity();
+    return;
+  }
+  
+  // โหมดตั้งโจทย์
+  // อัปเดต classroom ก่อนอ่านค่า
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+  const classroom = document.getElementById('classroomInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
+
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
-  const cfgUserName = userName || 'ไม่ระบุ'; // ใช้ค่าเริ่มต้นหากไม่มีการกรอก
+  const cfgUserName = userName || 'ไม่ระบุ';
 
   if (allQuestions.length === 0) console.warn('[START] Starting activity with 0 questions');
 
@@ -214,12 +1430,19 @@ function startActivity() {
     topic: cfgTopic,
     unit: cfgUnit,
     teacher: cfgTeacher,
-    userName: cfgUserName, // เพิ่มชื่อผู้ทดสอบใน config
+    classroom: classroom || '',
+    userName: cfgUserName,
     questions: allQuestions || []
   };
 
   localStorage.setItem('thaiGameConfig', JSON.stringify(config));
   window.location.href = 'gamethai.html';
+}
+
+function deleteQuestion(id) {
+  if (!confirm('ต้องการลบคำถามนี้หรือไม่?')) return;
+  allQuestions = allQuestions.filter(q => q.id !== id);
+  renderQuestionsList();
 }
 
 // ฟังก์ชันบันทึกกิจกรรม (บันทึกลง Cloud)
@@ -228,10 +1451,11 @@ async function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const classroom = document.getElementById('classroomInput').value.trim();
   const userName = document.getElementById('userNameInput').value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
@@ -241,98 +1465,141 @@ async function saveActivity() {
   const cfgTeacher = teacher;
   const cfgUserName = userName || 'ไม่ระบุ';
 
-  if (allQuestions.length === 0) {
-    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อก่อนบันทึก');
+  // ตรวจสอบตามโหมด
+  if (currentMode === 'question' && allQuestions.length === 0) {
+    showCustomAlert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อก่อนบันทึก');
+    return;
+  }
+  
+  if (currentMode === 'write' && vocabularyList.length === 0) {
+    showCustomAlert('กรุณาเพิ่มคำศัพท์อย่างน้อย 1 คำก่อนบันทึก');
+    return;
+  }
+  
+  if (currentMode === 'dialog' && dialogList.length === 0) {
+    showCustomAlert('กรุณาเพิ่มบทสนทนาอย่างน้อย 1 บทก่อนบันทึก');
     return;
   }
 
-  // ถ้ากำลังแก้ไขกิจกรรมจากคลาวด์
-  if (window.editingCloudActivity) {
-    const { teacherName, activityId } = window.editingCloudActivity;
-    try {
-      const res = await fetch(`/api/settings/thai/${encodeURIComponent(teacherName)}/${activityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: window.editingCloudActivityName || `${cfgTopic} - สัปดาห์ ${cfgWeek}`,
-          config: {
-            week: cfgWeek,
-            topic: cfgTopic,
-            unit: cfgUnit,
-            teacher: cfgTeacher,
-            userName: cfgUserName,
-            questions: allQuestions
-          }
-        })
-      });
-      if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
-      delete window.editingCloudActivity;
-      delete window.editingCloudActivityName;
-      return;
-    } catch (err) {
-      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
-      return;
-    }
-  }
-
-  // บันทึกใหม่
-  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
+  const activityName = prompt('ชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
   if (!activityName) return;
 
   try {
-    const res = await fetch('/api/settings/thai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        teacherName: cfgTeacher,
-        name: activityName,
-        config: {
-          week: cfgWeek,
-          topic: cfgTopic,
-          unit: cfgUnit,
-          teacher: cfgTeacher,
-          userName: cfgUserName,
-          questions: allQuestions
-        }
-      })
-    });
-    if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
-    const data = await res.json();
-    alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+    let activityConfig;
+    
+    if (currentMode === 'write') {
+      activityConfig = {
+        gameType: 'writing',
+        week: cfgWeek,
+        topic: cfgTopic,
+        unit: cfgUnit,
+        teacher: cfgTeacher,
+        classroom: classroom || '',
+        userName: cfgUserName,
+        vocabulary: vocabularyList
+      };
+    } else if (currentMode === 'dialog') {
+      activityConfig = {
+        gameType: 'dialog',
+        week: cfgWeek,
+        topic: cfgTopic,
+        unit: cfgUnit,
+        teacher: cfgTeacher,
+        classroom: classroom || '',
+        userName: cfgUserName,
+        dialogs: dialogList
+      };
+    } else {
+      activityConfig = {
+        gameType: 'question',
+        week: cfgWeek,
+        topic: cfgTopic,
+        unit: cfgUnit,
+        teacher: cfgTeacher,
+        classroom: classroom || '',
+        userName: cfgUserName,
+        questions: allQuestions
+      };
+    }
+
+    if (window.editingCloudActivity) {
+      // อัพเดทกิจกรรมเดิม
+      const res = await fetch(`/api/settings/thai/${encodeURIComponent(cfgTeacher)}/${window.editingCloudActivity.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: window.editingCloudActivityName || activityName,
+          config: activityConfig
+        })
+      });
+      if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
+      showCustomAlert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      delete window.editingCloudActivity;
+      delete window.editingCloudActivityName;
+    } else {
+      // สร้างกิจกรรมใหม่
+      const res = await fetch('/api/settings/thai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teacherName: cfgTeacher,
+          name: activityName,
+          config: activityConfig
+        })
+      });
+      if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
+      const data = await res.json();
+      showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!<br>รหัส: ${data.data?.activityId || '-'}`);
+    }
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
 // ฟังก์ชันโหลดกิจกรรมจากคลาวด์
 async function loadActivity() {
+  console.log('🔍 loadActivity() เริ่มทำงาน');
   const teacherList = document.getElementById('teacherList');
   const activityList = document.getElementById('activityList');
+  const modal = document.getElementById('activityModal');
+  
+  console.log('teacherList element:', teacherList);
+  console.log('activityModal element:', modal);
+  
   teacherList.innerHTML = '<p style="text-align:center;">⏳ กำลังโหลดจากคลาวด์...</p>';
   activityList.style.display = 'none';
-  document.getElementById('activityModal').style.display = 'flex';
+  modal.style.display = 'flex';
+  
+  console.log('Modal display set to flex');
 
   try {
+    console.log('📡 กำลังเรียก API: /api/settings/thai');
     const res = await fetch('/api/settings/thai');
+    console.log('API response status:', res.status);
+    
     if (!res.ok) throw new Error('โหลดข้อมูลไม่สำเร็จ');
     const result = await res.json();
+    console.log('API result:', result);
+    
     const activities = result.data || [];
+    console.log('จำนวนกิจกรรม:', activities.length);
 
     const teacherMap = {};
     activities.forEach(a => {
       if (!teacherMap[a.teacherName]) teacherMap[a.teacherName] = [];
       teacherMap[a.teacherName].push(a);
     });
+    console.log('teacherMap:', teacherMap);
 
     const teachers = Object.keys(teacherMap);
+    console.log('จำนวนครู:', teachers.length);
     if (teachers.length === 0) {
       teacherList.innerHTML = '<p style="text-align:center; color:#666;">ยังไม่มีกิจกรรมบนคลาวด์</p>';
       return;
     }
 
     teacherList.innerHTML = `
-      <h3 style="margin: 0 0 15px 0; color: #e65100;">👩‍🏫 เลือกครู</h3>
+      <h3 style="margin: 0 0 15px 0; color: #e65100;">เลือกครู</h3>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
         ${teachers.map(t => `
           <div onclick="showTeacherActivities('${encodeURIComponent(t)}')" 
@@ -351,31 +1618,89 @@ async function loadActivity() {
   }
 }
 
-function showTeacherActivities(encodedTeacherName) {
+function showTeacherActivities(encodedTeacherName, filterType = 'all') {
   const teacherName = decodeURIComponent(encodedTeacherName);
-  const activities = window.cloudTeacherMap[teacherName] || [];
+  const allActivities = window.cloudTeacherMap[teacherName] || [];
   const teacherList = document.getElementById('teacherList');
   const activityList = document.getElementById('activityList');
+  
+  // กรองกิจกรรมตามประเภท
+  const activities = filterType === 'all' ? allActivities : 
+    allActivities.filter(a => {
+      const gameType = a.config?.gameType || 'question';
+      return gameType === filterType;
+    });
+  
+  // นับจำนวนแต่ละประเภท
+  const countQuestion = allActivities.filter(a => (a.config?.gameType || 'question') === 'question').length;
+  const countWriting = allActivities.filter(a => a.config?.gameType === 'writing').length;
+  const countDialog = allActivities.filter(a => a.config?.gameType === 'dialog').length;
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #e65100;">📚 กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #e65100;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'all')" 
+              style="padding: 10px 16px; border: 2px solid #ff9800; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'all' ? 'background: #ff9800; color: white;' : 'background: white; color: #ff9800;'}">
+        ทั้งหมด (${allActivities.length})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'question')" 
+              style="padding: 10px 16px; border: 2px solid #2196F3; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'question' ? 'background: #2196F3; color: white;' : 'background: white; color: #2196F3;'}">
+        โจทย์ปัญหา (${countQuestion})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'writing')" 
+              style="padding: 10px 16px; border: 2px solid #4CAF50; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'writing' ? 'background: #4CAF50; color: white;' : 'background: white; color: #4CAF50;'}">
+        ฝึกเขียน (${countWriting})
+      </button>
+      <button onclick="showTeacherActivities('${encodedTeacherName}', 'dialog')" 
+              style="padding: 10px 16px; border: 2px solid #9C27B0; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s;
+                     ${filterType === 'dialog' ? 'background: #9C27B0; color: white;' : 'background: white; color: #9C27B0;'}">
+        ฝึกฟัง (${countDialog})
+      </button>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ไม่มีกิจกรรมในหมวดหมู่นี้</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
-      ${activities.map(a => `
-        <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #ff9800;">
-          <div style="display: flex; justify-content: space-between; align-items: start;">
-            <div style="flex: 1;">
-              <h4 style="margin: 0 0 8px 0; color: #e65100; font-size: 16px;">📖 ${a.name}</h4>
-              <p style="margin: 4px 0; font-size: 13px; color: #666;">สาระ: ${a.config?.topic || '-'}</p>
-              <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
-              <p style="margin: 4px 0; font-size: 13px; color: #ff9800; font-weight: bold;">จำนวนคำถาม: ${a.config?.questions?.length || 0} ข้อ</p>
-              <p style="margin: 4px 0; font-size: 11px; color: #999;">รหัส: ${a.activityId}</p>
-              <p style="margin: 4px 0; font-size: 11px; color: #888;">📅 บันทึก: ${a.createdAtThai || a.updatedAtThai || '-'}</p>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+      ${activities.map(a => {
+        const gameType = a.config?.gameType || 'question';
+        const typeBadge = gameType === 'writing' ? 'เขียน' : 
+                         gameType === 'dialog' ? 'สนทนา' : 
+                         'โจทย์';
+        const badgeColor = gameType === 'writing' ? '#4CAF50' : 
+                          gameType === 'dialog' ? '#9C27B0' : 
+                          '#2196F3';
+        const count = gameType === 'writing' ? (a.config?.vocabulary?.length || 0) + ' คำ' :
+                     gameType === 'dialog' ? (a.config?.dialogs?.length || 0) + ' บท' :
+                     (a.config?.questions?.length || 0) + ' ข้อ';
+        
+        return `
+          <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #ff9800;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                  <h4 style="margin: 0; color: #e65100; font-size: 16px;">${a.name}</h4>
+                  <span style="background: ${badgeColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${typeBadge}</span>
+                </div>
+                <p style="margin: 4px 0; font-size: 13px; color: #666;">สาระ: ${a.config?.topic || '-'}</p>
+                <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
+                <p style="margin: 4px 0; font-size: 13px; color: #ff9800; font-weight: bold;">จำนวน: ${count}</p>
+                <p style="margin: 4px 0; font-size: 11px; color: #999;">รหัส: ${a.activityId}</p>
+                <p style="margin: 4px 0; font-size: 11px; color: #888;">📅 บันทึก: ${a.createdAtThai || a.updatedAtThai || '-'}</p>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
               <button onclick="playCloudActivity('${encodeURIComponent(teacherName)}', ${a.activityId})" 
                       style="background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">▶️ เล่น</button>
               <button onclick="editCloudActivity('${encodeURIComponent(teacherName)}', ${a.activityId})" 
@@ -385,8 +1710,10 @@ function showTeacherActivities(encodedTeacherName) {
             </div>
           </div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }
@@ -400,32 +1727,117 @@ function playCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
-  localStorage.setItem('thaiGameConfig', JSON.stringify(activity.config));
-  window.location.href = 'gamethai.html';
-}
-
-function editCloudActivity(encodedTeacherName, activityId) {
-  const teacherName = decodeURIComponent(encodedTeacherName);
-  const activities = window.cloudTeacherMap[teacherName] || [];
-  const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { 
+    showCustomAlert('ไม่พบกิจกรรมนี้'); 
+    return; 
+  }
 
   const config = activity.config || {};
   document.getElementById('weekInput').value = config.week || '';
   document.getElementById('topicInput').value = config.topic || '';
   document.getElementById('unitInput').value = config.unit || '';
   document.getElementById('teacherInput').value = config.teacher || '';
-  if(document.getElementById('userNameInput')) document.getElementById('userNameInput').value = config.userName || '';
+  document.getElementById('classroomInput').value = config.classroom || '';
+  document.getElementById('userNameInput').value = config.userName || '';
 
-  allQuestions = config.questions || [];
-  renderQuestionsList();
+  // ตรวจสอบว่าเป็นโหมดไหน
+  if (config.gameType === 'dialog' || config.dialogs) {
+    // โหมดสนทนา - บันทึก config แล้วไปหน้าเกมเลย
+    const dialogConfig = {
+      week: config.week || '-',
+      topic: config.topic || 'บทสนทนา',
+      unit: config.unit || '-',
+      teacher: config.teacher || 'ไม่ระบุ',
+      classroom: config.classroom || '',
+      userName: config.userName || 'ไม่ระบุ',
+      dialogs: config.dialogs || [],
+      characterLeftName: config.characterLeftName || 'ตัวละครซ้าย',
+      characterRightName: config.characterRightName || 'ตัวละครขวา',
+      contextTitle: config.contextTitle || '',
+      contextDescription: config.contextDescription || '',
+      backgroundImage: config.backgroundImage || null
+    };
+    localStorage.setItem('thaiDialogConfig', JSON.stringify(dialogConfig));
+    closeActivityModal();
+    window.location.href = 'gamedialog.html';
+  } else if (config.gameType === 'writing' || config.vocabulary) {
+    switchMode('write');
+    vocabularyList = config.vocabulary || [];
+    renderVocabularyList();
+    closeActivityModal();
+    startActivity();
+  } else {
+    switchMode('question');
+    allQuestions = config.questions || [];
+    renderQuestionsList();
+    closeActivityModal();
+    startActivity();
+  }
+}
+
+function editCloudActivity(encodedTeacherName, activityId) {
+  const teacherName = decodeURIComponent(encodedTeacherName);
+  const activities = window.cloudTeacherMap[teacherName] || [];
+  const activity = activities.find(a => a.activityId === activityId);
+  if (!activity) { 
+    showCustomAlert('ไม่พบกิจกรรมนี้'); 
+    return; 
+  }
+
+  const config = activity.config || {};
+  document.getElementById('weekInput').value = config.week || '';
+  document.getElementById('topicInput').value = config.topic || '';
+  document.getElementById('unitInput').value = config.unit || '';
+  document.getElementById('teacherInput').value = config.teacher || '';
+  document.getElementById('classroomInput').value = config.classroom || '';
+  document.getElementById('userNameInput').value = config.userName || '';
+
+  // ตรวจสอบว่าเป็นโหมดไหน
+  if (config.gameType === 'writing' || config.vocabulary) {
+    switchMode('write');
+    vocabularyList = config.vocabulary || [];
+    renderVocabularyList();
+  } else if (config.gameType === 'dialog' || config.dialogs) {
+    switchMode('dialog');
+    dialogList = config.dialogs || [];
+    
+    // โหลดบริบท
+    if (document.getElementById('dialogContextTitle')) {
+      document.getElementById('dialogContextTitle').value = config.contextTitle || '';
+    }
+    if (document.getElementById('dialogContextDescription')) {
+      document.getElementById('dialogContextDescription').value = config.contextDescription || '';
+    }
+    
+    // โหลดชื่อตัวละคร
+    if (document.getElementById('characterLeftName')) {
+      document.getElementById('characterLeftName').value = config.characterLeftName || 'ตัวละครซ้าย';
+    }
+    if (document.getElementById('characterRightName')) {
+      document.getElementById('characterRightName').value = config.characterRightName || 'ตัวละครขวา';
+    }
+    
+    // โหลดภาพพื้นหลัง
+    if (config.backgroundImage) {
+      window.dialogBackgroundImage = config.backgroundImage;
+      const preview = document.getElementById('dialogBgPreview');
+      if (preview) {
+        preview.innerHTML = '<img src="' + config.backgroundImage + '" style="max-width:100%;max-height:150px;border-radius:8px;">';
+      }
+    }
+    
+    renderDialogList();
+  } else {
+    switchMode('question');
+    allQuestions = config.questions || [];
+    renderQuestionsList();
+  }
 
   window.editingCloudActivity = { teacherName, activityId };
   window.editingCloudActivityName = activity.name;
 
   closeActivityModal();
-  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
+  showCustomAlert('📝 กำลังแก้ไขกิจกรรม "' + activity.name + '"<br><br>แก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท');
 }
 
 async function deleteCloudActivity(encodedTeacherName, activityId) {
@@ -434,16 +1846,20 @@ async function deleteCloudActivity(encodedTeacherName, activityId) {
   try {
     const res = await fetch(`/api/settings/thai/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('ลบไม่สำเร็จ');
-    alert('✅ ลบกิจกรรมสำเร็จ!');
+    showCustomAlert('✅ ลบกิจกรรมสำเร็จ!');
     loadActivity();
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
 function closeActivityModal() {
   document.getElementById('activityModal').style.display = 'none';
 }
+
+console.log('✅ ฟังก์ชัน loadActivity และ closeActivityModal ถูก define แล้ว');
+console.log('loadActivity type:', typeof loadActivity);
+console.log('closeActivityModal type:', typeof closeActivityModal);
 
 </script>
 
@@ -452,6 +1868,24 @@ function closeActivityModal() {
 <script src="/socket-client.js"></script>
 <script>
   try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
+<script>
+// ฟังก์ชันรวม ระดับชั้น + ห้อง เป็น classroom
+function updateClassroomValue() {
+  const grade = document.getElementById('gradeSelect')?.value || '';
+  const room = document.getElementById('roomInput')?.value.trim() || '';
+  const classroomInput = document.getElementById('classroomInput');
+  if (classroomInput) {
+    classroomInput.value = room ? `${grade}/${room}` : grade;
+  }
+}
+// เรียกทุกครั้งที่มีการเปลี่ยนค่า
+document.addEventListener('DOMContentLoaded', function() {
+  const gradeSelect = document.getElementById('gradeSelect');
+  const roomInput = document.getElementById('roomInput');
+  if (gradeSelect) gradeSelect.addEventListener('change', updateClassroomValue);
+  if (roomInput) roomInput.addEventListener('input', updateClassroomValue);
+});
 </script>
 <script>
 var __localUsageId_teacherthai = null;

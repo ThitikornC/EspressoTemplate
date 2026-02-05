@@ -14,6 +14,13 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf-thai-support@1.0.0/dist/jspdf-thai-support.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+  import { showStudentInputDialog, saveStudentTestResult } from '/js/studentInput.js';
+  import { saveStudentToFirebase } from '/js/mongodb-config.js';
+  window.showStudentInputDialog = showStudentInputDialog;
+  window.saveStudentTestResult = saveStudentTestResult;
+  window.saveStudentToFirebase = saveStudentToFirebase;
+</script>
 <style>
 body { 
   font-family: 'Roboto', sans-serif; 
@@ -95,6 +102,11 @@ body::before {
   margin-top: 20px;
   position: relative;
   z-index: 5;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  width: calc(99% + 40px);
+  padding: 0 5px;
 }
 
 .zone { 
@@ -152,6 +164,12 @@ body::before {
 
 
 
+#scorePopup {
+  background: linear-gradient(135deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  border: 6px solid #74640a;
+  box-shadow: 0 0 40px rgba(116, 100, 10, 0.5), 0 10px 30px rgba(0,0,0,0.3);
+}
+
 #scorePopup button { font-size: 18px; padding: 6px 12px; margin-top: 10px; cursor: pointer; }
 
 /* Feedback Overlay */
@@ -188,6 +206,142 @@ body::before {
 
   }
 }
+
+/* Volume Control Styles - YouTube Style */
+.sound-control-wrapper {
+  position: fixed;
+  top: 15px;
+  right: 50px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sound-toggle-btn {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.sound-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.sound-control-wrapper.show-volume .sound-toggle-btn {
+  display: none;
+}
+
+.volume-control {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 15px;
+  border-radius: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.sound-control-wrapper.show-volume .volume-control {
+  display: flex;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.volume-icon {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.volume-icon:hover {
+  transform: scale(1.1);
+}
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.volume-slider:hover {
+  height: 6px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b6914, #d4a574);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b6914, #d4a574);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.volume-display {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .sound-control-wrapper {
+    right: 10px;
+    top: 15px;
+  }
+  .sound-toggle-btn {
+    width: 45px;
+    height: 45px;
+  }
+  .volume-icon {
+    font-size: 20px;
+  }
+  .volume-slider {
+    width: 80px;
+  }
+  .volume-control {
+    padding: 8px 12px;
+  }
+}
 </style>
 <style>
 /* Global version badge: fixed bottom-right on the viewport */
@@ -221,6 +375,7 @@ body::before {
 <div id="gameContainer">
   <div class="question-container">
     <div class="question-text" id="questionText"></div>
+    <div id="questionImage" style="text-align: center; margin: 15px 0;"></div>
   </div>
   
   <div id="zones">
@@ -231,44 +386,45 @@ body::before {
 
 <!-- Popup -->
 <div id="scorePopup">
-  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
-  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
+  <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#3b3305;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
+  <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#3b3305;">ชื่อ: <span id="playerNameDisplay"></span></p>
   <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
-  <p style="font-size:32px; font-weight:700; margin:20px 0;">🎉 Your Score: <span id="finalScore"></span> 🎉</p>
+  <p style="font-size:32px; font-weight:700; margin:20px 0; color:#74640a;">🏆 คะแนนของคุณ: <span id="finalScore" style="color:#8b6914;"></span> ⭐</p>
   
   <div style="display: flex; justify-content: center; gap: 15px; margin: 25px 0;">
-    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      🔄
+    <button onclick="playAgain()" title="เล่นอีกครั้ง" style="background: linear-gradient(135deg, #c9a668 0%, #a68944 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <span style="color: #4dd0e1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔄</span>
     </button>
     <div style="position: relative;">
-      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-        🔗
+      <button onclick="toggleShareMenu()" title="แชร์/บันทึก" style="background: linear-gradient(135deg, #a68944 0%, #8b7530 100%); color: white; border: 4px solid #74640a; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="color: #ff6b9d; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">📊</span>
       </button>
-      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 3px solid #2196F3;">
+      <div id="shareMenu" style="display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8f6f0 0%, #fff8e8 100%); border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden; min-width: 180px; z-index: 10000; border: 4px solid #74640a;">
         <!--<button onclick="shareScore(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #2196F3, #1E88E5); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #1976D2, #1565C0)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #2196F3, #1E88E5)'; this.style.transform='scale(1)';">
           <span style="font-size: 28px;">🔗</span> แชร์ผลกิจกรรม
         </button>
       -->
-        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
-          <span style="font-size: 28px;">📥</span> ดาวน์โหลด
+        <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #d4a574, #8b6914); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #c9a668, #74640a)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #d4a574, #8b6914)'; this.style.transform='scale(1)';">
+          <span style="font-size: 28px;">💾</span> ดาวน์โหลด PDF
         </button>
       </div>
     </div>
-    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; cursor: pointer; font-size: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      ✖
+    <button onclick="closePopup()" title="ปิด" style="background: linear-gradient(135deg, #8b7530 0%, #6d5e26 100%); color: white; border: 4px solid #5a4d08; border-radius: 50%; width: 75px; height: 75px; cursor: pointer; font-size: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.2s; font-weight: 700;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      ✕
     </button>
   </div>
 </div>
 
 <script>
 let audioCtx, baseFreq = 200;
-let soundEnabled = true; // global sound toggle (used by audio helpers)
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // global sound toggle (used by audio helpers)
 const sparkleChars = ['✨', '🌟', '💫', '⭐'];
 let createdAnswers = {};
 let score = 0;
 let gameStarted = false;
 let currentQuestionIndex = 0;
 let allQuestions = [];
+let userAnswers = []; // เก็บคำตอบของผู้ใช้
 let playCount = 1; // นับจำนวนครั้งที่เล่น
 let gameStartTime = null; // เวลาเริ่มเล่น
 let totalCorrectAnswers = 0; // จำนวนตอบถูก
@@ -276,25 +432,17 @@ let totalWrongAnswers = 0; // จำนวนตอบผิด
 
 // ฟังก์ชันสร้างรายงาน HTML สำหรับแปลงเป็นรูป
 function generateReportHTML(data) {
-  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher } = data;
-  
-  let grade = '';
-  if (percentage >= 80) grade = 'ดีเยี่ยม';
-  else if (percentage >= 60) grade = 'ดี';
-  else if (percentage >= 40) grade = 'พอใจ';
-  else grade = 'ควรปรับปรุง';
+  const { dateStr, timeStr, percentage, scoreVal, total, userName, topic, unit, week, teacher, classroom } = data;
 
   return `
-    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white;">
+    <div style="font-family: 'Arial', sans-serif; color: #333; width: 600px; padding: 20px; background: white; position: relative;">
       <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
       <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
       <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
-        <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:80px; width:auto;" crossorigin="anonymous" />
         <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
       </div>
       <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <h1 style="margin: 5px 0; font-size: 24px;">Espresso</h1>
-        <p style="margin: 5px 0; font-size: 14px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
       </div>
       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
         <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
@@ -302,7 +450,8 @@ function generateReportHTML(data) {
           <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${week || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${topic || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${unit || '-'}</td></tr>
-          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${classroom || '-'}</td></tr>
           <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${userName || '-'}</td></tr>
         </table>
       </div>
@@ -341,13 +490,14 @@ async function generateReportImage() {
       topic: teacherConfig.topic,
       unit: teacherConfig.unit,
       week: teacherConfig.week,
-      teacher: teacherConfig.teacher
+      teacher: teacherConfig.teacher,
+      classroom: teacherConfig.classroom
     };
     
     // สร้าง element ชั่วคราวสำหรับ render
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
+    tempDiv.style.left = '-9998px';
     tempDiv.style.top = '0';
     tempDiv.innerHTML = generateReportHTML(reportData);
     document.body.appendChild(tempDiv);
@@ -431,21 +581,29 @@ async function autoSaveGameResult() {
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
 document.getElementById('topicName').innerText = teacherConfig.topic || 'Unknown';
 
-// ถ้าเพิ่งเลือกกิจกรรม (loadActivity) ให้ถามชื่อผู้ทดสอบ (optional)
-if (window.location.hash === '#promptUserName') {
-  setTimeout(() => {
-    let userName = prompt('กรุณากรอกชื่อผู้ทดสอบ (ถ้าไม่กรอกจะข้ามได้):', teacherConfig.userName || '');
-    if (userName !== null) {
-      userName = userName.trim();
-      // อัปเดตใน localStorage
-      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
-      config.userName = userName;
-      localStorage.setItem('emojiGameConfig', JSON.stringify(config));
-      teacherConfig.userName = userName;
-    }
-    // ลบ hash เพื่อไม่ให้ถามซ้ำ
-    window.location.hash = '';
-  }, 300);
+// เก็บข้อมูลผู้ทดสอบ
+let currentStudent = null;
+
+// ใช้ข้อมูลจาก config ที่ครูตั้งไว้
+if (teacherConfig && teacherConfig.userName && teacherConfig.classroom) {
+  currentStudent = {
+    name: teacherConfig.userName,
+    classroom: teacherConfig.classroom
+  };
+  console.log('Using student info from config:', currentStudent);
+  
+  // บันทึกผู้ทดสอบลง Database
+  if (window.saveStudentToFirebase) {
+    window.saveStudentToFirebase({
+      name: currentStudent.name,
+      classroom: currentStudent.classroom,
+      lastActivity: new Date().toISOString()
+    }).then(() => {
+      console.log('Student saved to database:', currentStudent.name);
+    }).catch((saveError) => {
+      console.error('Error saving student to database:', saveError);
+    });
+  }
 }
 
 // ตรวจสอบและกำหนดค่าเริ่มต้นให้ teacherConfig
@@ -546,7 +704,9 @@ function playAudio(key, srcs = [], volume = 0.5) {
   try {
     const audio = _getAudioElement(key, srcs);
     if (!audio.src && srcs && srcs.length > 0) audio.src = srcs[0];
-    audio.volume = volume;
+    // Use currentVolume if available, otherwise use the provided volume parameter
+    const finalVolume = (typeof currentVolume !== 'undefined' && !isMuted) ? currentVolume * volume : volume;
+    audio.volume = finalVolume;
     audio.currentTime = 0;
     const p = audio.play();
     if (p && typeof p.then === 'function') p.catch(() => {});
@@ -588,13 +748,18 @@ function initAudio() {
 }
 
 function playSlideTone(freqStart, freqEnd) {
-  if (!audioCtx) return;
+  if (!audioCtx || !soundEnabled) return;
+  // Check if muted or volume is 0
+  const effectiveVolume = (typeof currentVolume !== 'undefined' && !isMuted) ? currentVolume : 0;
+  if (effectiveVolume === 0) return;
+  
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
   osc.frequency.setValueAtTime(freqStart, audioCtx.currentTime);
   osc.frequency.linearRampToValueAtTime(freqEnd, audioCtx.currentTime + 0.15);
-  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  // Apply currentVolume to the gain (0.05 is base volume)
+  gain.gain.setValueAtTime(0.05 * effectiveVolume, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
   osc.connect(gain);
   gain.connect(audioCtx.destination);
@@ -678,6 +843,11 @@ function checkDrop(answerDiv, answerId, isCorrect) {
   // ตรวจสอบว่าปล่อยในโซนถูกต้อง
   if (rect.left + rect.width / 2 > correctZone.left && rect.left + rect.width / 2 < correctZone.right &&
       rect.top + rect.height / 2 > correctZone.top && rect.top + rect.height / 2 < correctZone.bottom) {
+    
+    // เก็บคำตอบที่ผู้ใช้เลือก
+    const currentQuestion = allQuestions[currentQuestionIndex];
+    userAnswers[currentQuestionIndex] = answerId;
+    
     if (isCorrect) {
       // ใส่คำตอบถูกในช่อง = ถูกต้อง! ได้คะแนนและไปโจทย์ถัดไป
       showFeedback(true);
@@ -708,7 +878,7 @@ function nextQuestion() {
     if (score === allQuestions.length) {
       endGame('🎉 ผ่านทุกข้อ!', '#4CAF50');
     } else {
-      endGame('✅ จบกิจกรรม', '#FF9800');
+      endGame('✅ จบกิจกรรม', '#FF9807');
     }
   } else {
     // โหลดโจทย์ถัดไป
@@ -717,7 +887,7 @@ function nextQuestion() {
 }
 
 // จบเกมทันทีพร้อมผลลัพธ์
-function endGame(message, color) {
+async function endGame(message, color) {
   document.getElementById('topicDisplay').innerText = teacherConfig.topic || 'ไม่ระบุ';
   document.getElementById('playerNameDisplay').innerText = teacherConfig.userName || 'ไม่ระบุชื่อ';
   document.getElementById('resultMessage').innerText = message;
@@ -725,7 +895,7 @@ function endGame(message, color) {
   document.getElementById('finalScore').innerText = `${score}/${allQuestions.length}`;
   document.getElementById('scorePopup').style.display = 'block';
   
-  // บันทึกผลเกมอัตโนมัติลง DB
+  // บันทึกผลเกมอัตโนมัติลง DB (บันทึกที่เดียว)
   autoSaveGameResult();
 }
 
@@ -798,40 +968,38 @@ async function shareResult(config) {
 
     const pdfContent = `
       <div style="font-family: 'THSarabunNew', sans-serif; color: #333; position: relative;">
-        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(45deg); font-size:110px; color:rgba(0,0,0,0.06); font-weight:700; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-         <div style="text-align: center; margin-bottom: 12px; margin-top: 120px; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:220px; width:auto; max-width:60%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:220px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
-              </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
         </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
         </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
           </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+          <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
+        </div>
+        <div style="margin-top: 30px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
+          บริษัท กว้างไม่ จำกัด<br>
+          263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+          โทร: 083-654-9743 | www.kwamgunlimit.com
         </div>
       </div>
     `;
@@ -869,71 +1037,41 @@ function saveResult() {
     const pdfContent = document.createElement('div');
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333; position: relative;">
-        <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-        <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-        <div style="text-align: center; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:220px; width:auto; max-width:60%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:220px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
-              </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
         </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
         </div>
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+            <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
           </table>
         </div>
-      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+          <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
         </div>
-        <div style="margin-top: 70px; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
-      </div>
-       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 50px;">
-      <div style="display: inline-block; text-align: right;">
-        บริษัท กว้างไม่ จำกัด<br>
-        263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-        ติดต่อเราได้ที่<br>
-        โทร : 083-654-9743<br>
-        เว็บไซต์ : www.kwangunlimit.com
-      </div>
+        <div style="margin-top: 30px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
+          บริษัท กว้างไม่ จำกัด<br>
+          263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+          โทร: 083-654-9743 | www.kwamgunlimit.com
+        </div>
       </div>
     `;
-
-    // ตรวจสอบและเพิ่มชื่อผู้ทดสอบใน PDF
-    const activityInfoTable = pdfContent.querySelector('table');
-    const userNameRow = document.createElement('tr');
-    userNameRow.innerHTML = `
-      <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
-    `;
-
-    // เพิ่มชื่อผู้ทดสอบไปที่ล่างสุดของตาราง
-    activityInfoTable.appendChild(userNameRow);
 
     html2pdf().set(opt).from(pdfContent).save();
   } catch (error) {
@@ -950,56 +1088,39 @@ function buildPdfElement() {
   const element = document.createElement('div');
   element.innerHTML = `
     <div style="font-family: 'Arial', sans-serif; color: #333; position: relative;">
-      <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
-      <div style="position: absolute; top: 1px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
-      <div style="text-align: center; margin: 40px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
-                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
+      <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(0,0,0,0.05); font-weight:700; pointer-events:none; z-index:1; white-space:nowrap;">Espresso</div>
+      <div style="position: absolute; top: 10px; right: 20px; font-size: 12px; color: #666;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+      <div style="text-align: center; margin: 20px 0 15px 0; display:flex; align-items:center; justify-content:center; gap:18px;">
+        <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:80px; width:auto;" crossorigin="anonymous" />
       </div>
-      <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h1 style="margin: 5px 0; font-size: 32px;">Espresso</h1>
-        <p style="margin: 5px 0; font-size: 18px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+      <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
       </div>
-      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-          </tr>
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+        <p style="font-size: 13px; font-weight: bold; margin: 0 0 8px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <tr><td style="padding: 6px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ครูผู้สอน:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ระดับชั้น/ห้อง:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || '-'}</td></tr>
+          <tr><td style="padding: 6px; font-weight: bold; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td><td style="padding: 6px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td></tr>
         </table>
       </div>
-      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-        <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-        <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
+      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: center;">
+        <p style="font-size: 14px; margin: 0 0 10px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+        <p style="font-size: 36px; color: #000; font-weight: bold; margin: 0;">${score}/${allQuestions.length || 0}</p>
       </div>
-      <div style="margin-top: 50px; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      <div style="margin-top: 30px; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
       </div>
-    <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 100px;">
-      <div style="display: inline-block; text-align: right;">
+      <div style="font-size: 11px; color: #666; text-align: right; margin-top: 20px; line-height: 1.3;">
         บริษัท กว้างไม่ จำกัด<br>
         263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
-        ติดต่อเราได้ที่<br>
-        โทร : 083-654-9743<br>
-        เว็บไซต์ : www.kwamgunlimit.com
+        โทร: 083-654-9743 | www.kwamgunlimit.com
       </div>
-    </div>
-      
     </div>
   `;
   return element;
@@ -1176,7 +1297,84 @@ function playAgain() {
   initGame();
 }
 
-// ฟังก์ชันบันทึกผลเป็น PDF
+// ฟังก์ชันสร้าง PDF และแปลงเป็น base64 อัตโนมัติ
+async function generatePDFBase64() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    
+    const pdfContent = document.createElement('div');
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333; padding: 15px;">
+        <div style="position:absolute; left:50%; top:55%; transform:translate(-50%,-50%) rotate(45deg); font-size:160px; color:rgba(0,0,0,0.05); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position: absolute; top: 20px; right: 30px; font-size: 11px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+        <div style="text-align: center; margin: 35px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+          <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:95px; width:auto; max-width:28%; margin-bottom:8px; display:block;" />
+        </div>
+        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 18px; border-radius: 8px; margin-bottom: 18px;">
+          <h1 style="margin: 5px 0; font-size: 28px;">Espresso</h1>
+          <p style="margin: 5px 0; font-size: 16px;">รายงานผลการประเมินกิจกรรมคณิตศาสตร์</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <p style="font-size: 13px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.userName || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ห้องเรียน:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.classroom || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">โจทย์:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.topic || 'ไม่ระบุ'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 7px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 7px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || 'ไม่ระบุ'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 18px; margin-bottom: 18px; text-align: center;">
+          <p style="font-size: 15px; margin: 0 0 12px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 26px; color: #000000; font-weight: bold;">${score}/${allQuestions.length}</p>
+        </div>
+        <div style="margin-top: 35px; text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 7px 0 0 0; font-size: 12px; color: #333;">( _______________________ )</p>
+        </div>
+        <div style="margin-top: 50px; margin-right: 10px; text-align: right;">
+          <p style="font-size: 11px; color: #333; line-height: 1.4; margin: 0;">
+            บริษัท กว้างไม่ จำกัด<br>
+            263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+            ติดต่อเราได้ที่<br>
+            โทร : 083-654-9743<br>
+            เว็บไซต์ : www.kwamgunlimit.com
+          </p>
+        </div>
+      </div>
+    `;
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // สร้าง PDF และแปลงเป็น base64
+    const pdf = await html2pdf().set(opt).from(pdfContent).outputPdf('datauristring');
+    return pdf; // คืนค่า base64 string
+  } catch (error) {
+    console.error('Error generating PDF base64:', error);
+    return null;
+  }
+}
+
+// ฟังก์ชันบันทึกผลเป็น PDF (ดาวน์โหลด)
 function exportToPDF() {
   try {
     const date = new Date();
@@ -1202,7 +1400,6 @@ function exportToPDF() {
          <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
       <div style="position: absolute; top: 1px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
       <div style="text-align: center; margin: 40px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
-                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
                 <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
       </div>
          <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -1291,6 +1488,25 @@ function loadQuestion(index) {
   
   // แสดงโจทย์
   document.getElementById('questionText').innerText = question.question;
+  
+  // แสดงรูปภาพถ้ามี
+  const imageContainer = document.getElementById('questionImage');
+  const questionContainer = document.querySelector('.question-container');
+  if (question.image) {
+    imageContainer.innerHTML = `<img src="${question.image}" style="max-width: 50%; max-height: 120px; width: auto; height: auto; object-fit: contain; display: block; margin: 5px auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" />`;
+    // ลด padding ของ container เมื่อมีรูป
+    if (questionContainer) {
+      questionContainer.style.padding = '15px';
+      questionContainer.style.margin = '5px auto';
+    }
+  } else {
+    imageContainer.innerHTML = '';
+    // คืนค่า padding ปกติเมื่อไม่มีรูป
+    if (questionContainer) {
+      questionContainer.style.padding = '20px';
+      questionContainer.style.margin = '10px auto';
+    }
+  }
 
   // รวมคำตอบทั้งหมดและสุ่มลำดับ
   const allAnswers = [];
@@ -1322,20 +1538,33 @@ function loadQuestion(index) {
   const cols = Math.min(total, maxCols);
   const rows = Math.ceil(total / cols);
 
-  // compute baseX centered for the number of columns
-  const rowTotalWidth = cols * answerWidth + (cols - 1) * hSpacing;
-  let baseX = (window.innerWidth - rowTotalWidth) / 2;
-  baseX = Math.max(margin, baseX);
+  // คำนวณตำแหน่งจากกรอบสีเขียว
+  const zonesElement = document.getElementById('zones');
+  let bottomY;
+  
+  if (zonesElement) {
+    const zoneRect = zonesElement.getBoundingClientRect();
+    // วางคำตอบห่างจากกรอบสีเขียว 20px ให้อยู่ใกล้กรอบมากขึ้น
+    bottomY = zoneRect.bottom + 20;
+  } else {
+    // fallback: ใช้ตำแหน่งจากด้านล่างหน้าจอ
+    bottomY = window.innerHeight - 200;
+  }
 
-  // start from lower area but allow multiple rows upwards
-  const bottomY = window.innerHeight - 160; // baseline from bottom
-
-  // สร้างคำตอบแต่ละข้อ โดยส่งตำแหน่งเริ่มต้นที่คำนวณแล้ว (multi-row)
+  // สร้างคำตอบแต่ละข้อ โดยจัดให้แต่ละแถวอยู่ตรงกลางเสมอ
   allAnswers.forEach((answer, i) => {
     const row = Math.floor(i / cols);
     const col = i % cols;
+    
+    // คำนวณจำนวนคำตอบในแถวนี้
+    const colsInThisRow = (row === rows - 1) ? (total % cols || cols) : cols;
+    
+    // คำนวณความกว้างของแถวนี้และจัดให้อยู่ตรงกลาง
+    const rowWidth = colsInThisRow * answerWidth + (colsInThisRow - 1) * hSpacing;
+    const baseX = Math.max(margin, (window.innerWidth - rowWidth) / 2);
+    
     const x = baseX + col * (answerWidth + hSpacing);
-    const y = bottomY - row * (answerHeight + vSpacing);
+    const y = bottomY - row * 10; // จัดเรียงในแนวนอนเป็นหลัก แถวบนอยู่สูงขึ้นนิดหน่อย
     createDraggableAnswer(answer.text, answer.id, answer.isCorrect, x, y);
   });
 }
@@ -1406,23 +1635,158 @@ function generatePDF() {
 <script>
 function toggleSound() {
   soundEnabled = !soundEnabled;
+  isMuted = !soundEnabled; // ซิงค์สถานะ
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
   const soundButton = document.getElementById('soundToggleButton');
-  if (soundButton) soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  if (soundButton) {
+    soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  }
 
-  // Control all sounds
+  // Control all sounds including Web Audio API
   if (!soundEnabled) {
     if (audioCtx) audioCtx.suspend(); // Suspend AudioContext
+    // Also mute HTML5 audio
+    document.querySelectorAll('audio').forEach(audio => audio.volume = 0);
   } else {
     if (audioCtx) {
       audioCtx.resume(); // Resume AudioContext
     } else {
       initAudio(); // Initialize AudioContext if not already created
     }
+    // Restore HTML5 audio volume
+    const vol = (typeof currentVolume !== 'undefined' && !isMuted) ? currentVolume : 1.0;
+    document.querySelectorAll('audio').forEach(audio => audio.volume = vol);
+  }
+  updateVolumeDisplay(); // อัพเดทไอคอนในบาร์
+}
+
+function toggleVolumeBar() {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper) {
+    wrapper.classList.toggle('show-volume');
   }
 }
+
+// Close volume bar when clicking outside
+document.addEventListener('click', function(event) {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper && !wrapper.contains(event.target)) {
+    wrapper.classList.remove('show-volume');
+  }
+});
+
+// Prevent closing when clicking inside wrapper
+document.addEventListener('DOMContentLoaded', function() {
+  const wrapper = document.getElementById('soundControlWrapper');
+  if (wrapper) {
+    wrapper.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+  }
+});
 </script>
 
-<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 15px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
+<!-- Sound Control with Volume -->
+<div class="sound-control-wrapper" id="soundControlWrapper">
+  <img class="sound-toggle-btn" id="soundToggleButton" onclick="toggleVolumeBar()" src="/picture/open.png" alt="Toggle Sound">
+  
+  <div class="volume-control">
+    <div class="volume-icon" onclick="toggleMute()" id="volumeIcon">🔊</div>
+    <input type="range" min="0" max="100" value="100" class="volume-slider" id="volumeSlider" oninput="updateVolume(this.value)">
+    <div class="volume-display" id="volumeDisplay">100%</div>
+  </div>
+</div>
+
+<script>
+// Volume Control Functions
+let currentVolume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
+let isMuted = false;
+let previousVolume = currentVolume;
+
+function updateVolumeDisplay() {
+  const percentage = Math.round(currentVolume * 100);
+  const volumeDisplay = document.getElementById('volumeDisplay');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const volumeIcon = document.getElementById('volumeIcon');
+  
+  // แสดง 0% และตำแหน่ง slider เป็น 0 เมื่อปิดเสียง
+  const displayPercentage = (isMuted || !soundEnabled) ? 0 : percentage;
+  
+  if (volumeDisplay) volumeDisplay.textContent = displayPercentage + '%';
+  if (volumeSlider) volumeSlider.value = displayPercentage;
+  localStorage.setItem('gameVolume', currentVolume.toString());
+  
+  // Update slider background gradient
+  if (volumeSlider) {
+    volumeSlider.style.background = `linear-gradient(to right, #8b6914 0%, #d4a574 ${displayPercentage}%, #ddd ${displayPercentage}%, #ddd 100%)`;
+  }
+  
+  // Update volume icon
+  if (volumeIcon) {
+    if (displayPercentage === 0 || isMuted || !soundEnabled) {
+      volumeIcon.innerHTML = '<img src="/picture/close.png" style="width: 24px; height: 24px; filter: brightness(0);">';
+    } else if (displayPercentage < 50) {
+      volumeIcon.innerHTML = '<img src="/picture/open.png" style="width: 24px; height: 24px; filter: brightness(0);">';
+    } else {
+      volumeIcon.innerHTML = '<img src="/picture/open.png" style="width: 24px; height: 24px; filter: brightness(0);">';
+    }
+  }
+  
+  // Update all audio elements
+  document.querySelectorAll('audio').forEach(audio => {
+    audio.volume = isMuted ? 0 : currentVolume;
+  });
+  
+  // Update speech synthesis volume if supported
+  if (window.speechSynthesis && window.currentSpeech) {
+    window.currentSpeech.volume = isMuted ? 0 : currentVolume;
+  }
+}
+
+function updateVolume(value) {
+  currentVolume = value / 100;
+  isMuted = false;
+  updateVolumeDisplay();
+}
+
+function toggleMute() {
+  if (isMuted) {
+    isMuted = false;
+    soundEnabled = true;
+    currentVolume = previousVolume;
+  } else {
+    isMuted = true;
+    soundEnabled = false;
+    previousVolume = currentVolume;
+  }
+  
+  localStorage.setItem('soundEnabled', soundEnabled ? 'true' : 'false');
+  
+  // อัพเดทไอคอนหลัก
+  const soundButton = document.getElementById('soundToggleButton');
+  if (soundButton) {
+    soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  }
+  
+  // Control AudioContext
+  if (!soundEnabled && audioCtx) {
+    audioCtx.suspend();
+  } else if (soundEnabled && audioCtx) {
+    audioCtx.resume();
+  }
+  
+  updateVolumeDisplay();
+}
+
+// Initialize volume on page load
+window.addEventListener('load', function() {
+  // อัปเดตปุ่มตามสถานะที่โหลด
+  const btn = document.getElementById('soundToggleButton');
+  if (btn) btn.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  isMuted = !soundEnabled;
+  updateVolumeDisplay();
+});
+</script>
 
 <script>
   try {
