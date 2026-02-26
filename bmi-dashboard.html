@@ -199,6 +199,7 @@
                         <table class="w-full text-sm text-left text-gray-600">
                             <thead class="bg-gray-50 text-gray-500 font-medium">
                                 <tr>
+                                    <th class="px-6 py-4">ครั้งที่</th>
                                     <th class="px-6 py-4">วันที่</th>
                                     <th class="px-6 py-4">อายุ</th>
                                     <th class="px-6 py-4 text-right">น้ำหนัก</th>
@@ -838,14 +839,16 @@
 
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
-                [...itemsArr].reverse().forEach(row => {
+                const reversedArr = [...itemsArr].reverse();
+                reversedArr.forEach((row, index) => {
                 const rowRefs = getRefsFor(row.gender||gender, row.ageTotalM, row.h);
                 const rWA = rowRefs.refWA ? formatStatusText(evaluateStatus(row.w, rowRefs.refWA, 'WA').t, 'WA') : '-';
                 const rHA = rowRefs.refHA ? formatStatusText(evaluateStatus(row.h, rowRefs.refHA, 'HA').t, 'HA') : '-';
                 const rWH = rowRefs.refWH ? formatStatusText(evaluateStatus(row.w, rowRefs.refWH, 'WH').t, 'WH') : '-';
+                const visitNum = index + 1;
                 const tr = document.createElement('tr');
                 tr.className = "bg-white hover:bg-gray-50";
-                tr.innerHTML = `<td class="px-6 py-4">${formatDate(row.date)}</td><td class="px-6 py-4">${formatAge(row)}</td><td class="px-6 py-4 text-right font-bold">${row.w}</td><td class="px-6 py-4 text-right font-bold">${row.h}</td><td class="px-6 py-4 text-center">${isOlder ? '-' : rWA}</td><td class="px-6 py-4 text-center">${rHA}</td><td class="px-6 py-4 text-center">${rWH}</td><td class=\"px-4 py-4 text-center\"><button type=\"button\" class=\"text-red-500 hover:text-red-700 text-sm\" title=\"ลบรายการ\" onclick=\"(function(e){e.stopPropagation(); deleteRecord(${row.id});})(event)\">ลบ</button></td>`;
+                tr.innerHTML = `<td class="px-6 py-4 font-bold text-center text-gray-700">${visitNum}</td><td class="px-6 py-4">${formatDate(row.date)}</td><td class="px-6 py-4">${formatAge(row)}</td><td class="px-6 py-4 text-right font-bold">${row.w}</td><td class="px-6 py-4 text-right font-bold">${row.h}</td><td class="px-6 py-4 text-center">${isOlder ? '-' : rWA}</td><td class="px-6 py-4 text-center">${rHA}</td><td class="px-6 py-4 text-center">${rWH}</td><td class=\"px-4 py-4 text-center\"><button type=\"button\" class=\"text-red-500 hover:text-red-700 text-sm\" title=\"ลบรายการ\" onclick=\"(function(e){e.stopPropagation(); deleteRecord(${row.id});})(event)\">ลบ</button></td>`;
                 tbody.appendChild(tr);
             });
 
@@ -1100,6 +1103,12 @@
             const latest = data[data.length - 1];
             const isOlder = latest && latest.ageTotalM > 72;
 
+            // เพิ่มหมายเลขครั้งที่ให้ข้อมูลแต่ละรายการ (ล่าสุด = 1)
+            const dataWithVisitNum = data.map((d, idx) => ({
+                ...d,
+                _visitNum: data.length - idx  // ล่าสุด=1, ก่อนหน้า=2 เป็นต้น
+            }));
+
             const containerWA = document.getElementById('containerWA');
             const containerHA = document.getElementById('containerHA');
             
@@ -1118,14 +1127,17 @@
                 if(containerHA) containerHA.classList.add('xl:col-span-2');
                 
                 const rawHA = genderObj.group_6_19.h_a;
-                const plotDataHA = data.map(d => Math.min(d.ageTotalM, 228));
+                const plotDataHA = dataWithVisitNum.map(d => Math.min(d.ageTotalM, 228));
                 const refHA = rawHA.map(r => ({ x: r.x * 12, y: r.y }));
-                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', plotDataHA, data.map(d => d.h), refHA, 72, 228, colorsHA_6_19, data);
+                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', plotDataHA, dataWithVisitNum.map(d => d.h), refHA, 72, 228, colorsHA_6_19, dataWithVisitNum);
 
                 const refWH = genderObj.group_6_19.w_h;
                 const maxRefH = refWH[refWH.length-1].x;
-                const plotDataWH = data.map(d => ({ x: Math.min(d.h, maxRefH), y: d.w, _meta: d }));
-                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 90, 185, colorsWH_6_19);
+                const plotDataWH = dataWithVisitNum.map(d => ({ x: Math.min(d.h, maxRefH), y: d.w, _meta: d }));
+                // คำนวณ maxX จากจุดข้อมูลจริง + padding
+                const maxHeightWH_6_19 = plotDataWH.length > 0 ? Math.max(...plotDataWH.map(p => p.x)) : 185;
+                const paddedMaxXWH_6_19 = Math.max(185, Math.ceil(maxHeightWH_6_19 + 2));
+                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 90, paddedMaxXWH_6_19, colorsWH_6_19);
                 
                 document.getElementById('labelHA').innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามอายุ (6-19 ปี)`;
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (6-19 ปี)`;
@@ -1155,14 +1167,17 @@
                 if(containerHA) containerHA.classList.remove('xl:col-span-2');
 
                 const refWA = genderObj.group_0_5.w_a;
-                createAreaChart('chartWA', 'น้ำหนัก (กก.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.w), refWA, 0, 72, colorsWA_0_5, data);
+                createAreaChart('chartWA', 'น้ำหนัก (กก.)', 'อายุ (เดือน)', dataWithVisitNum.map(d => d.ageTotalM), dataWithVisitNum.map(d => d.w), refWA, 0, 72, colorsWA_0_5, dataWithVisitNum);
                 
                 const refHA = genderObj.group_0_5.h_a;
-                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', data.map(d => d.ageTotalM), data.map(d => d.h), refHA, 0, 72, colorsHA_0_5, data);
+                createAreaChart('chartHA', 'ส่วนสูง (ซม.)', 'อายุ (เดือน)', dataWithVisitNum.map(d => d.ageTotalM), dataWithVisitNum.map(d => d.h), refHA, 0, 72, colorsHA_0_5, dataWithVisitNum);
 
                 const refWH = genderObj.group_0_5.w_h;
-                const plotDataWH = data.map(d => ({ x: d.h, y: d.w, _meta: d }));
-                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 65, 120, colorsWH_0_5);
+                const plotDataWH = dataWithVisitNum.map(d => ({ x: d.h, y: d.w, _meta: d }));
+                // คำนวณ maxX จากจุดข้อมูลจริง + padding
+                const maxHeightWH_0_5 = plotDataWH.length > 0 ? Math.max(...plotDataWH.map(p => p.x)) : 120;
+                const paddedMaxXWH_0_5 = Math.max(120, Math.ceil(maxHeightWH_0_5 + 2));
+                createScatterAreaChart('chartWH', 'น้ำหนัก (กก.)', 'ส่วนสูง (ซม.)', plotDataWH, refWH, 65, paddedMaxXWH_0_5, colorsWH_0_5);
 
                 document.getElementById('labelHA').innerHTML = `<span class="w-2 h-5 bg-teal-500 rounded mr-2"></span>กราฟส่วนสูงตามอายุ (0-5 ปี)`;
                 document.getElementById('labelWH').innerHTML = `<span class="w-2 h-5 bg-purple-500 rounded mr-2"></span>กราฟน้ำหนักตามส่วนสูง (0-5 ปี)`;
@@ -1194,7 +1209,17 @@
             if (chartInstances[id]) chartInstances[id].destroy();
             const datasets = [];
             const childPoints = xData.map((x, i) => ({ x: x, y: yData[i], _meta: (typeof meta !== 'undefined' && meta && meta[i]) ? meta[i] : null }));
-            datasets.push({ type: 'scatter', label: 'เด็ก', data: childPoints, backgroundColor: '#0f172a', pointRadius: 5, order: 10 });
+            datasets.push({ 
+                type: 'scatter', 
+                label: 'เด็ก', 
+                data: childPoints, 
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                pointRadius: 5.5,
+                pointBorderColor: 'rgba(15, 23, 42, 0.9)',
+                pointBorderWidth: 1.5,
+                pointHoverRadius: 7,
+                order: 10 
+            });
             const refCount = (refData && refData[0] && Array.isArray(refData[0].y)) ? refData[0].y.length : 0;
             for (let i = refCount - 1; i >= 0; i--) {
                 const color = colors[i % colors.length] || '#ccc';
@@ -1223,23 +1248,46 @@
                     ctx.font = '12px "Sarabun", sans-serif';
                     ctx.textBaseline = 'top';
                     const boxes = [];
+                    
+                    // Draw visit number on each point
                     meta.data.forEach((el, idx) => {
                         try {
-                            // read the original data point from the dataset (child dataset is first)
                             const dsPoint = (chart.data && chart.data.datasets && chart.data.datasets[0] && chart.data.datasets[0].data) ? chart.data.datasets[0].data[idx] : null;
-                            if (!dsPoint || !dsPoint._meta) return;
-                            const d = dsPoint._meta;
-                            // compute pixel coordinates using scales
+                            if (!dsPoint) return;
+                            let px = (chart.scales && chart.scales.x) ? chart.scales.x.getPixelForValue(dsPoint.x) : (el.x || 0);
+                            let py = (chart.scales && chart.scales.y) ? chart.scales.y.getPixelForValue(dsPoint.y) : (el.y || 0);
+                            
+                            // Clamp to chart boundaries with padding
+                            const textRadius = 7;
+                            px = Math.max(chartArea.left + textRadius, Math.min(px, chartArea.right - textRadius));
+                            py = Math.max(chartArea.top + textRadius, Math.min(py, chartArea.bottom - textRadius));
+                            
+                            // Draw visit number inside/near the point
+                            const visitNum = (dsPoint._meta && dsPoint._meta._visitNum) ? dsPoint._meta._visitNum : (idx + 1);
+                            ctx.font = 'bold 11px "Sarabun", sans-serif';
+                            ctx.fillStyle = '#fff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(String(visitNum), px, py);
+                        } catch (e) { }
+                    });
+                    
+                    // Only show detailed labels for clicked point
+                    if (chart._selectedPointIdx !== undefined && chart._selectedPointIdx !== null) {
+                        const idx = chart._selectedPointIdx;
+                        const el = meta.data[idx];
+                        try {
+                            const dsPoint = (chart.data && chart.data.datasets && chart.data.datasets[0] && chart.data.datasets[0].data) ? chart.data.datasets[0].data[idx] : null;
+                            if (!dsPoint) throw new Error('no data');
+                            const d = dsPoint._meta || {};
                             const px = (chart.scales && chart.scales.x) ? chart.scales.x.getPixelForValue(dsPoint.x) : (el.x || 0);
                             const py = (chart.scales && chart.scales.y) ? chart.scales.y.getPixelForValue(dsPoint.y) : (el.y || 0);
-                            // debug: draw a visible red ring at the point to confirm plugin runs
-                            try { ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,60,60,0.95)'; ctx.lineWidth = 2; ctx.stroke(); } catch(e) {}
+                            
                             const lines = [];
                             try { lines.push('วันที่: ' + new Date(d.date).toLocaleDateString('th-TH')); } catch (e) { if (d.date) lines.push('วันที่: ' + d.date); }
                             const totalM = (typeof d.ageTotalM === 'number') ? d.ageTotalM : ((d.ageY || 0) * 12 + (d.ageM_Input || 0));
                             const years = Math.floor(totalM / 12);
                             lines.push('อายุ: ' + years + ' ปี');
-                            // include evaluation result for this chart (WA/HA)
                             try {
                                 const evalKey = (id === 'chartWA') ? 'statWA' : (id === 'chartHA') ? 'statHA' : null;
                                 if (evalKey && dsPoint[evalKey]) {
@@ -1248,22 +1296,72 @@
                             } catch (e) {}
                             lines.push(xLabel + ': ' + dsPoint.x);
                             lines.push(yLabel + ': ' + dsPoint.y);
+                            
                             const padding = 6;
                             const lineHeight = 16;
                             const textWidths = lines.map(l => ctx.measureText(l).width);
                             const w = Math.max(...textWidths);
                             const h = lines.length * lineHeight + padding;
-                            let bx = px + 8;
-                            let by = py - h - 8;
-                            for (let b of boxes) {
-                                const overlapX = !(bx + w < b.x || bx > b.x + b.w);
-                                const overlapY = !(by + h < b.y || by > b.y + b.h);
-                                if (overlapX && overlapY) by = b.y - h - 6;
+                            
+                            // Try multiple positions with larger spacing to avoid collisions
+                            const positions = [
+                                { x: px + 12, y: py - h - 12 },    // top-right
+                                { x: px - w - 12, y: py - h - 12 }, // top-left
+                                { x: px + 12, y: py + 12 },         // bottom-right
+                                { x: px - w - 12, y: py + 12 },     // bottom-left
+                                { x: chartArea.right - w - 8, y: py - h/2 },  // far-right
+                                { x: chartArea.left + 4, y: py - h/2 }        // far-left
+                            ];
+                            
+                            let bx = positions[0].x;
+                            let by = positions[0].y;
+                            
+                            // Find first position that doesn't collide with existing boxes
+                            for (let pos of positions) {
+                                let collides = false;
+                                
+                                // Check collision with existing boxes
+                                for (let b of boxes) {
+                                    const overlapX = pos.x < b.x + b.w && pos.x + w + padding > b.x;
+                                    const overlapY = pos.y < b.y + b.h && pos.y + h + padding > b.y;
+                                    if (overlapX && overlapY) {
+                                        collides = true;
+                                        break;
+                                    }
+                                }
+                                
+                                // Also check if label box would cover the data point itself
+                                if (!collides) {
+                                    const labelCoversPt = pos.x < px && pos.x + w + padding > px && 
+                                                         pos.y < py && pos.y + h + padding > py;
+                                    if (labelCoversPt) collides = true;
+                                }
+                                
+                                if (!collides) {
+                                    bx = pos.x;
+                                    by = pos.y;
+                                    break;
+                                }
                             }
+                            
+                            // Clamp to chart boundaries
                             if (bx + w + padding > chartArea.right) bx = chartArea.right - w - padding - 4;
                             if (bx < chartArea.left) bx = chartArea.left + 4;
-                            if (by < chartArea.top) by = py + 8;
-                            if (by + h > chartArea.bottom) by = chartArea.bottom - h - 4;
+                            if (by < chartArea.top) by = chartArea.top + 4;
+                            if (by + h + padding > chartArea.bottom) by = chartArea.bottom - h - padding - 4;
+                            
+                            // Draw leader line from point to label box
+                            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([3, 3]);
+                            const boxEdgeX = bx > px ? bx - 4 : bx + w + padding + 4;
+                            const boxEdgeY = by > py ? by - 4 : by + h + padding + 4;
+                            ctx.beginPath();
+                            ctx.moveTo(px, py);
+                            ctx.lineTo(boxEdgeX, boxEdgeY);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+                            
                             ctx.fillStyle = 'rgba(255,255,255,0.95)';
                             ctx.strokeStyle = 'rgba(0,0,0,0.08)';
                             ctx.lineWidth = 1;
@@ -1273,7 +1371,7 @@
                             lines.forEach((l, li) => ctx.fillText(l, bx + padding / 2, by + li * lineHeight + 2));
                             boxes.push({ x: bx - 4, y: by - 4, w: w + padding + 8, h: h + 4 });
                         } catch (e) { }
-                    });
+                    }
                     ctx.restore();
                 }
             };
@@ -1285,7 +1383,40 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    onClick: (event, elements) => {
+                        const chart = chartInstances[id];
+                        const meta = chart.getDatasetMeta(0);
+                        if (!meta || !meta.data) return;
+                        
+                        const rect = chart.canvas.getBoundingClientRect();
+                        const x = event.pageX - rect.left;
+                        const y = event.pageY - rect.top;
+                        
+                        // Find nearest data point within clickable distance
+                        let nearestIdx = null;
+                        let nearestDist = 12;
+                        
+                        meta.data.forEach((el, idx) => {
+                            const dx = el.x - x;
+                            const dy = el.y - y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < nearestDist) {
+                                nearestDist = dist;
+                                nearestIdx = idx;
+                            }
+                        });
+                        
+                        // Toggle selection
+                        if (nearestIdx !== null) {
+                            if (chart._selectedPointIdx === nearestIdx) {
+                                chart._selectedPointIdx = null; // deselect
+                            } else {
+                                chart._selectedPointIdx = nearestIdx; // select
+                            }
+                            chart.update();
+                        }
+                    }
                 },
                 plugins: [drawLabelsPlugin]
             });
@@ -1298,7 +1429,17 @@
             // Child Points (brand dark)
             // ensure points carry optional meta (date/age) so tooltip can use them
             const childPts = points.map(p => ({ x: p.x, y: p.y, _meta: p._meta || p }));
-            datasets.push({ type: 'scatter', label: 'เด็ก', data: childPts, backgroundColor: '#0f172a', pointRadius: 5, order: 10 });
+            datasets.push({ 
+                type: 'scatter', 
+                label: 'เด็ก', 
+                data: childPts, 
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                pointRadius: 5.5,
+                pointBorderColor: 'rgba(15, 23, 42, 0.9)',
+                pointBorderWidth: 1.5,
+                pointHoverRadius: 7,
+                order: 10 
+            });
             // Ref Lines
             const refCount = refData[0].y.length;
             for (let i = refCount - 1; i >= 0; i--) {
@@ -1313,7 +1454,40 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    onClick: (event, elements) => {
+                        const chart = chartInstances[id];
+                        const meta = chart.getDatasetMeta(0);
+                        if (!meta || !meta.data) return;
+                        
+                        const rect = chart.canvas.getBoundingClientRect();
+                        const x = event.pageX - rect.left;
+                        const y = event.pageY - rect.top;
+                        
+                        // Find nearest data point within clickable distance
+                        let nearestIdx = null;
+                        let nearestDist = 12;
+                        
+                        meta.data.forEach((el, idx) => {
+                            const dx = el.x - x;
+                            const dy = el.y - y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < nearestDist) {
+                                nearestDist = dist;
+                                nearestIdx = idx;
+                            }
+                        });
+                        
+                        // Toggle selection
+                        if (nearestIdx !== null) {
+                            if (chart._selectedPointIdx === nearestIdx) {
+                                chart._selectedPointIdx = null; // deselect
+                            } else {
+                                chart._selectedPointIdx = nearestIdx; // select
+                            }
+                            chart.update();
+                        }
+                    }
                 },
                 plugins: [
                     {
@@ -1323,20 +1497,49 @@
                             const area = chart.chartArea;
                             const padding = 6;
                             const lineHeight = 14;
+                            const drawnBoxes = [];
+                            
+                            // First, draw visit numbers on all points
+                            let pointIdx = 0;
                             chart.data.datasets.forEach(function(dataset) {
                                 if (!dataset || dataset.label !== 'เด็ก' || !dataset.data) return;
-                                ctx.save();
-                                ctx.font = '12px Sarabun, sans-serif';
-                                ctx.fillStyle = '#0f172a';
-                                ctx.textAlign = 'left';
-                                ctx.textBaseline = 'top';
-                                dataset.data.forEach(function(pt) {
+                                dataset.data.forEach(function(pt, idx) {
                                     if (!pt) return;
+                                    let px = chart.scales.x.getPixelForValue(pt.x);
+                                    let py = chart.scales.y.getPixelForValue(pt.y);
+                                    
+                                    // Clamp to chart boundaries with padding
+                                    const textRadius = 7;
+                                    px = Math.max(area.left + textRadius, Math.min(px, area.right - textRadius));
+                                    py = Math.max(area.top + textRadius, Math.min(py, area.bottom - textRadius));
+                                    
+                                    // Draw visit number on the point
+                                    const visitNum = (pt._meta && pt._meta._visitNum) ? pt._meta._visitNum : (idx + 1);
+                                    ctx.save();
+                                    ctx.font = 'bold 11px "Sarabun", sans-serif';
+                                    ctx.fillStyle = '#fff';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillText(String(visitNum), px, py);
+                                    ctx.restore();
+                                    
+                                    pointIdx++;
+                                });
+                            });
+                            
+                            // Only show detailed labels for clicked point
+                            if (chart._selectedPointIdx !== undefined && chart._selectedPointIdx !== null) {
+                                const selectedIdx = chart._selectedPointIdx;
+                                chart.data.datasets.forEach(function(dataset) {
+                                    if (!dataset || dataset.label !== 'เด็ก' || !dataset.data) return;
+                                    if (selectedIdx >= dataset.data.length) return;
+                                    
+                                    const pt = dataset.data[selectedIdx];
+                                    if (!pt) return;
+                                    
                                     const px = chart.scales.x.getPixelForValue(pt.x);
                                     const py = chart.scales.y.getPixelForValue(pt.y);
-                                    // debug: draw a visible red ring at the point to confirm plugin runs
-                                    try { ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,60,60,0.95)'; ctx.lineWidth = 2; ctx.stroke(); } catch(e) {}
-                                    const meta = pt._meta || null;
+                                    const meta = pt._meta || {};
                                     const lines = [];
                                     if (meta && meta.date) {
                                         try { lines.push('วันที่: ' + new Date(meta.date).toLocaleDateString('th-TH')); } catch(e) { lines.push('วันที่: ' + meta.date); }
@@ -1356,36 +1559,77 @@
                                     // measure width
                                     const textWidth = Math.max(...lines.map(l => ctx.measureText(l).width));
 
-                                    // preferred position (right of point)
-                                    let lx = px + 8;
-                                    let ly = py - (lines.length * lineHeight) / 2;
+                                    // Try multiple positions to avoid covered data point
+                                    const h = lines.length * lineHeight + padding * 2;
+                                    const positions = [
+                                        { x: px + 12, y: py - h - 12 },        // top-right
+                                        { x: px - textWidth - 12, y: py - h - 12 }, // top-left
+                                        { x: px + 12, y: py + 12 },             // bottom-right
+                                        { x: px - textWidth - 12, y: py + 12 }, // bottom-left
+                                        { x: area.right - textWidth - 8, y: py - h/2 },  // far-right
+                                        { x: area.left + 4, y: py - h/2 }       // far-left
+                                    ];
+
+                                    let lx = positions[0].x;
+                                    let ly = positions[0].y;
+                                    
+                                    // Find best position
+                                    for (let pos of positions) {
+                                        let ok = true;
+                                        // Check if covers the point itself
+                                        const coversPt = pos.x < px && pos.x + textWidth + padding * 2 > px && 
+                                                         pos.y < py && pos.y + h > py;
+                                        if (!coversPt) {
+                                            lx = pos.x;
+                                            ly = pos.y;
+                                            break;
+                                        }
+                                    }
 
                                     // clamp horizontally
-                                    if (lx + textWidth + padding * 2 > area.right) lx = px - 8 - textWidth - padding * 2;
+                                    if (lx + textWidth + padding * 2 > area.right) lx = area.right - textWidth - padding * 2 - 4;
                                     if (lx < area.left + 4) lx = area.left + 4;
 
                                     // clamp vertically
                                     if (ly < area.top + 4) ly = area.top + 4;
-                                    if (ly + lines.length * lineHeight + padding * 2 > area.bottom - 4) ly = area.bottom - lines.length * lineHeight - padding * 2 - 4;
+                                    if (ly + h > area.bottom - 4) ly = area.bottom - h - 4;
 
                                     // draw background
                                     const rectX = lx - padding;
                                     const rectY = ly - padding;
                                     const rectW = textWidth + padding * 2;
-                                    const rectH = lines.length * lineHeight + padding * 2;
+                                    const rectH = h;
+                                    ctx.save();
                                     ctx.fillStyle = 'rgba(255,255,255,0.92)';
                                     ctx.strokeStyle = 'rgba(0,0,0,0.06)';
                                     ctx.fillRect(rectX, rectY, rectW, rectH);
                                     ctx.strokeRect(rectX, rectY, rectW, rectH);
 
                                     // draw text lines
+                                    ctx.font = '12px "Sarabun", sans-serif';
                                     ctx.fillStyle = '#0f172a';
                                     for (let li = 0; li < lines.length; li++) {
-                                        ctx.fillText(lines[li], lx, ly + li * lineHeight);
+                                        ctx.fillText(lines[li], lx + padding / 2, ly + padding / 2 + li * lineHeight);
                                     }
+                                    
+                                    // Draw leader line
+                                    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                                    ctx.lineWidth = 1;
+                                    ctx.setLineDash([3, 3]);
+                                    ctx.beginPath();
+                                    ctx.moveTo(px, py);
+                                    ctx.lineTo(lx + rectW / 2, rectY);
+                                    ctx.stroke();
+                                    ctx.setLineDash([]);
+                                    ctx.restore();
                                 });
-                                ctx.restore();
-                            });
+                            }
+                        }
+                    },
+                    {
+                        id: 'chartClickHandler',
+                        afterEvent: function(chart, args) {
+                            // Will be handled by onClick in options
                         }
                     }
                 ]
@@ -1472,20 +1716,24 @@
                 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 <style>
                     /* Print page margins and wrapper to avoid content touching edges */
-                    @page { size: A4; margin: 18mm; }
+                    @page { size: A4 portrait; margin: 8mm; }
                     html,body{height:100%;}
-                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:12mm; color:#111; background:#fff}
-                    .print-wrap{max-width:180mm; margin:0 auto;}
-                    table{border-collapse:collapse; width:100%; font-size:13px; table-layout:fixed}
-                    th, td{border:1px solid #e5e7eb; padding:8px; text-align:center; vertical-align:middle}
-                    thead tr{background:#f3f4f6}
+                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:8mm; color:#111; background:#fff}
+                    .print-wrap{max-width:100%; margin:0 auto;}
+                    table{border-collapse:collapse; width:100%; font-size:11px; table-layout:auto; margin-bottom:10px}
+                    th, td{border:1px solid #999; padding:6px 3px; text-align:center; vertical-align:middle; white-space:nowrap}
+                    thead tr{background:#d0d0d0; font-weight:bold}
+                    /* Exceptions for longer cells that need wrapping */
+                    th:nth-child(3), td:nth-child(3) { white-space:normal; font-size:10px }
+                    th:nth-child(4), td:nth-child(4) { width: 3.5%; max-width: 25px; font-size:11px; padding:4px 2px }
+                    th:first-child, td:first-child { white-space:normal }
                     /* keep any explicit left-aligned cells (e.g., name column) */
                     th.text-left, td.text-left{ text-align:left }
-                    /* Slightly larger spacing for print readability */
-                    th, td { padding:10px }
+                    tr{height:auto; min-height:24px}
                     @media print {
-                        body{padding:0}
+                        body{padding:0; margin:0}
                         .print-wrap{margin:0}
+                        table{width:100%; margin-bottom:8px}
                     }
                 </style>`;
 
