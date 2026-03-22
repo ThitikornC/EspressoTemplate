@@ -1,0 +1,494 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Sarabun', 'Roboto', sans-serif;
+  background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+  border-radius: 20px;
+  padding: 20px 30px;
+  box-shadow: 0 0 50px rgba(255,230,160,0.8), 0 10px 30px rgba(0,0,0,0.2);
+  border: 3px solid #74640a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-content h1 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.info {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.info span {
+  background: linear-gradient(135deg, #74640a 0%, #8a7a3e 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-home {
+  background: linear-gradient(135deg, #74640a 0%, #8a7a3e 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(116, 100, 10, 0.4);
+}
+
+.btn-home:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(116, 100, 10, 0.6);
+}
+
+/* Dialog Area */
+.dialog-area {
+  background: white;
+  border-radius: 25px;
+  padding: 40px;
+  min-height: 500px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
+.dialog-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #74640a, #8a7a3e, #ebd09e, #74640a);
+}
+
+.dialog-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  min-height: 400px;
+}
+
+/* Characters */
+.character-left,
+.character-right {
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: all 0.3s;
+  filter: grayscale(70%);
+  text-align: center;
+}
+
+.character-left.active,
+.character-right.active {
+  opacity: 1;
+  filter: grayscale(0%);
+  transform: scale(1.05);
+}
+
+.character-img {
+  width: 350px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+}
+
+/* Speech Bubble */
+.dialog-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.speech-bubble {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  position: relative;
+  max-width: 500px;
+  border: 3px solid;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.speech-bubble.left {
+  border-color: #4CAF50;
+  margin-right: auto;
+}
+
+.speech-bubble.left::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 15px 20px 15px 0;
+  border-color: transparent #4CAF50 transparent transparent;
+}
+
+.speech-bubble.right {
+  border-color: #FF6B9D;
+  margin-left: auto;
+}
+
+.speech-bubble.right::before {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 15px 0 15px 20px;
+  border-color: transparent transparent transparent #FF6B9D;
+}
+
+.dialog-text-thai {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.dialog-text-english {
+  font-size: 16px;
+  color: #666;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.btn-control {
+  padding: 15px 35px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  color: white;
+}
+
+.btn-start {
+  background: linear-gradient(135deg, #57e167 0%, #57e167 100%);
+}
+
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(87, 225, 103, 0.5);
+}
+
+.btn-prev,
+.btn-next {
+  background: linear-gradient(135deg, #74640a 0%, #8a7a3e 100%);
+}
+
+.btn-prev:hover:not(:disabled),
+.btn-next:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(116, 100, 10, 0.5);
+}
+
+.btn-prev:disabled,
+.btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-restart {
+  background: linear-gradient(135deg, #ebd09e 0%, #c9b37a 100%);
+  color: #333;
+}
+
+.btn-restart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(235, 208, 158, 0.6);
+}
+
+/* Progress Bar */
+.progress-bar {
+  background: rgba(255,255,255,0.3);
+  height: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #74640a, #8a7a3e, #ebd09e);
+  width: 0%;
+  transition: width 0.5s ease;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(116, 100, 10, 0.5);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .character-img {
+    width: 280px;
+  }
+  
+  .dialog-container {
+    gap: 20px;
+  }
+  
+  .speech-bubble {
+    max-width: 450px;
+  }
+}
+
+@media (max-width: 992px) {
+  .character-img {
+    width: 220px;
+  }
+  
+  .dialog-area {
+    padding: 30px 20px;
+    min-height: 450px;
+  }
+  
+  .dialog-container {
+    gap: 15px;
+  }
+  
+  .speech-bubble {
+    max-width: 400px;
+    padding: 20px 25px;
+  }
+  
+  .dialog-text-thai {
+    font-size: 22px;
+  }
+  
+  #characterLeftName,
+  #characterRightName {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .header {
+    padding: 15px 20px;
+  }
+  
+  .header-content h1 {
+    font-size: 20px;
+  }
+  
+  .info span {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .dialog-area {
+    padding: 20px 15px;
+    min-height: 400px;
+  }
+  
+  .dialog-container {
+    flex-direction: column;
+    gap: 15px;
+    min-height: 350px;
+  }
+  
+  .character-img {
+    width: 180px;
+  }
+  
+  .speech-bubble {
+    max-width: 100%;
+    padding: 18px 20px;
+  }
+  
+  .speech-bubble.left::before,
+  .speech-bubble.right::before {
+    display: none;
+  }
+  
+  .dialog-text-thai {
+    font-size: 20px;
+  }
+  
+  .dialog-text-english {
+    font-size: 14px;
+  }
+  
+  #characterLeftName,
+  #characterRightName {
+    font-size: 15px !important;
+    margin-top: 8px !important;
+  }
+  
+  .btn-control {
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+  
+  .controls {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .dialog-area {
+    padding: 15px 10px;
+    min-height: 350px;
+  }
+  
+  .dialog-container {
+    gap: 10px;
+    min-height: 300px;
+  }
+  
+  .character-img {
+    width: 140px;
+  }
+  
+  .speech-bubble {
+    padding: 15px 18px;
+  }
+  
+  .dialog-text-thai {
+    font-size: 18px;
+  }
+  
+  #characterLeftName,
+  #characterRightName {
+    font-size: 14px !important;
+    margin-top: 6px !important;
+  }
+  
+  .btn-control {
+    padding: 10px 18px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .character-img {
+    width: 120px;
+  }
+  
+  .dialog-text-thai {
+    font-size: 16px;
+  }
+  
+  #characterLeftName,
+  #characterRightName {
+    font-size: 13px !important;
+  }
+  
+  .btn-control {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .controls {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .character-img {
+    width: 100px;
+  }
+  
+  .dialog-area {
+    padding: 10px;
+  }
+  
+  .speech-bubble {
+    padding: 12px 15px;
+  }
+  
+  .dialog-text-thai {
+    font-size: 15px;
+  }
+  
+  #characterLeftName,
+  #characterRightName {
+    font-size: 12px !important;
+  }
+  
+  .btn-control {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

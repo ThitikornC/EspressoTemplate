@@ -9,20 +9,130 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/teacherpicture.css">
 <script src="/js/prevent-image-download.js"></script>
+<style>
+/* Custom Alert Modal */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+.custom-alert-overlay.show {
+  display: flex;
+}
+.custom-alert-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: alertSlideIn 0.3s ease;
+}
+@keyframes alertSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.custom-alert-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.custom-alert-btn {
+  background: linear-gradient(135deg, #a67c52 0%, #8b6914 100%);
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.custom-alert-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(139, 105, 20, 0.4);
+}
+</style>
 </head>
 <body>
+
+<!-- Custom Alert Modal -->
+<div id="customAlertOverlay" class="custom-alert-overlay" onclick="closeCustomAlert(event)">
+  <div class="custom-alert-box" onclick="event.stopPropagation()">
+    <div id="customAlertMessage" class="custom-alert-message"></div>
+    <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+  </div>
+</div>
+
+<script>
+function showCustomAlert(message) {
+  document.getElementById('customAlertMessage').innerHTML = message;
+  document.getElementById('customAlertOverlay').classList.add('show');
+}
+function closeCustomAlert(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('customAlertOverlay').classList.remove('show');
+}
+</script>
 
 <div class="info-section">
     <h1>สมาร์ทเช็ค</h1>
   <h3>กรอกข้อมูลกิจกรรม</h3>
-  <div class="info-inputs">
-    <input id="weekInput" placeholder="สัปดาห์ที่">
-    <input id="topicInput" placeholder="สาระการเรียนรู้">
-    <input id="unitInput" placeholder="หน่วยการเรียนรู้">
-    <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
-    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
-
-
+  <div class="form-grid">
+    <div class="form-group">
+      <label for="weekInput">สัปดาห์ที่</label>
+      <input type="text" id="weekInput" placeholder="ระบุสัปดาห์">
+    </div>
+    <div class="form-group">
+      <label for="topicInput">สาระการเรียนรู้</label>
+      <input type="text" id="topicInput" placeholder="เช่น ภาษาไทย">
+    </div>
+    <div class="form-group">
+      <label for="unitInput">หน่วยการเรียนรู้</label>
+      <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
+    </div>
+    <div class="form-group">
+      <label for="teacherInput">ครูผู้สอน</label>
+      <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
+    </div>
+    <div class="form-group">
+      <label for="gradeSelect">ระดับชั้น</label>
+      <select id="gradeSelect">
+        <option value="">-- เลือกระดับชั้น --</option>
+        <option value="อนุบาล 1">อนุบาล 1</option>
+        <option value="อนุบาล 2">อนุบาล 2</option>
+        <option value="อนุบาล 3">อนุบาล 3</option>
+        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+        <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+        <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+        <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+        <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+        <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+        <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+        <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+        <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+        <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+        <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+        <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="roomInput">ห้อง</label>
+      <input type="text" id="roomInput" placeholder="เช่น 1, 2, 3...">
+    </div>
+    <input type="hidden" id="classroomInput">
+    <div class="form-group">
+      <label for="userNameInput">ชื่อผู้ทดสอบ</label>
+      <input type="text" id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+    </div>
   </div>
 </div>
 
@@ -57,6 +167,7 @@
   <button class="neon-btn" onclick="saveConfig()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เริ่มกิจกรรม</button>
   <button class="neon-btn" onclick="saveActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">บันทึกกิจกรรม</button>
   <button class="neon-btn" onclick="loadActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เลือกกิจกรรม</button>
+  <button class="neon-btn" onclick="window.location.href='student-reports.html'" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">ประวัติผู้ทดสอบ</button>
 </div>
 
 <!-- Activity Selection Modal -->
@@ -235,12 +346,24 @@ if(!savedConfig.date) {
 
 // Updated saveConfig to include userName in the saved configuration
 function saveConfig() {
+  // อัปเดต classroom ก่อนบันทึก
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const classroom = document.getElementById('classroomInput')?.value.trim();
   const userName = document.getElementById('userNameInput')?.value.trim();
+  const gradeSelected = document.getElementById('gradeSelect')?.value;
+
+  // ตรวจสอบว่าเลือกระดับชั้นหรือยัง
+  if (!gradeSelected) {
+    showCustomAlert('⚠️ กรุณาเลือกระดับชั้นก่อนเริ่มกิจกรรม');
+    document.getElementById('gradeSelect')?.focus();
+    return;
+  }
 
   // Allow saving even when some fields are empty — use sensible defaults
   const cfgWeek = week || '-';
@@ -260,6 +383,7 @@ function saveConfig() {
     unit: cfgUnit,
     teacher: cfgTeacher,
     mainTopic: cfgMainTopic,
+    classroom: classroom || '',
     userName: cfgUserName,
     correctImages: correctImages || [],
     wrongImages: wrongImages || []
@@ -271,15 +395,19 @@ function saveConfig() {
 
 // ฟังก์ชันบันทึกกิจกรรม (บันทึกลง Cloud)
 async function saveActivity() {
+  // อัปเดต classroom ก่อนบันทึก
+  if (typeof updateClassroomValue === 'function') updateClassroomValue();
+  
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const classroom = document.getElementById('classroomInput')?.value.trim();
   const userName = document.getElementById('userNameInput')?.value.trim();
 
   if (!teacher) {
-    alert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
+    showCustomAlert('กรุณากรอกชื่อครูผู้รับผิดชอบก่อนบันทึก');
     return;
   }
 
@@ -291,7 +419,7 @@ async function saveActivity() {
   const cfgUserName = userName || 'ไม่ระบุ';
 
   if (correctImages.length === 0 && wrongImages.length === 0) {
-    alert('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปก่อนบันทึก');
+    showCustomAlert('กรุณาเพิ่มรูปภาพอย่างน้อย 1 รูปก่อนบันทึก');
     return;
   }
 
@@ -310,6 +438,7 @@ async function saveActivity() {
             unit: cfgUnit,
             teacher: cfgTeacher,
             mainTopic: cfgMainTopic,
+            classroom: classroom || '',
             userName: cfgUserName,
             correctImages: correctImages,
             wrongImages: wrongImages
@@ -317,12 +446,12 @@ async function saveActivity() {
         })
       });
       if (!res.ok) throw new Error('อัพเดทไม่สำเร็จ');
-      alert('✅ อัพเดทกิจกรรมสำเร็จ!');
+      showCustomAlert('✅ อัพเดทกิจกรรมสำเร็จ!');
       delete window.editingCloudActivity;
       delete window.editingCloudActivityName;
       return;
     } catch (err) {
-      alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+      showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
       return;
     }
   }
@@ -344,6 +473,7 @@ async function saveActivity() {
           unit: cfgUnit,
           teacher: cfgTeacher,
           mainTopic: cfgMainTopic,
+          classroom: classroom || '',
           userName: cfgUserName,
           correctImages: correctImages,
           wrongImages: wrongImages
@@ -352,9 +482,9 @@ async function saveActivity() {
     });
     if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
     const data = await res.json();
-    alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!\nรหัส: ${data.data?.activityId || '-'}`);
+    showCustomAlert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!<br>รหัส: ${data.data?.activityId || '-'}`);
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -412,16 +542,33 @@ function showTeacherActivities(encodedTeacherName) {
 
   teacherList.style.display = 'none';
   activityList.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: #2e7d32;">🖼️ กิจกรรมของ ${teacherName}</h3>
-      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">← กลับ</button>
+    <div style="display: flex; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+      <button onclick="backToTeacherList()" style="background: #607d8b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">&lt;</button>
+      <h3 style="margin: 0; color: #2e7d32;">กิจกรรมของ ${teacherName}</h3>
     </div>
+    
+    <!-- Category Badge -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+      <span style="padding: 10px 16px; background: #4CAF50; color: white; border-radius: 20px; font-size: 13px; font-weight: bold;">
+        เกมทายรูป (${activities.length})
+      </span>
+    </div>
+    
+    ${activities.length === 0 ? `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <p style="font-size: 48px; margin: 0;">📭</p>
+        <p style="font-size: 16px;">ยังไม่มีกิจกรรม</p>
+      </div>
+    ` : `
     <div style="display: grid; gap: 10px;">
       ${activities.map(a => `
         <div style="background: white; padding: 15px; border-radius: 10px; border: 3px solid #4CAF50;">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div style="flex: 1;">
-              <h4 style="margin: 0 0 8px 0; color: #1b5e20; font-size: 16px;">🖼️ ${a.name}</h4>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #1b5e20; font-size: 16px;">${a.name}</h4>
+                <span style="background: #4CAF50; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">ทายรูป</span>
+              </div>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">หัวข้อ: ${a.config?.mainTopic || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #666;">สัปดาห์: ${a.config?.week || '-'}</p>
               <p style="margin: 4px 0; font-size: 13px; color: #4CAF50; font-weight: bold;">รูปถูก: ${a.config?.correctImages?.length || 0} / รูปผิด: ${a.config?.wrongImages?.length || 0}</p>
@@ -440,6 +587,7 @@ function showTeacherActivities(encodedTeacherName) {
         </div>
       `).join('')}
     </div>
+    `}
   `;
   activityList.style.display = 'block';
 }
@@ -453,7 +601,7 @@ function playCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
   localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
   window.location.href = 'gamepicture.html';
 }
@@ -462,7 +610,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   const teacherName = decodeURIComponent(encodedTeacherName);
   const activities = window.cloudTeacherMap[teacherName] || [];
   const activity = activities.find(a => a.activityId === activityId);
-  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+  if (!activity) { showCustomAlert('ไม่พบกิจกรรมนี้'); return; }
 
   const config = activity.config || {};
   if(document.getElementById('weekInput')) document.getElementById('weekInput').value = config.week || '';
@@ -481,7 +629,7 @@ function editCloudActivity(encodedTeacherName, activityId) {
   window.editingCloudActivityName = activity.name;
 
   closeActivityModal();
-  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
+  showCustomAlert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"<br><br>แก้ไขข้อมูลได้เลย แล้วกด "บันทึกกิจกรรม" เพื่ออัพเดท`);
 }
 
 async function deleteCloudActivity(encodedTeacherName, activityId) {
@@ -490,10 +638,10 @@ async function deleteCloudActivity(encodedTeacherName, activityId) {
   try {
     const res = await fetch(`/api/settings/picture/${encodeURIComponent(teacherName)}/${activityId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('ลบไม่สำเร็จ');
-    alert('✅ ลบกิจกรรมสำเร็จ!');
+    showCustomAlert('✅ ลบกิจกรรมสำเร็จ!');
     loadActivity();
   } catch (err) {
-    alert('❌ เกิดข้อผิดพลาด: ' + err.message);
+    showCustomAlert('❌ เกิดข้อผิดพลาด: ' + err.message);
   }
 }
 
@@ -520,6 +668,26 @@ window.closeActivityModal = closeActivityModal;
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+<script>
+// ฟังก์ชันรวม ระดับชั้น + ห้อง เป็น classroom
+function updateClassroomValue() {
+  const grade = document.getElementById('gradeSelect')?.value || '';
+  const room = document.getElementById('roomInput')?.value.trim() || '';
+  const classroomInput = document.getElementById('classroomInput');
+  if (classroomInput) {
+    classroomInput.value = room ? `${grade}/${room}` : grade;
+  }
+}
+// เรียกทุกครั้งที่มีการเปลี่ยนค่า
+document.addEventListener('DOMContentLoaded', function() {
+  const gradeSelect = document.getElementById('gradeSelect');
+  const roomInput = document.getElementById('roomInput');
+  if (gradeSelect) gradeSelect.addEventListener('change', updateClassroomValue);
+  if (roomInput) roomInput.addEventListener('input', updateClassroomValue);
+  // เรียกครั้งแรกเพื่อตั้งค่าเริ่มต้น
+  updateClassroomValue();
+});
+</script>
 <script>
 // เริ่ม/จบการบันทึกการใช้งานสำหรับหน้าครูตั้งค่า (teacherpicture)
 var __localUsageId_teacherpicture = null;

@@ -1,0 +1,2 @@
+{"type":"start_buffered","usageId":"local-1769789693271-vxs8cuecr0q","client_id":"c-6xpxhacc9e9-ml0t8je2","page":"/studio/category","start_at":"2026-01-30T16:14:53.265Z","created_at":"2026-01-30T16:14:53.271Z"}
+{"type":"flush","usageId":"697cd900e78c44ae8acfb514","client_id":"c-6xpxhacc9e9-ml0t8je2","page":"/studio/category","section":"category","start_at":"2026-01-30T16:14:53.265Z","end_at":"2026-01-30T16:14:56.282Z","durationMs":3017,"events":[],"created_at":"2026-01-30T16:14:56.286Z","flush_reason":"end","_id":"697cd900e78c44ae8acfb514"}
