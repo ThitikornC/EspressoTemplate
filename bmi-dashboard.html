@@ -47,6 +47,18 @@
             .responsive-scroll th, .responsive-scroll td { padding: 6px 8px; }
             .status-pill { min-width: 64px; font-size: 12px; padding: 4px 8px; }
         }
+
+        /* Applied only during export to force print-friendly dark text */
+        .export-black-text,
+        .export-black-text * {
+            color: #000 !important;
+            text-shadow: none !important;
+        }
+        .export-black-text table,
+        .export-black-text th,
+        .export-black-text td {
+            border-color: #000 !important;
+        }
         
         canvas{width:100% !important; height:auto !important; display:block}
         #globalSidebarToggle, #mobileToggleBtn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; font-size:20px; }
@@ -146,11 +158,11 @@
                             </div>
                         </div>
                         <div class="mt-8 text-xs text-gray-300">เกณฑ์อ้างอิง: กรมอนามัย (0-19 ปี)</div>
-                        <div class="mt-6 flex gap-2 justify-center">
-                            <button onclick="openAddModal()" class="text-brand text-sm hover:underline">แก้ไข/เพิ่ม</button>
+                        <div class="mt-6 flex items-center gap-2 justify-center">
+                            <button onclick="openAddModal()" class="text-brand text-sm leading-none hover:underline">แก้ไข/เพิ่ม</button>
                             <span class="text-gray-300">|</span>
-                            <button onclick="exportToCSV()" class="text-green-500 text-sm hover:underline">Export CSV</button>
-                            <button onclick="exportToPNG()" class="text-purple-600 text-sm hover:underline">Export PNG</button>
+                            <button onclick="exportToCSV()" class="text-green-500 text-sm leading-none hover:underline">Export CSV</button>
+                            <button onclick="exportToPNG()" class="text-purple-600 text-sm leading-none hover:underline">Export PNG</button>
                         </div>
                     </div>
                 </div>
@@ -464,7 +476,7 @@
                 const lower = ref[1];
                 if (val > top) return { t: "น้ำหนักมาก", c: "status-red" };
                 if (val > upper) return { t: "น้ำหนักค่อนข้างมาก", c: "status-orange" };
-                if (val >= median) return { t: "น้ำหนักตามเกณ", c: "status-green" };
+                if (val >= median) return { t: "น้ำหนักตามเกณฑ์", c: "status-green" };
                 if (val >= lower) return { t: "น้ำหนักค่อนข้างน้อย", c: "status-orange" };
                 return { t: "น้ำหนักน้อย", c: "status-red" };
             }
@@ -492,7 +504,32 @@
         let pendingRecord = null; // temporary record shown in result modal before saving
         let currentSelectedName = null;
         let currentRoom = null; // null = show rooms list, otherwise show names in that room
+        let currentClassVisit = 'latest'; // 'latest' or visit number string (1..n)
         let chartInstances = {};
+
+        // Consistent recency compare: date first, then id as a tie-breaker
+        function compareByRecencyDesc(a, b) {
+            const ad = new Date(a && a.date ? a.date : 0).getTime();
+            const bd = new Date(b && b.date ? b.date : 0).getTime();
+            if (bd !== ad) return bd - ad;
+            const aid = Number((a && (a.id || a.serverId)) || 0);
+            const bid = Number((b && (b.id || b.serverId)) || 0);
+            return bid - aid;
+        }
+
+        function sortByAgeAscThenDateAsc(list) {
+            return [...(list || [])].sort((a, b) => {
+                const am = Number((a && a.ageTotalM) || 0);
+                const bm = Number((b && b.ageTotalM) || 0);
+                if (am !== bm) return am - bm;
+                const ad = new Date(a && a.date ? a.date : 0).getTime();
+                const bd = new Date(b && b.date ? b.date : 0).getTime();
+                if (ad !== bd) return ad - bd;
+                const aid = Number((a && (a.id || a.serverId)) || 0);
+                const bid = Number((b && (b.id || b.serverId)) || 0);
+                return aid - bid;
+            });
+        }
 
         async function fetchRecords() {
             // Try server endpoints in order:
@@ -561,26 +598,101 @@
             } catch(e) {}
             renderSidebar();
             updateDashboard();
+
+            // Keep dashboard fresh when records are added from another page/tab
+            setInterval(() => { refreshRecordsAndView(true); }, 15000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') refreshRecordsAndView(true);
+            });
+            window.addEventListener('focus', () => refreshRecordsAndView(true));
         }
 
-        // Return latest record per student filtered by classroom (className may be 'ไม่ระบุ' for empty)
-        function getLatestPerStudentInClass(className) {
+        async function refreshRecordsAndView(silent = true) {
+            try {
+                const latest = await fetchRecords();
+                if (!Array.isArray(latest)) return;
+
+                const beforeCount = Array.isArray(allRecords) ? allRecords.length : 0;
+                const afterCount = latest.length;
+                const changed = beforeCount !== afterCount || JSON.stringify((latest[0] || {})) !== JSON.stringify((allRecords[0] || {}));
+                if (!changed && silent) return;
+
+                allRecords = latest;
+                const selectedNameBefore = currentSelectedName;
+                const roomBefore = currentRoom;
+
+                try {
+                    const dbg = document.getElementById('recordsCountDebug');
+                    if (dbg) dbg.innerText = `records: ${afterCount}`;
+                } catch (e) {}
+
+                renderSidebar('', roomBefore);
+
+                if (selectedNameBefore && allRecords.some(r => (r.name || '').trim() === selectedNameBefore)) {
+                    currentSelectedName = selectedNameBefore;
+                    selectChild(selectedNameBefore);
+                } else if (roomBefore) {
+                    showClassroomSummary(roomBefore);
+                } else {
+                    updateDashboard();
+                }
+            } catch (e) {
+                console.warn('refreshRecordsAndView failed', e);
+            }
+        }
+
+        // Return one record per student by requested visit: 'latest' or 1..n (oldest -> newest)
+        function getStudentRecordsByClassAndVisit(className, visitChoice = 'latest') {
             const grouped = groupByName(allRecords);
             const out = [];
             grouped.forEach(list => {
-                const latest = list.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
-                if (className === 'ไม่ระบุ') {
-                    if (!latest.classroom || String(latest.classroom).trim() === '') out.push(latest);
+                const sorted = sortByAgeAscThenDateAsc(list);
+                let picked = null;
+                if (visitChoice === 'latest') {
+                    picked = sorted[sorted.length - 1] || null;
                 } else {
-                    if (latest.classroom === className) out.push(latest);
+                    const visitNum = parseInt(visitChoice, 10);
+                    if (!isNaN(visitNum) && visitNum >= 1 && visitNum <= sorted.length) {
+                        picked = sorted[visitNum - 1];
+                    }
+                }
+                if (!picked) return;
+                if (className === 'ไม่ระบุ') {
+                    if (!picked.classroom || String(picked.classroom).trim() === '') out.push(picked);
+                } else {
+                    if (picked.classroom === className) out.push(picked);
                 }
             });
             return out.sort((a,b) => a.name.localeCompare(b.name));
         }
 
+        function getMaxVisitForClass(className) {
+            const grouped = groupByName(allRecords);
+            let maxVisit = 1;
+            grouped.forEach(list => {
+                const inClass = list.filter(r => {
+                    if (className === 'ไม่ระบุ') return !r.classroom || String(r.classroom).trim() === '';
+                    return r.classroom === className;
+                });
+                if (inClass.length > maxVisit) maxVisit = inClass.length;
+            });
+            return maxVisit;
+        }
+
+        // Build the same name ordering used in the left sidebar for a specific room.
+        function getRoomNamesInSidebarOrder(className) {
+            const roomItems = allRecords
+                .filter(r => {
+                    if (className === 'ไม่ระบุ') return !r.classroom || String(r.classroom).trim() === '';
+                    return r.classroom === className;
+                })
+                .sort(compareByRecencyDesc);
+            return Array.from(new Set(roomItems.map(r => (r.name || 'ไม่ระบุ').trim())));
+        }
+
         // Calculate class-level stats (reuse logic from before)
-        function calculateStatsForClass(className) {
-            const studentsInClass = getLatestPerStudentInClass(className);
+        function calculateStatsForClass(className, visitChoice = 'latest') {
+            const studentsInClass = getStudentRecordsByClassAndVisit(className, visitChoice);
             let t=0, n=0, o=0, u=0;
             studentsInClass.forEach(r => {
                 t++;
@@ -637,7 +749,7 @@
                 return;
             }
             // Show names for the selected room
-            const items = (roomsMap.get(currentRoom) || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+            const items = (roomsMap.get(currentRoom) || []).sort(compareByRecencyDesc);
             if (items.length === 0) {
                 listEl.innerHTML = '<div class="p-8 text-center text-gray-400">ยังไม่มีข้อมูล</div>';
                 return;
@@ -668,7 +780,7 @@
             }
 
             names.forEach(name => {
-                const childItems = items.filter(r => (r.name||'').trim() === name).sort((a,b) => new Date(b.date) - new Date(a.date));
+                const childItems = items.filter(r => (r.name||'').trim() === name).sort(compareByRecencyDesc);
                 const latest = childItems[0];
                 const div = document.createElement('div');
                 div.className = `p-4 cursor-pointer flex items-center gap-3 border-b border-gray-100 side-item ${currentSelectedName === name ? 'selected' : ''}`;
@@ -839,8 +951,12 @@
 
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
-                const reversedArr = [...itemsArr].reverse();
-                reversedArr.forEach((row, index) => {
+                const historyArr = [...itemsArr].sort((a, b) => {
+                    const diff = new Date(a.date) - new Date(b.date);
+                    if (diff !== 0) return diff;
+                    return (a.id || 0) - (b.id || 0);
+                });
+                historyArr.forEach((row, index) => {
                 const rowRefs = getRefsFor(row.gender||gender, row.ageTotalM, row.h);
                 const rWA = rowRefs.refWA ? formatStatusText(evaluateStatus(row.w, rowRefs.refWA, 'WA').t, 'WA') : '-';
                 const rHA = rowRefs.refHA ? formatStatusText(evaluateStatus(row.h, rowRefs.refHA, 'HA').t, 'HA') : '-';
@@ -871,7 +987,7 @@
             const dashEl = document.getElementById('schoolDashboard');
             const summaryTitle = document.getElementById('summaryTitle');
             const summaryTableBody = document.getElementById('summaryTableBody');
-            const stats = calculateStatsForClass(className);
+            const stats = calculateStatsForClass(className, currentClassVisit);
             summaryTitle.innerText = `ห้อง ${className}`;
             // replace summary table with single-row summary for this room
             summaryTableBody.innerHTML = '';
@@ -897,7 +1013,16 @@
                 if (container) container.appendChild(detail);
             }
 
-            const students = stats.students || [];
+            const studentsRaw = stats.students || [];
+            const sidebarNameOrder = getRoomNamesInSidebarOrder(className);
+            const byName = new Map();
+            studentsRaw.forEach(s => byName.set((s.name || 'ไม่ระบุ').trim(), s));
+            const students = [];
+            sidebarNameOrder.forEach(n => {
+                if (byName.has(n)) students.push(byName.get(n));
+            });
+            const maxVisit = getMaxVisitForClass(className);
+            const visitLabel = (currentClassVisit === 'latest') ? 'ล่าสุด' : `ครั้งที่ ${currentClassVisit}`;
             // Build quick summary counts by sex for the printable header table
             const summary = { male: {total:0, normal:0, over:0, under:0}, female: {total:0, normal:0, over:0, under:0} };
             students.forEach(s => {
@@ -1005,8 +1130,9 @@
             // Header table matching sample
             let html = `
                 <div class="flex items-center justify-between mb-2">
-                    <div class="text-sm text-gray-700 font-semibold">รายงานสรุป: ห้อง ${className} — จำนวน ${students.length} คน</div>
+                    <div class="text-sm text-gray-700 font-semibold">รายงานสรุป: ห้อง ${className} (${visitLabel}) — จำนวน ${students.length} คน</div>
                         <div class="flex items-center gap-2">
+                            <select id="classVisitSelect" onchange="onClassVisitChange(this.value)" class="px-2 py-1 rounded-md border border-gray-200 text-sm bg-white text-gray-700"></select>
                             <button onclick="printClassReport('${className}')" class="px-3 py-1 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 text-sm">พิมพ์</button>
                         </div>
                 </div>
@@ -1056,6 +1182,24 @@
             html += `<div class="my-6"></div>` + detailedHtml;
             detail.innerHTML = html;
 
+            try {
+                const visitSel = document.getElementById('classVisitSelect');
+                if (visitSel) {
+                    let optionsHtml = `<option value="latest">ล่าสุด</option>`;
+                    for (let i = 1; i <= maxVisit; i++) {
+                        optionsHtml += `<option value="${i}">ครั้งที่ ${i}</option>`;
+                    }
+                    visitSel.innerHTML = optionsHtml;
+                    visitSel.value = String(currentClassVisit);
+                    if (visitSel.value !== String(currentClassVisit)) {
+                        currentClassVisit = 'latest';
+                        visitSel.value = 'latest';
+                    }
+                }
+            } catch (e) {
+                console.warn('failed to render class visit selector', e);
+            }
+
             // Make columns equal width for all tables inside classDetail
             try {
                 const tables = detail.querySelectorAll('table');
@@ -1096,6 +1240,11 @@
                     if (content && content.scrollIntoView) content.scrollIntoView();
                 }
             } catch (e) { /* ignore */ }
+        }
+
+        function onClassVisitChange(value) {
+            currentClassVisit = value || 'latest';
+            if (currentRoom) showClassroomSummary(currentRoom);
         }
 
         function updateCharts(data, gender) {
@@ -1690,18 +1839,97 @@
                 const wa = refs.refWA ? formatStatusText(evaluateStatus(r.w, refs.refWA, 'WA').t, 'WA') : '-';
                 csv += `${formatDate(r.date)},${r.classroom ? 'ห้อง ' + r.classroom : ''},${r.ageTotalM},${r.w},${r.h},${wa},${ha},${wh}\n`;
             });
+
+            const meta = getSelectedExportMeta();
             const link = document.createElement("a");
             link.href = "data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-            link.download = `Growth_${currentSelectedName}.csv`;
+            link.download = `${meta.baseName}.csv`;
             link.click();
         }
+
+        function sanitizeFileName(name) {
+            return String(name || 'report')
+                .replace(/[\\/:*?"<>|]/g, '_')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function formatDateForFileName(dateVal) {
+            const d = new Date(dateVal || Date.now());
+            if (isNaN(d.getTime())) return 'unknown-date';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function getSelectedExportMeta() {
+            const displayNameEl = document.getElementById('studentNameDisplay');
+            const displayName = displayNameEl ? (displayNameEl.innerText || '').trim() : '';
+            const name = (currentSelectedName || displayName || 'ไม่ระบุชื่อ').trim();
+            const items = allRecords
+                .filter(r => (r.name || '').trim() === name)
+                .sort((a, b) => {
+                    const ad = new Date(a && a.date ? a.date : 0).getTime();
+                    const bd = new Date(b && b.date ? b.date : 0).getTime();
+                    if (ad !== bd) return ad - bd;
+                    const aid = Number((a && (a.id || a.serverId)) || 0);
+                    const bid = Number((b && (b.id || b.serverId)) || 0);
+                    return aid - bid;
+                });
+
+            const latest = items[items.length - 1] || [...allRecords].sort(compareByRecencyDesc)[0] || null;
+            const resolvedName = (latest && latest.name ? String(latest.name).trim() : name) || 'ไม่ระบุชื่อ';
+            const dateLabel = formatDateForFileName(latest && latest.date ? latest.date : Date.now());
+            const baseName = sanitizeFileName(`${resolvedName}_${dateLabel}`);
+            return { name: resolvedName, dateLabel, baseName, latest };
+        }
+
         async function exportToPNG() {
             const el = document.getElementById('captureAreaDashboard');
-            const canvas = await html2canvas(el);
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL("image/png");
-            a.download = "dashboard.png";
-            a.click();
+            if (!el) return;
+
+            // Force black text only for exported image, then restore immediately.
+            el.classList.add('export-black-text');
+            try {
+                const srcCanvas = await html2canvas(el, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    allowTaint: true,
+                    scrollY: -window.scrollY,
+                    windowWidth: document.documentElement.scrollWidth,
+                    windowHeight: document.documentElement.scrollHeight
+                });
+
+                // Create A4 portrait canvas and fit full report inside it.
+                const a4Width = 1240;
+                const a4Height = 1754;
+                const margin = 40;
+                const printableW = a4Width - margin * 2;
+                const printableH = a4Height - margin * 2;
+                const fitScale = Math.min(printableW / srcCanvas.width, printableH / srcCanvas.height);
+                const drawW = Math.round(srcCanvas.width * fitScale);
+                const drawH = Math.round(srcCanvas.height * fitScale);
+                const dx = Math.round((a4Width - drawW) / 2);
+                const dy = Math.round((a4Height - drawH) / 2);
+
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = a4Width;
+                outCanvas.height = a4Height;
+                const outCtx = outCanvas.getContext('2d');
+                outCtx.fillStyle = '#ffffff';
+                outCtx.fillRect(0, 0, a4Width, a4Height);
+                outCtx.drawImage(srcCanvas, dx, dy, drawW, drawH);
+
+                const meta = getSelectedExportMeta();
+                const a = document.createElement('a');
+                a.href = outCanvas.toDataURL('image/png');
+                a.download = `${meta.baseName}.png`;
+                a.click();
+            } finally {
+                el.classList.remove('export-black-text');
+            }
         }
         
         // (Removed class-level PNG/CSV export functions — UI no longer shows those buttons)
@@ -1716,24 +1944,26 @@
                 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 <style>
                     /* Print page margins and wrapper to avoid content touching edges */
-                    @page { size: A4 portrait; margin: 8mm; }
+                    @page { size: A4 portrait; margin: 6mm; }
                     html,body{height:100%;}
-                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:8mm; color:#111; background:#fff}
-                    .print-wrap{max-width:100%; margin:0 auto;}
-                    table{border-collapse:collapse; width:100%; font-size:11px; table-layout:auto; margin-bottom:10px}
-                    th, td{border:1px solid #999; padding:6px 3px; text-align:center; vertical-align:middle; white-space:nowrap}
-                    thead tr{background:#d0d0d0; font-weight:bold}
+                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:6mm; color:#000 !important; background:#fff}
+                    .print-wrap{max-width:100%; margin:0 auto; color:#000 !important;}
+                    .print-wrap, .print-wrap * { color:#000 !important; }
+                    table{border-collapse:collapse; width:100%; font-size:9.5px; table-layout:fixed; margin-bottom:8px}
+                    th, td{border:1px solid #000; padding:3px 2px; text-align:center; vertical-align:middle; white-space:normal; word-break:break-word}
+                    thead tr{background:#f2f2f2; font-weight:bold}
                     /* Exceptions for longer cells that need wrapping */
-                    th:nth-child(3), td:nth-child(3) { white-space:normal; font-size:10px }
-                    th:nth-child(4), td:nth-child(4) { width: 3.5%; max-width: 25px; font-size:11px; padding:4px 2px }
+                    th:nth-child(3), td:nth-child(3) { white-space:normal; font-size:9px }
+                    th:nth-child(4), td:nth-child(4) { width: 4.5%; max-width: 28px; font-size:9px; padding:2px 1px }
                     th:first-child, td:first-child { white-space:normal }
                     /* keep any explicit left-aligned cells (e.g., name column) */
                     th.text-left, td.text-left{ text-align:left }
-                    tr{height:auto; min-height:24px}
+                    tr{height:auto; min-height:18px}
                     @media print {
                         body{padding:0; margin:0}
                         .print-wrap{margin:0}
-                        table{width:100%; margin-bottom:8px}
+                        table{width:100%; margin-bottom:6px}
+                        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                 </style>`;
 
