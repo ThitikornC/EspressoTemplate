@@ -41,6 +41,13 @@
         .responsive-scroll th, .responsive-scroll td { white-space: nowrap; }
         .responsive-scroll thead th { position: sticky; top: 0; background: #fff; z-index: 3; }
 
+        /* Classroom report table lines should be solid black */
+        #classDetail table,
+        #classDetail th,
+        #classDetail td {
+            border-color: #000 !important;
+        }
+
         @media (max-width: 768px) {
             .responsive-scroll table { min-width: 520px; }
             table.w-full.text-sm { font-size: 12px; }
@@ -1139,13 +1146,13 @@
                 <table class="w-full text-sm border-collapse text-center">
                     <thead>
                         <tr class="bg-gray-100 text-gray-700 font-bold">
-                            <th class="p-2 border">ลำดับ</th>
-                            <th class="p-2 border">วันที่</th>
-                            <th class="p-2 border">ชื่อ - นามสกุล</th>
-                            <th class="p-2 border">เพศ</th>
-                            <th class="p-2 border">อายุ</th>
-                            <th class="p-2 border">น้ำหนัก</th>
-                            <th class="p-2 border">ส่วนสูง</th>
+                            <th class="px-1 py-2 border" style="width:1.5%">ลำดับ</th>
+                            <th class="p-2 border" style="width:8%">วันที่</th>
+                            <th class="p-2 border" style="white-space:nowrap">ชื่อ - นามสกุล</th>
+                            <th class="p-2 border" style="width:2%">เพศ</th>
+                            <th class="p-2 border" style="width:9%">อายุ</th>
+                            <th class="p-2 border" style="width:6%">น้ำหนัก</th>
+                            <th class="p-2 border" style="width:6%">ส่วนสูง</th>
                             <th class="p-2 border">น้ำหนักตามอายุ</th>
                             <th class="p-2 border">ส่วนสูงตามอายุ</th>
                             <th class="p-2 border">น้ำหนักตามส่วนสูง</th>
@@ -1164,10 +1171,10 @@
                 const ageDisplay = formatAge(s);
                 html += `
                         <tr>
-                            <td class="p-2 border text-center">${idx+1}</td>
+                            <td class="px-1 py-2 border text-center" style="width:1.5%">${idx+1}</td>
                             <td class="p-2 border text-center">${formatDate(s.date)}</td>
-                            <td class="p-2 border text-center">${s.name}</td>
-                            <td class="p-2 border text-center">${sexLabel}</td>
+                            <td class="p-2 border text-left" style="white-space:nowrap">${s.name}</td>
+                            <td class="p-2 border text-center" style="width:2%">${sexLabel}</td>
                             <td class="p-2 border text-center">${ageDisplay}</td>
                             <td class="p-2 border text-center font-bold">${s.w}</td>
                             <td class="p-2 border text-center font-bold">${s.h}</td>
@@ -1531,7 +1538,19 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
+                    scales: {
+                        x: {
+                            type: 'linear', min: minX, max: maxX,
+                            title: { display: true, text: xLabel },
+                            border: { color: '#333', width: 1.5 },
+                            grid: { color: 'rgba(0,0,0,0.25)', lineWidth: 1.2 }
+                        },
+                        y: {
+                            title: { display: true, text: yLabel },
+                            border: { color: '#333', width: 1.5 },
+                            grid: { color: 'rgba(0,0,0,0.25)', lineWidth: 1.2 }
+                        }
+                    },
                     plugins: { legend: { display: false }, tooltip: { enabled: false } },
                     onClick: (event, elements) => {
                         const chart = chartInstances[id];
@@ -1602,7 +1621,19 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { x: { type: 'linear', min: minX, max: maxX, title: { display: true, text: xLabel } }, y: { title: { display: true, text: yLabel } } },
+                    scales: {
+                        x: {
+                            type: 'linear', min: minX, max: maxX,
+                            title: { display: true, text: xLabel },
+                            border: { color: '#333', width: 1.5 },
+                            grid: { color: 'rgba(0,0,0,0.25)', lineWidth: 1.2 }
+                        },
+                        y: {
+                            title: { display: true, text: yLabel },
+                            border: { color: '#333', width: 1.5 },
+                            grid: { color: 'rgba(0,0,0,0.25)', lineWidth: 1.2 }
+                        }
+                    },
                     plugins: { legend: { display: false }, tooltip: { enabled: false } },
                     onClick: (event, elements) => {
                         const chart = chartInstances[id];
@@ -1944,21 +1975,29 @@
                 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 <style>
                     /* Print page margins and wrapper to avoid content touching edges */
-                    @page { size: A4 portrait; margin: 6mm; }
+                    @page { size: A4 portrait; margin: 5mm; }
                     html,body{height:100%;}
-                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:6mm; color:#000 !important; background:#fff}
+                    body{font-family: 'Sarabun', sans-serif; margin:0; padding:5mm; color:#000 !important; background:#fff}
                     .print-wrap{max-width:100%; margin:0 auto; color:#000 !important;}
                     .print-wrap, .print-wrap * { color:#000 !important; }
-                    table{border-collapse:collapse; width:100%; font-size:9.5px; table-layout:fixed; margin-bottom:8px}
-                    th, td{border:1px solid #000; padding:3px 2px; text-align:center; vertical-align:middle; white-space:normal; word-break:break-word}
+                    table{border-collapse:collapse; width:100%; font-size:9.6px; table-layout:auto; margin-bottom:7px}
+                    th, td{border:1px solid #000; padding:3px 2px; text-align:center; vertical-align:middle; white-space:normal; word-break:break-word; overflow:hidden}
                     thead tr{background:#f2f2f2; font-weight:bold}
                     /* Exceptions for longer cells that need wrapping */
-                    th:nth-child(3), td:nth-child(3) { white-space:normal; font-size:9px }
-                    th:nth-child(4), td:nth-child(4) { width: 4.5%; max-width: 28px; font-size:9px; padding:2px 1px }
-                    th:first-child, td:first-child { white-space:normal }
+                    th:nth-child(1), td:nth-child(1) { width: 3%; white-space:nowrap; padding:2px 1px }
+                    th:nth-child(2), td:nth-child(2) { width: 10%; white-space:nowrap }
+                    th:nth-child(3), td:nth-child(3) { width: 30%; white-space:nowrap; word-break:normal; text-align:left; padding-left:4px }
+                    th:nth-child(4), td:nth-child(4) { width: 3%; white-space:nowrap; padding:2px 1px }
+                    th:nth-child(5), td:nth-child(5) { width: 9%; white-space:nowrap }
+                    th:nth-child(6), td:nth-child(6) { width: 6%; white-space:nowrap }
+                    th:nth-child(7), td:nth-child(7) { width: 6%; white-space:nowrap }
+                    th:nth-child(8), td:nth-child(8) { width: 11% }
+                    th:nth-child(9), td:nth-child(9) { width: 11% }
+                    th:nth-child(10), td:nth-child(10) { width: 11% }
+                    th:first-child, td:first-child { white-space:nowrap }
                     /* keep any explicit left-aligned cells (e.g., name column) */
                     th.text-left, td.text-left{ text-align:left }
-                    tr{height:auto; min-height:18px}
+                    tr{height:auto; min-height:16px}
                     @media print {
                         body{padding:0; margin:0}
                         .print-wrap{margin:0}
