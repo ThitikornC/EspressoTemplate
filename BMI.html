@@ -48,7 +48,7 @@
                 <div class="mt-3">
                     <label class="block text-sm font-medium text-gray-600 mb-1">รูปถ่าย / อัปโหลด <span class="text-xs text-gray-400">(ถ่ายก่อน)</span></label>
                     <div class="flex items-center gap-3">
-                        <input id="photoInput" type="file" accept="image/*" capture="environment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        <input id="photoInput" type="file" accept="image/*" capture="environment" class="block w-full min-w-0 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                         <img id="photoPreview" src="" alt="preview" style="display:none; width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #e5e7eb;" />
                     </div>
                 </div>
@@ -155,25 +155,25 @@
                     </div>
                 </div>
 
-                <div class="mt-5 space-y-2 relative z-10">
-                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-center">
-                                <span class="text-sm font-semibold text-gray-600">น้ำหนักตามเกณฑ์ส่วนสูง</span>
-                                <span id="resStatWH" class="status-pill status-green">-</span>
+                <div class="mt-5 space-y-3 relative z-10">
+                    <div class="flex flex-col p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center gap-4">
+                                <span class="text-base font-semibold text-gray-700">น้ำหนักตามเกณฑ์ส่วนสูง</span>
+                                <span id="resStatWH" class="status-pill status-green px-4 py-2 text-sm min-w-[110px]">-</span>
                             </div>
                     </div>
                     
-                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-semibold text-gray-600">ส่วนสูงตามเกณฑ์อายุ</span>
-                            <span id="resStatHA" class="status-pill status-green">-</span>
+                    <div class="flex flex-col p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center gap-4">
+                            <span class="text-base font-semibold text-gray-700">ส่วนสูงตามเกณฑ์อายุ</span>
+                            <span id="resStatHA" class="status-pill status-green px-4 py-2 text-sm min-w-[110px]">-</span>
                         </div>
                     </div>
 
-                    <div class="flex flex-col p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-semibold text-gray-600">น้ำหนักตามเกณฑ์อายุ</span>
-                            <span id="resStatWA" class="status-pill status-green">-</span>
+                    <div class="flex flex-col p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center gap-4">
+                            <span class="text-base font-semibold text-gray-700">น้ำหนักตามเกณฑ์อายุ</span>
+                            <span id="resStatWA" class="status-pill status-green px-4 py-2 text-sm min-w-[110px]">-</span>
                         </div>
                     </div>
                 </div>
@@ -460,28 +460,36 @@ const growthData = {
         function evaluateStatus(val, ref, type) {
             if (!ref || !Array.isArray(ref) || ref.length === 0) return { t: '-', c: 'bg-gray-100' };
             const len = ref.length;
-            const median = ref[Math.floor((len - 1) / 2)];
-            const low = ref[0];
-            const high = ref[len - 1];
+            // ref เรียงตามลำดับ SD: [−2SD, −1.5SD, Median, +1.5SD, +2SD, (+3SD เฉพาะ WH)]
+            const sdM2  = ref[0];                                     // −2SD
+            const sdM15 = ref[1] != null ? ref[1] : sdM2;            // −1.5SD
+            const median = ref[2] != null ? ref[2] : ref[Math.floor((len - 1) / 2)];
+            const sdP15 = ref[3] != null ? ref[3] : ref[len - 1];   // +1.5SD
+            const sdP2  = ref[4] != null ? ref[4] : ref[len - 1];   // +2SD
+            const sdP3  = ref[5] != null ? ref[5] : sdP2;           // +3SD
 
             if (type === 'HA') {
-                if (val > high) return { t: "สูง", c: "status-green bg-green-100 text-green-700" };
-                if (val >= median) return { t: "สูงตามเกณฑ์", c: "status-green" };
-                if (val >= low) return { t: "ค่อนข้างเตี้ย", c: "status-orange" };
+                if (val > sdP2)   return { t: "สูง", c: "status-green bg-green-100 text-green-700" };
+                if (val > sdP15)  return { t: "ค่อนข้างสูง", c: "status-green" };
+                if (val >= sdM15) return { t: "สูงตามเกณฑ์", c: "status-green" };
+                if (val >= sdM2)  return { t: "ค่อนข้างเตี้ย", c: "status-orange" };
                 return { t: "เตี้ย", c: "status-red" };
             }
 
             if (type === 'WA') {
-                if (val > high) return { t: "น้ำหนักมาก", c: "status-red" };
-                if (val >= median) return { t: "น้ำหนักตามเกณฑ์", c: "status-green" };
-                if (val >= low) return { t: "น้ำหนักค่อนข้างน้อย", c: "status-orange" };
+                if (val > sdP2)   return { t: "น้ำหนักมาก", c: "status-red" };
+                if (val > sdP15)  return { t: "น้ำหนักค่อนข้างมาก", c: "status-orange" };
+                if (val >= sdM15) return { t: "น้ำหนักตามเกณฑ์", c: "status-green" };
+                if (val >= sdM2)  return { t: "น้ำหนักค่อนข้างน้อย", c: "status-orange" };
                 return { t: "น้ำหนักน้อย", c: "status-red" };
             }
 
             if (type === 'WH') {
-                if (val > high) return { t: "อ้วน", c: "status-red" };
-                if (val >= median) return { t: "สมส่วน", c: "status-green" };
-                if (val >= low) return { t: "ค่อนข้างผอม", c: "status-orange" };
+                if (val > sdP3)   return { t: "อ้วน", c: "status-red" };
+                if (val > sdP2)   return { t: "เริ่มอ้วน", c: "status-orange" };
+                if (val > sdP15)  return { t: "ท้วม", c: "status-yellow" };
+                if (val >= sdM15) return { t: "สมส่วน", c: "status-green" };
+                if (val >= sdM2)  return { t: "ค่อนข้างผอม", c: "status-orange" };
                 return { t: "ผอม", c: "status-red" };
             }
 

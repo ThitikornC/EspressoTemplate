@@ -9,24 +9,163 @@
 <script src="/js/prevent-image-download.js"></script>
     <style>
       /* Ensure mode buttons have equal size and align consistently */
-      .container { display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+      /* กริดการ์ด 3 คอลัมน์ จัดกึ่งกลางชิดบน — ตรงกับ Client.vue (.tree-container) */
+      .container {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 320px)) !important;
+        justify-content: center !important;
+        align-content: start !important;
+        gap: 32px !important;
+        padding: 20px 20px 60px !important;
+        max-width: min(1200px, 95vw) !important;
+        margin: 0 auto !important;
+        min-height: 100vh !important;
+      }
+      .container h1 { grid-column: 1 / -1; text-align: center; margin: 24px 0 8px; }
       .container .neon-btn {
-        display: inline-flex !important;
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        /* reduced horizontal size */
-        width: clamp(200px, 32vw, 360px) !important;
-        /* slightly taller buttons */
-        min-height: clamp(72px, 9vh, 104px) !important;
-        /* increase vertical padding, keep smaller horizontal padding */
-        padding: clamp(16px, 3vh, 28px) clamp(10px, 2.2vw, 16px) !important;
+        /* ขนาดการ์ดแบบเดียวกับ .parent-box */
+        width: 100% !important;
+        max-width: 320px !important;
+        min-height: 200px !important;
+        margin: 0 !important;
+        padding: 16px !important;
         box-sizing: border-box !important;
         text-align: center !important;
-        white-space: nowrap !important;
-        line-height: 1 !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+      }
+      /* responsive เหมือนต้นฉบับ: จอแคบ -> 2 คอลัมน์ / มือถือ -> 1 */
+      @media (max-width: 768px) {
+        .container { grid-template-columns: repeat(2, minmax(0, 340px)) !important; gap: 16px !important; }
+      }
+      @media (max-width: 560px) {
+        .container { grid-template-columns: minmax(0, 340px) !important; }
       }
       /* Keep inner text readable on small screens */
       .container .neon-btn span, .container .neon-btn { font-size: clamp(1rem, 2.2vw, 1.25rem) !important; }
+
+      /* ปุ่ม i มุมขวาบนของการ์ด — กดดูความหมายของโหมดนั้นโดยไม่เข้าไปในโหมด */
+      /* ต้องเจาะจงกว่า `.container .neon-btn span` ด้านบน ไม่งั้นโดน font-size ของการ์ดทับ */
+      .container .neon-btn .info-dot {
+        position: absolute !important;
+        top: 10px;
+        right: 10px;
+        width: 30px !important;
+        height: 30px;
+        flex: 0 0 auto;
+        text-shadow: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 2px solid #74640a;
+        background: #fffef8;
+        color: #74640a;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+        font-weight: 700;
+        font-size: 18px !important;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+        transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+        z-index: 20;
+      }
+      .container .neon-btn .info-dot:hover,
+      .container .neon-btn .info-dot:focus-visible {
+        background: #74640a;
+        color: #fffef8;
+        transform: scale(1.12);
+        outline: none;
+      }
+      /* มือถือ: ขยายให้นิ้วกดโดนง่ายขึ้น */
+      @media (max-width: 560px) {
+        .container .neon-btn .info-dot {
+          width: 36px !important;
+          height: 36px;
+          font-size: 20px !important;
+          top: 8px;
+          right: 8px;
+        }
+      }
+      /* ── ป๊อปอัปความหมาย: ต้องพอดีทุกจอ ── */
+      /* จอเตี้ย (มือถือแนวนอน / เปิด devtools) การ์ดเคยสูงเกินจนปุ่มปิดหลุดออกนอกจอ
+         จึงจำกัดความสูง ให้เนื้อหาเลื่อนเอง และตรึงปุ่มปิดไว้ล่างการ์ดเสมอ */
+      /* ยึด overlay ด้วย inset แทน width/height:100% — บน iOS Safari ค่า 100% อิงกับ
+         viewport ตอนแถบ URL ซ่อน ทำให้การ์ดเลื่อนไปอยู่ใต้แถบเบราว์เซอร์
+         (display เว้นไว้ให้ JS สลับ none/flex เอง) */
+      #infoModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+      .info-card {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 500px;
+        max-height: calc(100vh - 32px);
+        max-height: calc(100dvh - 32px);
+        background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+        border: 6px solid #74640a;
+        border-radius: 20px;
+        box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 30px rgba(255, 230, 160, 0.7);
+        padding: clamp(18px, 4.5vw, 36px) clamp(16px, 4vw, 36px);
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .info-body {
+        flex: 1 1 auto;
+        min-height: 0;          /* ให้ลูกที่ overflow เลื่อนได้จริงใน flex column */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .info-card #infoTitle {
+        color: #333;
+        margin: 0 0 10px;
+        font-size: clamp(20px, 5.5vw, 28px);
+        text-align: center;
+      }
+      .info-card #infoMeaning {
+        color: #555;
+        margin: 0;
+        font-size: clamp(14.5px, 3.8vw, 17px);
+        line-height: 1.75;
+        text-align: center;
+      }
+      .info-actions {
+        flex: 0 0 auto;
+        display: flex;
+        justify-content: center;
+        padding-top: clamp(14px, 3vw, 22px);
+      }
+      .info-card .info-close-btn {
+        font-size: 1rem !important;
+        padding: 8px 30px !important;
+        min-height: 40px !important;
+        margin: 0 !important;
+      }
+
+      /* ข้อมูลในป๊อปอัป */
+      .info-keyword {
+        display: inline-block;
+        padding: 3px 14px;
+        border-radius: 9999px;
+        background: rgba(116, 100, 10, 0.12);
+        border: 1px solid #74640a;
+        color: #74640a;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
       /* Mobile: make contact button flow-friendly and touchable when moved under SmartTrack */
       @media (max-width: 768px) {
         #contactButton {
@@ -41,7 +180,7 @@
           margin: 12px auto !important;
           padding: clamp(16px, 3vh, 28px) clamp(10px, 2.2vw, 16px) !important;
           font-size: clamp(1rem, 2.2vw, 1.25rem) !important;
-          border-radius: 9999px !important;
+          border-radius: 10px !important;
           box-shadow: 0 8px 24px rgba(0,0,0,0.32) !important;
           z-index: 9999 !important;
         }
@@ -54,44 +193,50 @@
     <div class="container">
         <h1>เลือกโหมด</h1>
 
-          <a href="/teacherpicture.html" 
+          <a href="/teacherpicture.html"
              id="smartCheckBtn"
              class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           สมาร์ทเช็ค
+          <span class="info-dot" data-info="smartcheck" role="button" tabindex="0" aria-label="ความหมายของโหมดสมาร์ทเช็ค">i</span>
         </a>
-        
+
         <a href="/teachermatch.html" class="neon-btn bg-calculate text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           ตัวเลข
+          <span class="info-dot" data-info="numbers" role="button" tabindex="0" aria-label="ความหมายของโหมดตัวเลข">i</span>
         </a>
 
         <a href="/teacherthai.html" class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           ภาษา
+          <span class="info-dot" data-info="language" role="button" tabindex="0" aria-label="ความหมายของโหมดภาษา">i</span>
         </a>
 
         <a href="/studio/" class="neon-btn bg-calculate text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           สตูดิโอ
+          <span class="info-dot" data-info="studio" role="button" tabindex="0" aria-label="ความหมายของโหมดสตูดิโอ">i</span>
         </a>
-        
+
         <a id="smartTrackBtn" href="/BMI.html"
            class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center"
            title="สมาร์ทแทรค">
           สมาร์ทแทรค
+          <span class="info-dot" data-info="smarttrack" role="button" tabindex="0" aria-label="ความหมายของโหมดสมาร์ทแทรค">i</span>
         </a>
         
         <!-- Box Breathing removed -->
     </div>
 
 <!-- Info Popup Modal -->
-<div id="infoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
-  <div style="background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding: 40px; border-radius: 20px; border: 6px solid #74640a; box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 30px rgba(255,230,160,0.7); max-width: 500px; width: 90%;">
-    <h2 style="color: #333; margin-bottom: 20px; font-size: 28px; text-align: center;">สมาร์ทเช็ค</h2>
-    <p style="color: #555; font-size: 18px; line-height: 1.8; text-align: center; margin-bottom: 20px;">
-      แบบฝึกหัดตรวจความเข้าใจที่รวดเร็ว ใช้งานง่าย และเหมาะกับทุกเนื้อหา
-    </p>
-    <div style="display: flex; justify-content: center;">
-      <button onclick="closeInfoModal()" class="neon-btn" style="font-size: 1rem; padding: 8px 30px; min-height: 36px;">
-        ปิด
-      </button>
+<div id="infoModal" style="display: none;">
+  <div class="info-card">
+    <div class="info-body">
+      <h2 id="infoTitle">สมาร์ทเช็ค</h2>
+      <div style="text-align: center; margin-bottom: 16px;"><span id="infoKeyword" class="info-keyword">Awareness</span></div>
+      <p id="infoMeaning">
+        แบบฝึกหัดตรวจความเข้าใจที่รวดเร็ว ใช้งานง่าย และเหมาะกับทุกเนื้อหา
+      </p>
+    </div>
+    <div class="info-actions">
+      <button onclick="closeInfoModal()" class="neon-btn info-close-btn">ปิด</button>
     </div>
   </div>
 </div>
@@ -166,44 +311,63 @@
 </script>
 
 <script>
-// Long press for Smart Check info
-let longPressTimer;
-const smartCheckBtn = document.getElementById('smartCheckBtn');
+// เดิมดูความหมายด้วยการกดค้าง 800ms ที่ปุ่มสมาร์ทเช็ค — เปลี่ยนมาใช้ปุ่ม i บนการ์ดทุกโหมดแทน
+// (กดค้างเดิมพอปล่อยนิ้วแล้วลิงก์ก็ยังพาเข้าโหมดอยู่ดี)
 
-smartCheckBtn?.addEventListener('mousedown', function(e) {
-  longPressTimer = setTimeout(() => {
-    e.preventDefault();
-    openInfoModal();
-  }, 800); // กดค้าง 800ms
-});
-
-smartCheckBtn?.addEventListener('mouseup', function() {
-  clearTimeout(longPressTimer);
-});
-
-smartCheckBtn?.addEventListener('mouseleave', function() {
-  clearTimeout(longPressTimer);
-});
-
-smartCheckBtn?.addEventListener('touchstart', function(e) {
-  longPressTimer = setTimeout(() => {
-    e.preventDefault();
-    openInfoModal();
-  }, 800);
-});
-
-smartCheckBtn?.addEventListener('touchend', function() {
-  clearTimeout(longPressTimer);
-});
-
-smartCheckBtn?.addEventListener('touchcancel', function() {
-  clearTimeout(longPressTimer);
-});
+// ── ความหมายของแต่ละโหมด (ใช้กับปุ่ม i บนการ์ด) ──
+const MODE_INFO = {
+  smartcheck: {
+    title: 'สมาร์ทเช็ค',
+    keyword: 'Awareness',
+    meaning: 'เรียนรู้จากโลกและสถานการณ์ปัจจุบัน',
+  },
+  numbers: {
+    title: 'ตัวเลข',
+    keyword: 'Numeracy',
+    meaning: 'สร้างพื้นฐานการคิดและการใช้ตัวเลข',
+  },
+  language: {
+    title: 'ภาษา',
+    keyword: 'Literacy',
+    meaning: 'สร้างทักษะการสื่อสารผ่านการอ่าน เขียน ฟัง และพูด',
+  },
+  studio: {
+    title: 'สตูดิโอ',
+    keyword: 'Exploration',
+    meaning: 'เรียนรู้ผ่านการลงมือทำและการค้นพบ',
+  },
+  smarttrack: {
+    title: 'สมาร์ทแทรค',
+    keyword: 'Growth',
+    meaning: 'ติดตามการเติบโตของผู้เรียนด้วยข้อมูล',
+  },
+};
 
 // Info Modal Functions
-function openInfoModal() {
+function openInfoModal(mode) {
+  const info = MODE_INFO[mode] || MODE_INFO.smartcheck;
+  document.getElementById('infoTitle').innerText = info.title;
+  document.getElementById('infoKeyword').innerText = info.keyword;
+  document.getElementById('infoMeaning').innerText = info.meaning;
   document.getElementById('infoModal').style.display = 'flex';
 }
+
+// ปุ่ม i อยู่ในลิงก์การ์ด — ต้องกันไม่ให้กดแล้วเข้าโหมดไปด้วย
+document.addEventListener('click', function(e) {
+  const dot = e.target.closest('.info-dot');
+  if (!dot) return;
+  e.preventDefault();
+  e.stopPropagation();
+  openInfoModal(dot.dataset.info);
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const dot = e.target.closest && e.target.closest('.info-dot');
+  if (!dot) return;
+  e.preventDefault();
+  e.stopPropagation();
+  openInfoModal(dot.dataset.info);
+});
 
 function closeInfoModal() {
   document.getElementById('infoModal').style.display = 'none';

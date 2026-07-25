@@ -38,7 +38,7 @@ body {
 }
 
 .game-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%);
   padding: 25px 30px;
   text-align: center;
   color: white;
@@ -134,10 +134,10 @@ body {
           animation: wrongShake 0.5s;
 }
 
-.choice-1 { background: linear-gradient(135deg, #85c226 0%, #6fa019 100%); }
-.choice-2 { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
-.choice-3 { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
-.choice-4 { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+.choice-1 { background: linear-gradient(135deg, #d4a574 0%, #b8935f 100%); }
+.choice-2 { background: linear-gradient(135deg, #c4915a 0%, #a87847 100%); }
+.choice-3 { background: linear-gradient(135deg, #8b6914 0%, #6f5410 100%); }
+.choice-4 { background: linear-gradient(135deg, #9b7b3f 0%, #7f6333 100%); }
 
 @-webkit-keyframes correctPulse {
   0%, 100% { -webkit-transform: scale(1); transform: scale(1); }
